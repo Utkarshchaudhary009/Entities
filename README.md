@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <p align="center">
   <a href="https://clerk.com?utm_source=github&utm_medium=clerk_docs" target="_blank" rel="noopener noreferrer">
     <picture>
@@ -84,3 +85,6 @@ Feel free to create a support thread on our [Discord](https://clerk.com/discord)
 You can discuss ideas, ask questions, and meet others from the community in our [Discord](https://discord.com/invite/b5rXHjAg7A).
 
 If you prefer, you can also find support through our [Twitter](https://twitter.com/ClerkDev), or you can [email](mailto:support@clerk.dev) us!
+=======
+# Entities
+>>>>>>> 7648268384a664a2ae4a5eb5a62cffbe75dacd0a
