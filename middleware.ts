@@ -1,8 +1,24 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 // This Middleware does not protect any routes by default.
 // See https://clerk.com/docs/references/nextjs/clerk-middleware for more information about configuring your Middleware
-export default clerkMiddleware();
+const isProtectedRoute = createRouteMatcher(["/admin(.*)"]);
+
+export default clerkMiddleware(async (auth, req) => {
+  // Protect /admin routes
+  if (isProtectedRoute(req)) {
+    await auth.protect((has) => {
+      return has({ role: "admin" });
+    });
+
+    const { sessionClaims } = await auth();
+    // Redirect non-admin users to home
+    if (sessionClaims?.metadata?.role !== "admin") {
+      const url = new URL("/", req.url);
+      return Response.redirect(url);
+    }
+  }
+});
 
 export const config = {
   matcher: [
