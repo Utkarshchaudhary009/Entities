@@ -11,8 +11,8 @@ export default clerkMiddleware(async (auth, req) => {
 
     // 2. Check for the custom "admin" role in metadata
     const { sessionClaims } = await auth();
-    
-    if (sessionClaims?.metadata?.role !== "admin") {
+
+    if (sessionClaims?.publicMetadata?.role === "admin") {
       // If not admin, redirect to home
       return NextResponse.redirect(new URL("/", req.url));
     }
