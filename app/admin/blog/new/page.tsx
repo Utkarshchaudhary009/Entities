@@ -1,6 +1,5 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
 import { useState } from "react";
 import { useSupabase } from "@/lib/supabase/client";
 import { useUser } from "@clerk/nextjs";
@@ -10,10 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Upload, ChevronLeft } from "lucide-react";
-import { Conversation } from "@/components/ai-elements/conversation";
+import { Loader2, Upload, ChevronLeft, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import {BlogPost} from "@/types/blog"
 
 export default function NewBlogPage() {
   const [title, setTitle] = useState("");
@@ -24,16 +23,15 @@ export default function NewBlogPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // AI Generation States
+  const [topic, setTopic] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [generatedPost, setGeneratedPost] = useState<BlogPost | null>(null);
 
   const supabase = useSupabase();
   const { user } = useUser();
   const router = useRouter();
-
-  // AI Chat Hook - properly destructured from useChat
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat({
-      api: "/api/chat",
-    });
 
   const generateSlug = (text: string) => {
     return text
@@ -55,17 +53,43 @@ export default function NewBlogPage() {
     }
   };
 
-  const handleUseDraft = () => {
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage && lastMessage.role === "assistant") {
-      // Extract text from message parts array
-      const textContent = lastMessage.parts
-        .filter((part) => part.type === "text")
-        .map((part) => part.text)
-        .join("");
+  // AI Blog Generation Handler
+  const handleGenerateBlog = async () => {
+    if (!topic.trim() || topic.length < 3) {
+      toast.error("Please enter a topic (minimum 3 characters)");
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const response = await fetch("/api/blog/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ topic }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Generation failed");
+      }
+
+      const blogPost: BlogPost = await response.json();
+      setGeneratedPost(blogPost);
       
-      setContent(textContent);
-      toast.success("Draft copied to editor!");
+      // Auto-fill the form with generated content
+      setTitle(blogPost.title);
+      setSlug(blogPost.slug);
+      setContent(blogPost.content);
+      setExcerpt(blogPost.excerpt);
+      
+      toast.success("Blog post generated successfully!");
+    } catch (error: any) {
+      console.error("Generation error:", error);
+      toast.error(error.message || "Failed to generate blog post");
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -226,17 +250,70 @@ export default function NewBlogPage() {
           </form>
         </div>
 
-        {/* Right Panel: AI Writer (Fixed height) */}
+        {/* Right Panel: AI Generator (Fixed height) */}
         <div className="h-[400px] w-full border-t bg-muted/10 p-4 lg:h-full lg:w-[400px] lg:border-l lg:border-t-0 lg:p-6">
-          <div className="h-full">
-            <Conversation
-              messages={messages}
-              input={input}
-              handleInputChange={handleInputChange}
-              handleSubmit={handleSubmit}
-              isLoading={isLoading}
-              onCopyLatest={handleUseDraft}
-            />
+          <div className="flex h-full flex-col">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">AI Blog Generator</h2>
+              <p className="text-sm text-muted-foreground">
+                Generate a complete blog post from a topic
+              </p>
+            </div>
+
+            <div className="flex-1 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="topic">Blog Topic</Label>
+                <Textarea
+                  id="topic"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="Enter a topic (e.g., 'The Future of AI in Web Development')"
+                  rows={3}
+                  disabled={generating}
+                />
+              </div>
+
+              <Button
+                onClick={handleGenerateBlog}
+                disabled={generating || !topic.trim()}
+                className="w-full"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate Blog Post
+                  </>
+                )}
+              </Button>
+
+              {generatedPost && (
+                <div className="rounded-md border bg-background p-4">
+                  <h3 className="mb-2 font-medium">Generated Preview</h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-semibold">Title:</span>{" "}
+                      {generatedPost.title}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Slug:</span>{" "}
+                      {generatedPost.slug}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Excerpt:</span>{" "}
+                      {generatedPost.excerpt}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Content: {generatedPost.content.length} characters
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
