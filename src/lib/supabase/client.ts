@@ -3,10 +3,10 @@ import { useSession } from "@clerk/nextjs";
 import { useMemo } from "react";
 
 export function useSupabase() {
-    const { session } = useSession();
+  const { session } = useSession();
 
-    return useMemo(() => {
-        return createClient(
+  return useMemo(() => {
+    return createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_KEY!,
       {
@@ -15,5 +15,5 @@ export function useSupabase() {
         },
       }
     );
-    }, [session]);
+  }, [session]);
 }

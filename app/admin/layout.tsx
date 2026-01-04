@@ -8,6 +8,7 @@ import { LayoutDashboard, Package, Image, Plus } from "lucide-react";
 const navItems = [
     { href: "/admin", label: "Orders", icon: LayoutDashboard },
     { href: "/admin/products/new", label: "New Product", icon: Plus },
+    { href: "/admin/blog/new", label: "Write Blog", icon: Package },
     { href: "/admin/media", label: "Media", icon: Image },
 ];
 
