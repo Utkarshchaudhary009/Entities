@@ -220,8 +220,6 @@ CREATE TABLE public.user_preferences (
   CONSTRAINT user_preferences_pkey PRIMARY KEY (id)
 
 );
-
-
 -- ==========================================
 -- 1. Enable RLS on All Tables
 -- ==========================================
@@ -246,41 +244,48 @@ ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 
 -- PRODUCTS
 CREATE POLICY "Public Read Products"
-ON public.products FOR SELECT
-USING (true);
+  ON public.products
+  FOR SELECT
+  USING (true);
 
 CREATE POLICY "Admin All Products"
-ON public.products FOR ALL
-TO authenticated
-USING (
-  -- Check if the JWT contains the "admin" role inside the metadata object
-  (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
-)
-WITH CHECK (
-  (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
-);
+  ON public.products
+  FOR ALL
+  TO authenticated
+  USING (
+    (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
+  )
+  WITH CHECK (
+    (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
+  );
 
 -- AUTHORS & BLOGS
 CREATE POLICY "Public Read Authors"
-ON public.authors FOR SELECT USING (true);
+  ON public.authors
+  FOR SELECT
+  USING (true);
 
 CREATE POLICY "Public Read Blogs"
-ON public.blogs FOR SELECT USING (is_published = true);
+  ON public.blogs
+  FOR SELECT
+  USING (is_published = true);
 
 CREATE POLICY "Admin Manage Blogs"
-ON public.blogs FOR ALL
-TO authenticated
-USING (
-  -- Check if the JWT contains the "admin" role inside the metadata object
-  (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
-)
-WITH CHECK (
-  (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
-);
+  ON public.blogs
+  FOR ALL
+  TO authenticated
+  USING (
+    (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
+  )
+  WITH CHECK (
+    (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
+  );
 
 -- COMPANY LINKS
 CREATE POLICY "Public Read Links"
-ON public.company_links FOR SELECT USING (true);
+  ON public.company_links
+  FOR SELECT
+  USING (true);
 
 -- ==========================================
 -- 3. Private User Data (Cart, Orders, Favorites)
@@ -288,37 +293,42 @@ ON public.company_links FOR SELECT USING (true);
 
 -- CART ITEMS (Strict Ownership)
 CREATE POLICY "User manage own cart"
-ON public.cart_items FOR ALL
-TO authenticated
-USING ((auth.jwt() ->> 'sub') = user_id)
-WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
+  ON public.cart_items
+  FOR ALL
+  TO authenticated
+  USING ((auth.jwt() ->> 'sub') = user_id)
+  WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
 
 -- CART HISTORY
 CREATE POLICY "User view own cart history"
-ON public.cart_history FOR SELECT
-TO authenticated
-USING ((auth.jwt() ->> 'sub') = user_id);
+  ON public.cart_history
+  FOR SELECT
+  TO authenticated
+  USING ((auth.jwt() ->> 'sub') = user_id);
 
 -- FAVORITES
 CREATE POLICY "User manage favorites"
-ON public.favorites FOR ALL
-TO authenticated
-USING ((auth.jwt() ->> 'sub') = user_id)
-WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
+  ON public.favorites
+  FOR ALL
+  TO authenticated
+  USING ((auth.jwt() ->> 'sub') = user_id)
+  WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
 
 -- SHIPPING ADDRESSES
 CREATE POLICY "User manage addresses"
-ON public.shipping_addresses FOR ALL
-TO authenticated
-USING ((auth.jwt() ->> 'sub') = user_id)
-WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
+  ON public.shipping_addresses
+  FOR ALL
+  TO authenticated
+  USING ((auth.jwt() ->> 'sub') = user_id)
+  WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
 
 -- USER PREFERENCES
 CREATE POLICY "User manage preferences"
-ON public.user_preferences FOR ALL
-TO authenticated
-USING ((auth.jwt() ->> 'sub') = user_id)
-WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
+  ON public.user_preferences
+  FOR ALL
+  TO authenticated
+  USING ((auth.jwt() ->> 'sub') = user_id)
+  WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
 
 -- ==========================================
 -- 4. Orders & Transactional Data
@@ -326,27 +336,30 @@ WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
 
 -- ORDERS
 CREATE POLICY "User view own orders"
-ON public.orders FOR SELECT
-TO authenticated
-USING ((auth.jwt() ->> 'sub') = user_id);
+  ON public.orders
+  FOR SELECT
+  TO authenticated
+  USING ((auth.jwt() ->> 'sub') = user_id);
 
 CREATE POLICY "User create orders"
-ON public.orders FOR INSERT
-TO authenticated
-WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
+  ON public.orders
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
 
 -- ORDER ITEMS (Linked via Order ID)
 -- Users can see items if they own the parent order
 CREATE POLICY "User view own order items"
-ON public.order_items FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.orders
-    WHERE orders.id = order_items.order_id
-    AND orders.user_id = (auth.jwt() ->> 'sub')
-  )
-);
+  ON public.order_items
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.orders
+      WHERE orders.id = order_items.order_id
+        AND orders.user_id = (auth.jwt() ->> 'sub')
+    )
+  );
 
 -- ==========================================
 -- 5. User Content & Interactions
@@ -354,44 +367,50 @@ USING (
 
 -- REVIEWS
 CREATE POLICY "Public read reviews"
-ON public.reviews FOR SELECT USING (true);
+  ON public.reviews
+  FOR SELECT
+  USING (true);
 
 CREATE POLICY "User create reviews"
-ON public.reviews FOR INSERT
-TO authenticated
-WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
+  ON public.reviews
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
 
 CREATE POLICY "User edit own reviews"
-ON public.reviews FOR UPDATE
-TO authenticated
-USING ((auth.jwt() ->> 'sub') = user_id);
+  ON public.reviews
+  FOR UPDATE
+  TO authenticated
+  USING ((auth.jwt() ->> 'sub') = user_id)
+  WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
 
 -- MESSAGES (Contact Form)
--- Anyone can insert (send message), only Admin can read
+-- Anyone can insert (send message)
 CREATE POLICY "Public send message"
-ON public.messages FOR INSERT
-WITH CHECK (true);
+  ON public.messages
+  FOR INSERT
+  WITH CHECK (true);
 
-CREATE POLICY "Admin read messages"
-ON public.messages FOR SELECT
-TO authenticated
-USING (
-  -- Check if the JWT contains the "admin" role inside the metadata object
-  (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
-)
-WITH CHECK (
-  (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
-);
+-- Admin manage messages (read and manage)
+CREATE POLICY "Admin manage messages"
+  ON public.messages
+  FOR ALL
+  TO authenticated
+  USING (
+    (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
+  )
+  WITH CHECK (
+    (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
+  );
 
 -- UPLOADS
--- Assuming these are user uploads (e.g. for returns or profile?)
-CREATE POLICY "Admin manage own uploads of products picture"
-ON public.uploads FOR ALL
-TO authenticated
-USING (
-  -- Check if the JWT contains the "admin" role inside the metadata object
-  (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
-)
-WITH CHECK (
-  (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
-);
+CREATE POLICY "Admin manage uploads"
+  ON public.uploads
+  FOR ALL
+  TO authenticated
+  USING (
+    (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
+  )
+  WITH CHECK (
+    (auth.jwt() ->> 'metadata')::jsonb ->> 'role' = 'admin'
+  );
