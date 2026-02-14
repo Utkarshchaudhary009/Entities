@@ -185,7 +185,8 @@ CREATE TABLE public.shipping_addresses (
   is_default boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT shipping_addresses_pkey PRIMARY KEY (id)
+  CONSTRAINT shipping_addresses_pkey PRIMARY KEY (id),
+  CONSTRAINT shipping_addresses_user_id_address_line1_key UNIQUE (user_id, address_line1)
 
 );
 
