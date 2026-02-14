@@ -306,6 +306,12 @@ CREATE POLICY "User view own cart history"
   TO authenticated
   USING ((auth.jwt() ->> 'sub') = user_id);
 
+CREATE POLICY "User insert own cart history"
+  ON public.cart_history
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
+
 -- FAVORITES
 CREATE POLICY "User manage favorites"
   ON public.favorites
