@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Size {
+  id            String   @id @default(uuid())
+  label         String   @unique
+  sortOrder     Int      @default(0) @map("sort_order")
+  measurements  Json?    @map("measurements")
+
+  @@map("sizes")
+}
+
+model Color {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  hex       String
+  sortOrder Int      @default(0) @map("sort_order")
+
+  @@map("colors")
+}
+
+model Category {
+  id              String    @id @default(uuid())
+  name            String
+  slug            String    @unique
+  thumbnailUrl    String?   @map("thumbnail_url")
+  about           String?
+  discountPercent Int       @default(0) @map("discount_percent")
+  sortOrder       Int       @default(0) @map("sort_order")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  products        Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id              String           @id @default(uuid())
+  name            String
+  slug            String           @unique
+  description     String?
+  price           Int
+  compareAtPrice  Int?             @map("compare_at_price")
+  categoryId      String?          @map("category_id")
+  thumbnailUrl    String?          @map("thumbnail_url")
+  images          String[]         @default([])
+  isFeatured      Boolean          @default(false) @map("is_featured")
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  category        Category?        @relation(fields: [categoryId], references: [id])
+  variants        ProductVariant[]
+
+  @@index([categoryId])
+  @@index([isFeatured])
+  @@index([slug])
+  @@map("products")
+}
+
+model ProductVariant {
+  id         String    @id @default(uuid())
+  productId  String    @map("product_id")
+  size       String
+  color      String
+  colorHex   String?   @map("color_hex")
+  stock      Int       @default(0)
+  sku        String?   @unique
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([productId])
+  @@index([sku])
+  @@map("product_variants")
+}
+
+model Cart {
+  id            String     @id @default(uuid())
+  sessionId     String     @unique @map("session_id")
+  clerkId        String?    @map("clerk_id")
+  customerEmail String?    @map("customer_email")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  items         CartItem[]
+
+  @@index([sessionId])
+  @@index([clerkId])
+  @@index([updatedAt])
+  @@map("carts")
+}
+
+model CartItem {
+  id               String         @id @default(uuid())
+  cartId           String         @map("cart_id")
+  productVariantId String         @map("product_variant_id")
+  quantity         Int            @default(1)
+  createdAt        DateTime       @default(now()) @map("created_at")
+  cart             Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+
+  @@unique([cartId, productVariantId])
+  @@index([cartId])
+  @@index([productVariantId])
+  @@map("cart_items")
+}
+
+model Order {
+  id                 String       @id @default(uuid())
+  orderNumber        String       @unique @map("order_number")
+  clerkId             String?      @map("clerk_id")
+  customerName       String       @map("customer_name")
+  whatsappNumber     String       @map("whatsapp_number")
+  email              String?
+  address            String
+  city               String
+  state              String
+  pincode            String
+  subtotal           Int
+  discountCode       String?      @map("discount_code")
+  discountAmount     Int          @default(0) @map("discount_amount")
+  shippingCost       Int          @default(0) @map("shipping_cost")
+  total              Int
+  status             String       @default("pending")
+  notes              String?
+  adminNotes         String?      @map("admin_notes")
+  whatsappMessageId  String?      @map("whatsapp_message_id")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+  items              OrderItem[]
+
+  @@index([orderNumber])
+  @@index([clerkId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([whatsappNumber])
+  @@map("orders")
+}
+
+model OrderItem {
+  id               String         @id @default(uuid())
+  orderId          String         @map("order_id")
+  productVariantId String?        @map("product_variant_id")
+  productName      String         @map("product_name")
+  productImage     String?        @map("product_image")
+  size             String
+  color            String
+  quantity         Int
+  unitPrice        Int            @map("unit_price")
+  totalPrice       Int            @map("total_price")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Discount {
+  id             String    @id @default(uuid())
+  code           String    @unique
+  description    String?
+  discountType   String    @default("percentage") @map("discount_type")
+  value          Int
+  minOrderValue  Int       @default(0) @map("min_order_value")
+  maxDiscount    Int?      @map("max_discount")
+  usageLimit     Int?      @map("usage_limit")
+  usageCount     Int       @default(0) @map("usage_count")
+  isActive       Boolean   @default(true) @map("is_active")
+  startsAt       DateTime? @map("starts_at")
+  expiresAt      DateTime? @map("expires_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([code])
+  @@index([isActive])
+  @@map("discounts")
+}

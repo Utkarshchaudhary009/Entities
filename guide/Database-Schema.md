@@ -128,17 +128,20 @@ Session-based shopping carts (guest-first).
 |--------|------|-------------|-------------|
 | `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
 | `session_id` | TEXT | NOT NULL, UNIQUE | Browser session identifier |
+| `user_id` | TEXT | NULLABLE | Clerk User ID (if logged in) |
 | `customer_email` | TEXT | NULLABLE | Optional email for notifications |
 | `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
 | `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
 
 **Business Rules:**
 - `session_id`: Generated on first visit, stored in localStorage
+- `user_id`: Linked when user logs in
 - Carts expire after 30 days of inactivity (cleanup job)
 - One cart per session
 
 **Indexes:**
 - `idx_carts_session` ON `(session_id)`
+- `idx_carts_user` ON `(user_id)`
 - `idx_carts_updated` ON `(updated_at)`
 
 ---
@@ -174,6 +177,7 @@ Customer orders.
 |--------|------|-------------|-------------|
 | `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
 | `order_number` | TEXT | NOT NULL, UNIQUE | Human-readable order ID |
+| `user_id` | TEXT | NULLABLE | Clerk User ID (if logged in) |
 | `customer_name` | TEXT | NOT NULL | Customer full name |
 | `whatsapp_number` | TEXT | NOT NULL | Contact WhatsApp |
 | `email` | TEXT | NULLABLE | Optional email |
@@ -209,6 +213,7 @@ Customer orders.
 
 **Indexes:**
 - `idx_orders_number` ON `(order_number)`
+- `idx_orders_user` ON `(user_id)`
 - `idx_orders_status` ON `(status)`
 - `idx_orders_created` ON `(created_at DESC)`
 - `idx_orders_whatsapp` ON `(whatsapp_number)`
@@ -328,7 +333,7 @@ Color definitions for consistency.
 
 ### 11. admin_users
 
-Admin user references (auth handled by Clerk).
+Admin user references (Linked to Clerk).
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -346,6 +351,8 @@ Admin user references (auth handled by Clerk).
 | `super_admin` | Full access, manage admins |
 | `admin` | Products, orders, categories |
 | `viewer` | Read-only dashboard |
+
+**Note:** This table is for application-level data and dashboard rendering. Actual RLS permissions should rely on the `user_role` claim in the Clerk JWT for performance.
 
 ---
 
@@ -468,37 +475,78 @@ CREATE TRIGGER update_cart_on_item_change
 
 ---
 
-## Row Level Security (RLS)
+## Security & Permissions (Clerk + Supabase)
 
-### Public Tables (Read for all, Write for admins)
+We use **Native Integration** with Clerk. Authentication is handled by Clerk, which issues a JWT. Supabase validates this JWT and extracts claims for Row Level Security (RLS).
+
+### 1. Helper Functions
+Access Clerk claims safely.
 
 ```sql
--- Products
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+-- Get the Clerk User ID (sub)
+CREATE OR REPLACE FUNCTION requesting_user_id()
+RETURNS TEXT AS $$
+  SELECT auth.jwt() ->> 'sub';
+$$ LANGUAGE sql STABLE;
 
-CREATE POLICY "Products are viewable by all"
-  ON products FOR SELECT
-  USING (is_active = TRUE);
-
-CREATE POLICY "Admins can manage products"
-  ON products FOR ALL
-  USING (auth.jwt() ->> 'role' = 'admin');
-
--- Similar for: categories, product_variants, sizes, colors
+-- Get the User Role (custom claim 'user_role')
+CREATE OR REPLACE FUNCTION requesting_user_role()
+RETURNS TEXT AS $$
+  SELECT auth.jwt() ->> 'role';
+$$ LANGUAGE sql STABLE;
 ```
 
-### Order Tables (Owner or admin only)
+### 2. RLS Policies
+
+**Enable RLS on all tables:**
+```sql
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE carts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+-- etc.
+```
+
+#### Public Catalog (Categories, Products, Variants)
+*   **Public:** Read-only.
+*   **Admins:** Full access.
 
 ```sql
--- Orders
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+-- READ
+CREATE POLICY "Public Read Access"
+ON products FOR SELECT
+USING (is_active = TRUE OR requesting_user_role() IN ('admin'));
 
+-- WRITE (Admin only)
+CREATE POLICY "Admin Write Access"
+ON products FOR ALL
+USING (requesting_user_role() IN ('admin'));
+```
+
+#### User Data (Orders)
+*   **Users:** View their own orders.
+*   **Admins:** View/Manage all.
+
+```sql
 CREATE POLICY "Users can view own orders"
-  ON orders FOR SELECT
-  USING (
-    whatsapp_number = current_setting('request.jwt.claims', true)::json->>'whatsapp'
-    OR auth.jwt() ->> 'role' = 'admin'
-  );
+ON orders FOR SELECT
+USING (
+  requesting_user_id() = user_id
+  OR requesting_user_role() IN ('admin')
+);
+```
+
+#### Shopping Carts
+*   **Guests:** Managed via Server Actions (Application Logic).
+*   **Authenticated Users:** View/Manage their own carts.
+
+```sql
+CREATE POLICY "Users can manage own carts"
+ON carts FOR ALL
+USING (requesting_user_id() = user_id);
 ```
 
 ---
@@ -513,9 +561,11 @@ CREATE POLICY "Users can view own orders"
 | product_variants | `idx_product_variants_product` | `(product_id)` |
 | product_variants | `idx_product_variants_sku` | `(sku)` |
 | carts | `idx_carts_session` | `(session_id)` |
+| carts | `idx_carts_user` | `(user_id)` |
 | carts | `idx_carts_updated` | `(updated_at)` |
 | cart_items | `idx_cart_items_cart` | `(cart_id)` |
 | orders | `idx_orders_number` | `(order_number)` |
+| orders | `idx_orders_user` | `(user_id)` |
 | orders | `idx_orders_status` | `(status)` |
 | orders | `idx_orders_created` | `(created_at DESC)` |
 | orders | `idx_orders_whatsapp` | `(whatsapp_number)` |
