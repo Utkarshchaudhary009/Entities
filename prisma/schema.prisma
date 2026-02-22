@@ -51,6 +51,8 @@ model Product {
   categoryId      String?          @map("category_id")
   thumbnailUrl    String?          @map("thumbnail_url")
   images          String[]         @default([])
+  defaultColor    String?          @map("default_color")
+  defaultSize     String?          @map("default_size")
   isFeatured      Boolean          @default(false) @map("is_featured")
   isActive        Boolean          @default(true) @map("is_active")
   createdAt       DateTime         @default(now()) @map("created_at")
