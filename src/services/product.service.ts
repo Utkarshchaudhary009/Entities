@@ -43,6 +43,8 @@ export class ProductService {
           categoryId: true,
           isFeatured: true,
           createdAt: true,
+          defaultColor: true,
+          defaultSize: true,
           category: {
             select: {
               name: true,

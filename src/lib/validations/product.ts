@@ -9,6 +9,8 @@ export const createProductSchema = z.object({
   categoryId: z.string().uuid("Category ID must be a valid UUID").optional(),
   thumbnailUrl: z.string().url("Invalid thumbnail URL").optional(),
   images: z.array(z.string().url("Invalid image URL")).default([]),
+  defaultColor: z.string().optional(),
+  defaultSize: z.string().optional(),
   isFeatured: z.boolean().default(false),
   isActive: z.boolean().default(true),
 });
