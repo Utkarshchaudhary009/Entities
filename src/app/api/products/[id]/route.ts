@@ -1,45 +1,47 @@
-import { NextResponse } from "next/server";
 import { productService } from "@/services/product.service";
 import { updateProductSchema } from "@/lib/validations/product";
-import { z } from "zod";
+import { requireAdmin } from "@/lib/auth/guards";
+import { handleError, successResponse, notFound } from "@/lib/api/response";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(_request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const product = await productService.findById(id);
-    if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
-    return NextResponse.json(product);
+    if (!product) return notFound("Product not found");
+    return successResponse(product);
   } catch (error) {
-    console.error("Error fetching product:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Fetch product");
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function PUT(request: Request, { params }: RouteParams) {
+  const guard = await requireAdmin();
+  if (!guard.success) return guard.response;
+
   try {
+    const { id } = await params;
     const json = await request.json();
     const body = updateProductSchema.parse(json);
     const product = await productService.update(id, body);
-    return NextResponse.json(product);
+    return successResponse(product);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error("Error updating product:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Update product");
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function DELETE(_request: Request, { params }: RouteParams) {
+  const guard = await requireAdmin();
+  if (!guard.success) return guard.response;
+
   try {
+    const { id } = await params;
     await productService.delete(id);
-    return NextResponse.json({ success: true });
+    return successResponse({ success: true });
   } catch (error) {
-    console.error("Error deleting product:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Delete product");
   }
 }

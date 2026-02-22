@@ -1,31 +1,36 @@
-import { NextResponse } from "next/server";
 import { cartService } from "@/services/cart.service";
 import { updateCartItemSchema } from "@/lib/validations/cart";
-import { z } from "zod";
+import { requireAuth } from "@/lib/auth/guards";
+import { handleError, successResponse } from "@/lib/api/response";
 
-export async function PUT(request: Request, { params }: { params: Promise<{ itemId: string }> }) {
-  const { itemId } = await params;
+interface RouteParams {
+  params: Promise<{ itemId: string }>;
+}
+
+export async function PUT(request: Request, { params }: RouteParams) {
+  const guard = await requireAuth();
+  if (!guard.success) return guard.response;
+
   try {
+    const { itemId } = await params;
     const json = await request.json();
     const { quantity } = updateCartItemSchema.parse(json);
-    const cartItem = await cartService.updateItem(itemId, quantity);
-    return NextResponse.json(cartItem);
+    const cartItem = await cartService.updateItem(itemId, quantity, guard.auth.userId);
+    return successResponse(cartItem);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error("Error updating cart item:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Update cart item");
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ itemId: string }> }) {
-  const { itemId } = await params;
+export async function DELETE(_request: Request, { params }: RouteParams) {
+  const guard = await requireAuth();
+  if (!guard.success) return guard.response;
+
   try {
-    await cartService.removeItem(itemId);
-    return NextResponse.json({ success: true });
+    const { itemId } = await params;
+    await cartService.removeItem(itemId, guard.auth.userId);
+    return successResponse({ success: true });
   } catch (error) {
-    console.error("Error deleting cart item:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Delete cart item");
   }
 }

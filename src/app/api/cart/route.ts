@@ -1,43 +1,57 @@
-import { NextResponse } from "next/server";
 import { cartService } from "@/services/cart.service";
 import { addToCartSchema } from "@/lib/validations/cart";
-import { z } from "zod";
+import { requireAuth } from "@/lib/auth/guards";
+import { handleError, createdResponse, successResponse, badRequest } from "@/lib/api/response";
+import { sessionIdSchema, parseSearchParams } from "@/lib/api/query-schemas";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const sessionId = searchParams.get("sessionId");
-
-  if (!sessionId) {
-    return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
-  }
+  const guard = await requireAuth();
+  if (!guard.success) return guard.response;
 
   try {
-    const cart = await cartService.getCart(sessionId);
-    return NextResponse.json(cart);
+    const { searchParams } = new URL(request.url);
+    const query = parseSearchParams(searchParams, sessionIdSchema);
+
+    const summary = await cartService.getCartSummary(query.sessionId, guard.auth.userId);
+    return successResponse(summary);
   } catch (error) {
-    console.error("Error fetching cart:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Fetch cart");
   }
 }
 
 export async function POST(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const sessionId = searchParams.get("sessionId");
-
-  if (!sessionId) {
-    return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
-  }
+  const guard = await requireAuth();
+  if (!guard.success) return guard.response;
 
   try {
+    const { searchParams } = new URL(request.url);
+    const query = parseSearchParams(searchParams, sessionIdSchema);
+
     const json = await request.json();
     const { productVariantId, quantity } = addToCartSchema.parse(json);
-    const cartItem = await cartService.addItem(sessionId, productVariantId, quantity);
-    return NextResponse.json(cartItem, { status: 201 });
+    const cartItem = await cartService.addItem(
+      query.sessionId,
+      productVariantId,
+      quantity,
+      guard.auth.userId,
+    );
+    return createdResponse(cartItem);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error("Error adding to cart:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Add to cart");
+  }
+}
+
+export async function DELETE(request: Request) {
+  const guard = await requireAuth();
+  if (!guard.success) return guard.response;
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const query = parseSearchParams(searchParams, sessionIdSchema);
+
+    await cartService.clearCart(query.sessionId, guard.auth.userId);
+    return successResponse({ success: true });
+  } catch (error) {
+    return handleError(error, "Clear cart");
   }
 }

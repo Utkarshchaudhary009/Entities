@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ORDER_STATUSES } from "@/types/domain";
 
 export const createOrderSchema = z.object({
   customerName: z.string().min(1, "Name is required"),
@@ -8,5 +9,9 @@ export const createOrderSchema = z.object({
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
   pincode: z.string().min(5, "Invalid pincode"),
-  sessionId: z.string().uuid("Session ID must be a valid UUID"),
+  sessionId: z.string().min(1).max(128),
+});
+
+export const updateOrderStatusSchema = z.object({
+  status: z.enum(ORDER_STATUSES as [string, ...string[]]),
 });

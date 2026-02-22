@@ -1,47 +1,43 @@
 import { NextResponse } from "next/server";
 import { productService } from "@/services/product.service";
 import { createProductSchema } from "@/lib/validations/product";
-import { z } from "zod";
+import { requireAdmin } from "@/lib/auth/guards";
+import { handleError, createdResponse } from "@/lib/api/response";
+import { productQuerySchema, parseSearchParams } from "@/lib/api/query-schemas";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const page = Number(searchParams.get("page")) || 1;
-  const limit = Number(searchParams.get("limit")) || 20;
-  const categoryId = searchParams.get("categoryId") || undefined;
-  const search = searchParams.get("search") || undefined;
-  const sort = searchParams.get("sort") || undefined;
-
   try {
+    const { searchParams } = new URL(request.url);
+    const query = parseSearchParams(searchParams, productQuerySchema);
+
     const result = await productService.findAll({
-        page,
-        limit,
-        categoryId,
-        search,
-        sort,
+      page: query.page,
+      limit: query.limit,
+      categoryId: query.categoryId,
+      search: query.search,
+      sort: query.sort,
     });
 
     return NextResponse.json(result, {
-        headers: {
-            "Cache-Control": "public, s-maxage=60, stale-while-revalidate=30"
-        }
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=30",
+      },
     });
   } catch (error) {
-    console.error("Error fetching products:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Fetch products");
   }
 }
 
 export async function POST(request: Request) {
+  const guard = await requireAdmin();
+  if (!guard.success) return guard.response;
+
   try {
     const json = await request.json();
     const body = createProductSchema.parse(json);
     const product = await productService.create(body);
-    return NextResponse.json(product, { status: 201 });
+    return createdResponse(product);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error("Error creating product:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Create product");
   }
 }

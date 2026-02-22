@@ -1,45 +1,47 @@
-import { NextResponse } from "next/server";
 import { brandDocumentService } from "@/services/brand-document.service";
 import { updateBrandDocumentSchema } from "@/lib/validations/brand-document";
-import { z } from "zod";
+import { requireAdmin } from "@/lib/auth/guards";
+import { handleError, successResponse, notFound } from "@/lib/api/response";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(_request: Request, { params }: RouteParams) {
   try {
-    const brandDocument = await brandDocumentService.findById(id);
-    if (!brandDocument) {
-      return NextResponse.json({ error: "Brand document not found" }, { status: 404 });
-    }
-    return NextResponse.json(brandDocument);
+    const { id } = await params;
+    const document = await brandDocumentService.findById(id);
+    if (!document) return notFound("Brand document not found");
+    return successResponse(document);
   } catch (error) {
-    console.error("Error fetching brand document:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Fetch brand document");
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function PUT(request: Request, { params }: RouteParams) {
+  const guard = await requireAdmin();
+  if (!guard.success) return guard.response;
+
   try {
+    const { id } = await params;
     const json = await request.json();
     const body = updateBrandDocumentSchema.parse(json);
-    const brandDocument = await brandDocumentService.update(id, body);
-    return NextResponse.json(brandDocument);
+    const document = await brandDocumentService.update(id, body);
+    return successResponse(document);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error("Error updating brand document:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Update brand document");
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function DELETE(_request: Request, { params }: RouteParams) {
+  const guard = await requireAdmin();
+  if (!guard.success) return guard.response;
+
   try {
+    const { id } = await params;
     await brandDocumentService.delete(id);
-    return NextResponse.json({ success: true });
+    return successResponse({ success: true });
   } catch (error) {
-    console.error("Error deleting brand document:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Delete brand document");
   }
 }

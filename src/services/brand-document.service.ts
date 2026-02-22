@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
+import { handlePrismaError } from "@/lib/errors";
 
 export class BrandDocumentService {
   async findAll(params: {
@@ -8,59 +9,79 @@ export class BrandDocumentService {
     brandId?: string;
     type?: string;
   }) {
-    const { page = 1, limit = 20, brandId, type } = params;
-    const skip = (page - 1) * limit;
+    try {
+      const { page = 1, limit = 20, brandId, type } = params;
+      const skip = (page - 1) * limit;
 
-    const where: Prisma.BrandDocumentWhereInput = {
-      isActive: true,
-      ...(brandId && { brandId }),
-      ...(type && { type: type as Prisma.EnumDocumentTypeFilter }),
-    };
+      const where: Prisma.BrandDocumentWhereInput = {
+        isActive: true,
+        ...(brandId && { brandId }),
+        ...(type && { type: type as Prisma.EnumDocumentTypeFilter }),
+      };
 
-    const [data, total] = await Promise.all([
-      prisma.brandDocument.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.brandDocument.count({ where }),
-    ]);
+      const [data, total] = await Promise.all([
+        prisma.brandDocument.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.brandDocument.count({ where }),
+      ]);
 
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      return {
+        data,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 
   async findById(id: string) {
-    return prisma.brandDocument.findUnique({
-      where: { id },
-    });
+    try {
+      return await prisma.brandDocument.findUnique({
+        where: { id },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 
   async create(data: Prisma.BrandDocumentCreateInput) {
-    return prisma.brandDocument.create({
-      data,
-    });
+    try {
+      return await prisma.brandDocument.create({
+        data,
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 
   async update(id: string, data: Prisma.BrandDocumentUpdateInput) {
-    return prisma.brandDocument.update({
-      where: { id },
-      data,
-    });
+    try {
+      return await prisma.brandDocument.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 
   async delete(id: string) {
-    return prisma.brandDocument.delete({
-      where: { id },
-    });
+    try {
+      return await prisma.brandDocument.delete({
+        where: { id },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
+import { handlePrismaError } from "@/lib/errors";
 
 export class FounderService {
   async findAll(params: {
@@ -7,80 +8,100 @@ export class FounderService {
     limit?: number;
     search?: string;
   }) {
-    const { page = 1, limit = 20, search } = params;
-    const skip = (page - 1) * limit;
+    try {
+      const { page = 1, limit = 20, search } = params;
+      const skip = (page - 1) * limit;
 
-    const where: Prisma.FounderWhereInput = {
-      ...(search && {
-        name: { contains: search, mode: "insensitive" },
-      }),
-    };
+      const where: Prisma.FounderWhereInput = {
+        ...(search && {
+          name: { contains: search, mode: "insensitive" },
+        }),
+      };
 
-    const [data, total] = await Promise.all([
-      prisma.founder.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
+      const [data, total] = await Promise.all([
+        prisma.founder.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+          include: {
             brand: {
-                select: {
-                    id: true,
-                    name: true,
-                    logoUrl: true
-                }
+              select: {
+                id: true,
+                name: true,
+                logoUrl: true
+              }
             },
             socialLinks: {
-                where: { isActive: true },
-                select: {
-                    id: true,
-                    platform: true,
-                    url: true
-                }
+              where: { isActive: true },
+              select: {
+                id: true,
+                platform: true,
+                url: true
+              }
             }
-        }
-      }),
-      prisma.founder.count({ where }),
-    ]);
+          }
+        }),
+        prisma.founder.count({ where }),
+      ]);
 
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      return {
+        data,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 
   async findById(id: string) {
-    return prisma.founder.findUnique({
-      where: { id },
-      include: {
-        brand: true,
-        socialLinks: { where: { isActive: true } }
-      },
-    });
+    try {
+      return await prisma.founder.findUnique({
+        where: { id },
+        include: {
+          brand: true,
+          socialLinks: { where: { isActive: true } }
+        },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 
   async create(data: Prisma.FounderCreateInput) {
-    return prisma.founder.create({
-      data,
-    });
+    try {
+      return await prisma.founder.create({
+        data,
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 
   async update(id: string, data: Prisma.FounderUpdateInput) {
-    return prisma.founder.update({
-      where: { id },
-      data,
-    });
+    try {
+      return await prisma.founder.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 
   async delete(id: string) {
-    return prisma.founder.delete({
-      where: { id },
-    });
+    try {
+      return await prisma.founder.delete({
+        where: { id },
+      });
+    } catch (error) {
+      handlePrismaError(error);
+    }
   }
 }
 

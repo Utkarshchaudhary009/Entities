@@ -1,75 +1,86 @@
-import { NextResponse } from "next/server";
 import { orderService } from "@/services/order.service";
 import { createOrderSchema } from "@/lib/validations/order";
-import { z } from "zod";
 import { cartService } from "@/services/cart.service";
+import { requireAuth, requireAdmin } from "@/lib/auth/guards";
+import { handleError, createdResponse, successResponse, badRequest } from "@/lib/api/response";
+import { orderQuerySchema, parseSearchParams } from "@/lib/api/query-schemas";
+import { generateOrderNumber } from "@/lib/crypto";
+import { Role } from "@/lib/auth/roles";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const page = Number(searchParams.get("page")) || 1;
-  const limit = Number(searchParams.get("limit")) || 20;
-  const status = searchParams.get("status") || undefined;
+  const guard = await requireAuth();
+  if (!guard.success) return guard.response;
 
   try {
-    const result = await orderService.findAll({ page, limit, status });
-    return NextResponse.json(result);
+    const { searchParams } = new URL(request.url);
+    const query = parseSearchParams(searchParams, orderQuerySchema);
+
+    const isAdmin = guard.auth.role === Role.ADMIN;
+
+    const result = await orderService.findAll({
+      page: query.page,
+      limit: query.limit,
+      status: query.status,
+      clerkId: isAdmin ? undefined : guard.auth.userId,
+    });
+
+    return successResponse(result);
   } catch (error) {
-    console.error("Error fetching orders:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Fetch orders");
   }
 }
 
 export async function POST(request: Request) {
+  const guard = await requireAuth();
+  if (!guard.success) return guard.response;
+
   try {
     const json = await request.json();
     const body = createOrderSchema.parse(json);
 
-    // Fetch cart items
-    const cart = await cartService.getCart(body.sessionId);
+    const cart = await cartService.getCartWithDetails(body.sessionId, guard.auth.userId);
     if (!cart || cart.items.length === 0) {
-        return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+      return badRequest("Cart is empty");
     }
 
-    const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const orderNumber = generateOrderNumber();
 
-    const subtotal = cart.items.reduce((sum, item) => sum + (item.productVariant.product.price * item.quantity), 0);
+    const subtotal = cart.items.reduce(
+      (sum, item) => sum + item.productVariant.product.price * item.quantity,
+      0
+    );
     const total = subtotal;
 
     const orderData = {
-        orderNumber,
-        customerName: body.customerName,
-        whatsappNumber: body.whatsappNumber,
-        email: body.email,
-        address: body.address,
-        city: body.city,
-        state: body.state,
-        pincode: body.pincode,
-        subtotal,
-        total,
-        items: {
-            create: cart.items.map(item => ({
-                productVariantId: item.productVariantId,
-                productName: item.productVariant.product.name,
-                size: item.productVariant.size,
-                color: item.productVariant.color,
-                quantity: item.quantity,
-                unitPrice: item.productVariant.product.price,
-                totalPrice: item.productVariant.product.price * item.quantity
-            }))
-        }
+      orderNumber,
+      clerkId: guard.auth.userId,
+      customerName: body.customerName,
+      whatsappNumber: body.whatsappNumber,
+      email: body.email,
+      address: body.address,
+      city: body.city,
+      state: body.state,
+      pincode: body.pincode,
+      subtotal,
+      total,
+      items: cart.items.map((item) => ({
+        productVariantId: item.productVariantId,
+        productName: item.productVariant.product.name,
+        productImage: item.productVariant.product.thumbnailUrl ?? undefined,
+        size: item.productVariant.size,
+        color: item.productVariant.color,
+        quantity: item.quantity,
+        unitPrice: item.productVariant.product.price,
+        totalPrice: item.productVariant.product.price * item.quantity,
+      })),
     };
 
     const order = await orderService.create(orderData);
 
-    // Clear cart
-    await cartService.clearCart(body.sessionId);
+    await cartService.clearCart(body.sessionId, guard.auth.userId);
 
-    return NextResponse.json(order, { status: 201 });
+    return createdResponse(order);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error("Error creating order:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Create order");
   }
 }

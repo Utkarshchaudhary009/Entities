@@ -1,36 +1,29 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { clerkClient } from "@clerk/nextjs/server";
+import { requireAdmin } from "@/lib/auth/guards";
+import { handleError, successResponse, badRequest } from "@/lib/api/response";
+import { z } from "zod";
+
+const updateRoleSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  role: z.enum(["admin", "user"], { message: "Role must be 'admin' or 'user'" }),
+});
 
 export async function POST(request: Request) {
-  // Check if the current user is authorized
-  const { sessionClaims } = await auth();
-
-  // 1. Authorization: Only admins can change roles
-  if (sessionClaims?.metadata.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const guard = await requireAdmin();
+  if (!guard.success) return guard.response;
 
   try {
-    const { userId, role } = await request.json();
-
-    // 2. Validate input
-    if (!userId || !["admin", "user"].includes(role)) {
-      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-    }
+    const json = await request.json();
+    const { userId, role } = updateRoleSchema.parse(json);
 
     const client = await clerkClient();
 
-    // 3. Update the user's metadata in Clerk
     await client.users.updateUser(userId, {
       publicMetadata: { role },
     });
 
-    return NextResponse.json({ success: true });
+    return successResponse({ success: true });
   } catch (error) {
-    console.error("Error updating role:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 },
-    );
+    return handleError(error, "Update role");
   }
 }
