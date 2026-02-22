@@ -183,3 +183,91 @@ model Discount {
   @@index([isActive])
   @@map("discounts")
 }
+
+model Brand {
+  id             String           @id @default(uuid())
+  name           String
+  logoUrl        String?          @map("logo_url")
+  tagline        String?
+  brandStory     String?          @map("brand_story")
+  supportEmail   String?          @map("support_email")
+  supportPhone   String?          @map("support_phone")
+  isActive       Boolean          @default(true) @map("is_active")
+
+  founderId      String           @unique @map("founder_id")
+  founder        Founder          @relation(fields: [founderId], references: [id], onDelete: Cascade)
+
+  documents      BrandDocument[]
+  socialLinks    SocialLink[]
+
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@map("brands")
+}
+
+model Founder {
+  id             String        @id @default(uuid())
+  name           String
+  age            Int?
+  story          String?
+  education      String?
+  quote          String?
+  thumbnailUrl   String?       @map("thumbnail_url")
+
+  brand          Brand?
+
+  socialLinks    SocialLink[]
+
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@map("founders")
+}
+
+model SocialLink {
+  id           String    @id @default(uuid())
+
+  platform     String
+  url          String
+  isActive     Boolean   @default(true) @map("is_active")
+
+  brandId      String?   @map("brand_id")
+  brand        Brand?    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  founderId    String?   @map("founder_id")
+  founder      Founder?  @relation(fields: [founderId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([brandId])
+  @@index([founderId])
+  @@map("social_links")
+}
+
+enum DocumentType {
+  RETURN_POLICY
+  SHIPPING_POLICY
+  REFUND_POLICY
+  PRIVACY_POLICY
+  TERMS_AND_CONDITIONS
+}
+
+model BrandDocument {
+  id        String    @id @default(uuid())
+
+  type      DocumentType
+  content   String
+  version   Int       @default(1)
+  isActive  Boolean   @default(true) @map("is_active")
+
+  brandId   String    @map("brand_id")
+  brand     Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@index([brandId])
+  @@map("brand_documents")
+}
