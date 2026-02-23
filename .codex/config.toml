@@ -1,0 +1,3 @@
+[mcp_servers.project-tool]
+command="bunx"
+args=["-y","@hugeicons/mcp-server"]
