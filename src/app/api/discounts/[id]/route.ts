@@ -1,28 +1,26 @@
-import { discountService } from "@/services/discount.service";
-import { updateDiscountSchema } from "@/lib/validations/discount";
+import { idParamSchema } from "@/lib/api/query-schemas";
+import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
-import { handleError, successResponse } from "@/lib/api/response";
+import { updateDiscountSchema } from "@/lib/validations/discount";
+import { discountService } from "@/services/discount.service";
+import type { RouteParamsAsync } from "@/types/api";
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, { params }: RouteParamsAsync) {
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const discount = await discountService.findById(id);
-    return successResponse(discount);
+    return successDataResponse(discount);
   } catch (error) {
     return handleError(error, "Fetch discount");
   }
 }
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export async function PUT(request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const json = await request.json();
     const body = updateDiscountSchema.parse(json);
     const discount = await discountService.update(id, {
@@ -34,22 +32,21 @@ export async function PUT(request: Request, { params }: RouteParams) {
         expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
       }),
     });
-    return successResponse(discount);
+    return successDataResponse(discount);
   } catch (error) {
     return handleError(error, "Update discount");
   }
 }
 
-export async function DELETE(_request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     await discountService.delete(id);
-    return successResponse({ success: true });
+    return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete discount");
   }
 }
-

@@ -1,19 +1,32 @@
-import { cartService } from "@/services/cart.service";
-import { addToCartSchema } from "@/lib/validations/cart";
+import { headers } from "next/headers";
+import { sessionIdSchema } from "@/lib/api/query-schemas";
+import {
+  badRequest,
+  createdDataResponse,
+  handleError,
+  successDataResponse,
+} from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/guards";
-import { handleError, createdResponse, successResponse, badRequest } from "@/lib/api/response";
-import { sessionIdSchema, parseSearchParams } from "@/lib/api/query-schemas";
+import { addToCartSchema } from "@/lib/validations/cart";
+import { cartService } from "@/services/cart.service";
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   const guard = await requireAuth();
   if (!guard.success) return guard.response;
 
   try {
-    const { searchParams } = new URL(request.url);
-    const query = parseSearchParams(searchParams, sessionIdSchema);
+    const headerStore = await headers();
+    const sessionId = headerStore.get("x-session-id");
+    if (!sessionId) {
+      return badRequest("Missing x-session-id header");
+    }
+    const query = sessionIdSchema.parse({ sessionId });
 
-    const summary = await cartService.getCartSummary(query.sessionId, guard.auth.userId);
-    return successResponse(summary);
+    const summary = await cartService.getCartSummary(
+      query.sessionId,
+      guard.auth.userId,
+    );
+    return successDataResponse(summary);
   } catch (error) {
     return handleError(error, "Fetch cart");
   }
@@ -24,8 +37,12 @@ export async function POST(request: Request) {
   if (!guard.success) return guard.response;
 
   try {
-    const { searchParams } = new URL(request.url);
-    const query = parseSearchParams(searchParams, sessionIdSchema);
+    const headerStore = await headers();
+    const sessionId = headerStore.get("x-session-id");
+    if (!sessionId) {
+      return badRequest("Missing x-session-id header");
+    }
+    const query = sessionIdSchema.parse({ sessionId });
 
     const json = await request.json();
     const { productVariantId, quantity } = addToCartSchema.parse(json);
@@ -35,22 +52,26 @@ export async function POST(request: Request) {
       quantity,
       guard.auth.userId,
     );
-    return createdResponse(cartItem);
+    return createdDataResponse(cartItem);
   } catch (error) {
     return handleError(error, "Add to cart");
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(_request: Request) {
   const guard = await requireAuth();
   if (!guard.success) return guard.response;
 
   try {
-    const { searchParams } = new URL(request.url);
-    const query = parseSearchParams(searchParams, sessionIdSchema);
+    const headerStore = await headers();
+    const sessionId = headerStore.get("x-session-id");
+    if (!sessionId) {
+      return badRequest("Missing x-session-id header");
+    }
+    const query = sessionIdSchema.parse({ sessionId });
 
     await cartService.clearCart(query.sessionId, guard.auth.userId);
-    return successResponse({ success: true });
+    return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Clear cart");
   }

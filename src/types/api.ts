@@ -3,6 +3,15 @@
  */
 
 import { z } from "zod";
+import type {
+  Brand,
+  Category,
+  Color,
+  Discount,
+  Order,
+  Product,
+  Size,
+} from "@/generated/prisma/client";
 
 // Route parameter types
 export interface RouteParams {
@@ -50,3 +59,46 @@ export const sortDirectionSchema = z.enum(["asc", "desc"]).default("desc");
 // Type exports
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type SortDirection = z.infer<typeof sortDirectionSchema>;
+
+type JsonDateString = string;
+
+// API JSON entity shapes (Dates serialize as ISO strings)
+export type ApiCategory = Omit<Category, "createdAt" | "updatedAt"> & {
+  createdAt: JsonDateString;
+  updatedAt: JsonDateString;
+};
+
+export type ApiBrand = Omit<Brand, "createdAt" | "updatedAt"> & {
+  createdAt: JsonDateString;
+  updatedAt: JsonDateString;
+};
+
+export type ApiColor = Omit<Color, "createdAt" | "updatedAt"> & {
+  createdAt: JsonDateString;
+  updatedAt: JsonDateString;
+};
+
+export type ApiSize = Omit<Size, "createdAt" | "updatedAt"> & {
+  createdAt: JsonDateString;
+  updatedAt: JsonDateString;
+};
+
+export type ApiProduct = Omit<Product, "createdAt" | "updatedAt"> & {
+  createdAt: JsonDateString;
+  updatedAt: JsonDateString;
+};
+
+export type ApiOrder = Omit<Order, "createdAt" | "updatedAt" | "deletedAt"> & {
+  createdAt: JsonDateString;
+  updatedAt: JsonDateString;
+  deletedAt: JsonDateString | null;
+};
+
+export type ApiDiscount = Omit<
+  Discount,
+  "startsAt" | "expiresAt" | "createdAt"
+> & {
+  startsAt: JsonDateString | null;
+  expiresAt: JsonDateString | null;
+  createdAt: JsonDateString;
+};

@@ -1,46 +1,68 @@
-import { brandService } from "@/services/brand.service";
-import { updateBrandSchema } from "@/lib/validations/brand";
+import { safeInngestSend } from "@/inngest/safe-send";
+import { idParamSchema } from "@/lib/api/query-schemas";
+import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
-import { handleError, successResponse, notFound } from "@/lib/api/response";
+import { updateBrandSchema } from "@/lib/validations/brand";
+import { brandService } from "@/services/brand.service";
+import type { RouteParamsAsync } from "@/types/api";
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, { params }: RouteParamsAsync) {
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const brand = await brandService.findById(id);
-    if (!brand) return notFound("Brand not found");
-    return successResponse(brand);
+    return successDataResponse(brand);
   } catch (error) {
     return handleError(error, "Fetch brand");
   }
 }
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export async function PUT(request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const json = await request.json();
     const body = updateBrandSchema.parse(json);
     const brand = await brandService.update(id, body);
-    return successResponse(brand);
+
+    await safeInngestSend({
+      name: "entity/brand.updated.v1",
+      data: {
+        id: brand.id,
+        name: brand.name,
+        tagline: brand.tagline ?? undefined,
+        logoUrl: brand.logoUrl ?? undefined,
+        isActive: brand.isActive,
+        actorId: guard.auth.userId,
+        idempotencyKey: `entity/brand.updated.v1:${brand.id}:${Date.now()}`,
+      },
+    });
+
+    return successDataResponse(brand);
   } catch (error) {
     return handleError(error, "Update brand");
   }
 }
 
-export async function DELETE(_request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     await brandService.delete(id);
-    return successResponse({ success: true });
+
+    await safeInngestSend({
+      name: "entity/brand.deleted.v1",
+      data: {
+        id,
+        actorId: guard.auth.userId,
+        idempotencyKey: `entity/brand.deleted.v1:${id}:${Date.now()}`,
+      },
+    });
+
+    return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete brand");
   }

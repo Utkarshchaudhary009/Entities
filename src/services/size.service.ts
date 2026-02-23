@@ -1,11 +1,12 @@
 import type { Prisma } from "@/generated/prisma/client";
-import prisma from "@/lib/prisma";
 import { handlePrismaError, NotFoundError } from "@/lib/errors";
+import prisma from "@/lib/prisma";
 
 export class SizeService {
   async findAll(params: { page?: number; limit?: number } = {}) {
     try {
-      const { page = 1, limit = 50 } = params;
+      const page = Math.max(1, Math.floor(params.page ?? 1));
+      const limit = Math.min(100, Math.max(1, Math.floor(params.limit ?? 20)));
       const skip = (page - 1) * limit;
 
       const [data, total] = await Promise.all([
@@ -27,7 +28,7 @@ export class SizeService {
         },
       };
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -37,7 +38,7 @@ export class SizeService {
       if (!size) throw new NotFoundError("Size", id);
       return size;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -45,7 +46,7 @@ export class SizeService {
     try {
       return await prisma.size.create({ data });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -53,7 +54,7 @@ export class SizeService {
     try {
       return await prisma.size.update({ where: { id }, data });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -61,10 +62,9 @@ export class SizeService {
     try {
       return await prisma.size.delete({ where: { id } });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 }
 
 export const sizeService = new SizeService();
-

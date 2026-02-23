@@ -1,22 +1,27 @@
+import type { BrandDocument, Prisma } from "@/generated/prisma/client";
+import type { DocumentType } from "@/generated/prisma/enums";
+import { handlePrismaError, NotFoundError } from "@/lib/errors";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
-import { handlePrismaError } from "@/lib/errors";
 
 export class BrandDocumentService {
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    brandId?: string;
-    type?: string;
-  }) {
+  async findAll(
+    params: {
+      page?: number;
+      limit?: number;
+      brandId?: string;
+      type?: string;
+    } = {},
+  ) {
     try {
-      const { page = 1, limit = 20, brandId, type } = params;
+      const page = Math.max(1, Math.floor(params.page ?? 1));
+      const limit = Math.min(100, Math.max(1, Math.floor(params.limit ?? 20)));
+      const { brandId, type } = params;
       const skip = (page - 1) * limit;
 
       const where: Prisma.BrandDocumentWhereInput = {
         isActive: true,
         ...(brandId && { brandId }),
-        ...(type && { type: type as Prisma.EnumDocumentTypeFilter }),
+        ...(type && { type: type as DocumentType }),
       };
 
       const [data, total] = await Promise.all([
@@ -39,17 +44,21 @@ export class BrandDocumentService {
         },
       };
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<BrandDocument> {
     try {
-      return await prisma.brandDocument.findUnique({
+      const document = await prisma.brandDocument.findUnique({
         where: { id },
       });
+      if (!document) {
+        throw new NotFoundError("BrandDocument", id);
+      }
+      return document;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -59,7 +68,7 @@ export class BrandDocumentService {
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -70,7 +79,7 @@ export class BrandDocumentService {
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -80,7 +89,7 @@ export class BrandDocumentService {
         where: { id },
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 }

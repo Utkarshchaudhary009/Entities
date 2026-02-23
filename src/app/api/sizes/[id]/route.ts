@@ -1,47 +1,44 @@
-import { sizeService } from "@/services/size.service";
-import { updateSizeSchema } from "@/lib/validations/size";
+import { idParamSchema } from "@/lib/api/query-schemas";
+import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
-import { handleError, successResponse } from "@/lib/api/response";
+import { updateSizeSchema } from "@/lib/validations/size";
+import { sizeService } from "@/services/size.service";
+import type { RouteParamsAsync } from "@/types/api";
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, { params }: RouteParamsAsync) {
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const size = await sizeService.findById(id);
-    return successResponse(size);
+    return successDataResponse(size);
   } catch (error) {
     return handleError(error, "Fetch size");
   }
 }
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export async function PUT(request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const json = await request.json();
     const body = updateSizeSchema.parse(json);
     const size = await sizeService.update(id, body);
-    return successResponse(size);
+    return successDataResponse(size);
   } catch (error) {
     return handleError(error, "Update size");
   }
 }
 
-export async function DELETE(_request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     await sizeService.delete(id);
-    return successResponse({ success: true });
+    return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete size");
   }
 }
-

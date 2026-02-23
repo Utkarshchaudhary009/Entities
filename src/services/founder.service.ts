@@ -1,15 +1,15 @@
+import type { Founder, Prisma } from "@/generated/prisma/client";
+import { handlePrismaError, NotFoundError } from "@/lib/errors";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
-import { handlePrismaError } from "@/lib/errors";
 
 export class FounderService {
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  }) {
+  async findAll(
+    params: { page?: number; limit?: number; search?: string } = {},
+  ) {
     try {
-      const { page = 1, limit = 20, search } = params;
+      const page = Math.max(1, Math.floor(params.page ?? 1));
+      const limit = Math.min(100, Math.max(1, Math.floor(params.limit ?? 20)));
+      const { search } = params;
       const skip = (page - 1) * limit;
 
       const where: Prisma.FounderWhereInput = {
@@ -29,18 +29,18 @@ export class FounderService {
               select: {
                 id: true,
                 name: true,
-                logoUrl: true
-              }
+                logoUrl: true,
+              },
             },
             socialLinks: {
               where: { isActive: true },
               select: {
                 id: true,
                 platform: true,
-                url: true
-              }
-            }
-          }
+                url: true,
+              },
+            },
+          },
         }),
         prisma.founder.count({ where }),
       ]);
@@ -55,21 +55,25 @@ export class FounderService {
         },
       };
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<Founder> {
     try {
-      return await prisma.founder.findUnique({
+      const founder = await prisma.founder.findUnique({
         where: { id },
         include: {
           brand: true,
-          socialLinks: { where: { isActive: true } }
+          socialLinks: { where: { isActive: true } },
         },
       });
+      if (!founder) {
+        throw new NotFoundError("Founder", id);
+      }
+      return founder;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -79,7 +83,7 @@ export class FounderService {
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -90,7 +94,7 @@ export class FounderService {
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -100,7 +104,7 @@ export class FounderService {
         where: { id },
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 }

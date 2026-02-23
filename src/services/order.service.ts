@@ -43,9 +43,11 @@ export interface CreateOrderInput {
 }
 
 export class OrderService {
-  async findAll(params: OrderFindAllParams) {
+  async findAll(params: OrderFindAllParams = {}) {
     try {
-      const { page = 1, limit = 20, status, clerkId } = params;
+      const page = Math.max(1, Math.floor(params.page ?? 1));
+      const limit = Math.min(100, Math.max(1, Math.floor(params.limit ?? 20)));
+      const { status, clerkId } = params;
       const skip = (page - 1) * limit;
 
       const where: Prisma.OrderWhereInput = {
@@ -77,7 +79,7 @@ export class OrderService {
         },
       };
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -96,7 +98,7 @@ export class OrderService {
 
       return order;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -115,7 +117,7 @@ export class OrderService {
 
       return order;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -125,7 +127,51 @@ export class OrderService {
         throw new ValidationError("Order must have at least one item");
       }
 
+      const aggregatedVariantQuantities = new Map<
+        string,
+        { quantity: number; productName: string }
+      >();
+      for (const item of data.items) {
+        if (!item.productVariantId) continue;
+        if (item.quantity <= 0) {
+          throw new ValidationError(`Invalid quantity for ${item.productName}`);
+        }
+        const prev = aggregatedVariantQuantities.get(item.productVariantId);
+        aggregatedVariantQuantities.set(item.productVariantId, {
+          quantity: (prev?.quantity ?? 0) + item.quantity,
+          productName: prev?.productName ?? item.productName,
+        });
+      }
+
       const order = await prisma.$transaction(async (tx) => {
+        // Validate stock and decrement atomically BEFORE creating the order.
+        for (const [
+          variantId,
+          entry,
+        ] of aggregatedVariantQuantities.entries()) {
+          const updated = await tx.$queryRaw<{ stock: number }[]>`
+            UPDATE "product_variants"
+            SET stock = stock - ${entry.quantity}
+            WHERE id = ${variantId} AND stock >= ${entry.quantity}
+            RETURNING stock
+          `;
+
+          if (updated.length === 0) {
+            const existing = await tx.productVariant.findUnique({
+              where: { id: variantId },
+              select: { stock: true },
+            });
+
+            if (!existing) {
+              throw new NotFoundError("Product variant", variantId);
+            }
+
+            throw new ValidationError(
+              `Insufficient stock for ${entry.productName}. Available: ${existing.stock}, Requested: ${entry.quantity}`,
+            );
+          }
+        }
+
         const newOrder = await tx.order.create({
           data: {
             orderNumber: data.orderNumber,
@@ -159,36 +205,12 @@ export class OrderService {
           include: { items: true },
         });
 
-        for (const item of data.items) {
-          if (item.productVariantId) {
-            const variant = await tx.productVariant.findUnique({
-              where: { id: item.productVariantId },
-              select: { stock: true },
-            });
-
-            if (variant && variant.stock < item.quantity) {
-              throw new ValidationError(
-                `Insufficient stock for ${item.productName}. Available: ${variant.stock}, Requested: ${item.quantity}`,
-              );
-            }
-
-            if (variant) {
-              await tx.productVariant.update({
-                where: { id: item.productVariantId! },
-                data: {
-                  stock: { decrement: item.quantity },
-                },
-              });
-            }
-          }
-        }
-
         return newOrder;
       });
 
       return order;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -206,7 +228,7 @@ export class OrderService {
 
       return order;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -219,7 +241,7 @@ export class OrderService {
 
       return order;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 }

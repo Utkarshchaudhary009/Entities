@@ -1,77 +1,120 @@
 import { EventSchemas, Inngest } from "inngest";
 
 type EntityEvents = {
-  "entity/brand.created": {
+  "entity/brand.created.v1": {
     data: {
       id: string;
       name: string;
       tagline?: string;
       logoUrl?: string;
-      website?: string;
-      userId: string;
+      isActive?: boolean;
+      actorId?: string;
+      idempotencyKey: string;
     };
   };
-  "entity/brand.updated": {
+  "entity/brand.updated.v1": {
     data: {
       id: string;
       name?: string;
       tagline?: string;
       logoUrl?: string;
-      website?: string;
       isActive?: boolean;
+      actorId?: string;
+      idempotencyKey: string;
     };
   };
-  "entity/brand.deleted": {
+  "entity/brand.deleted.v1": {
     data: {
       id: string;
+      actorId?: string;
+      idempotencyKey: string;
     };
   };
-  "entity/category.created": {
+  "entity/category.created.v1": {
     data: {
       id: string;
       name: string;
       slug: string;
-      description?: string;
-      userId: string;
+      about?: string;
+      isActive?: boolean;
+      actorId?: string;
+      idempotencyKey: string;
     };
   };
-  "entity/category.updated": {
+  "entity/category.updated.v1": {
     data: {
       id: string;
       name?: string;
       slug?: string;
-      description?: string;
+      about?: string;
       isActive?: boolean;
+      actorId?: string;
+      idempotencyKey: string;
     };
   };
-  "entity/category.deleted": {
+  "entity/category.deleted.v1": {
     data: {
       id: string;
+      actorId?: string;
+      idempotencyKey: string;
     };
   };
-  "entity/product.created": {
+  "entity/product.created.v1": {
     data: {
       id: string;
       name: string;
       description?: string;
       price: number;
-      brandId: string;
-      categoryId: string;
-      userId: string;
+      categoryId?: string | null;
+      isActive?: boolean;
+      actorId?: string;
+      idempotencyKey: string;
     };
   };
-  "entity/product.updated": {
+  "entity/product.updated.v1": {
     data: {
       id: string;
       name?: string;
       description?: string;
       price?: number;
       isActive?: boolean;
+      actorId?: string;
+      idempotencyKey: string;
     };
   };
-  "entity/product.deleted": {
+  "entity/product.deleted.v1": {
     data: {
       id: string;
+      actorId?: string;
+      idempotencyKey: string;
+    };
+  };
+  "entity/order.created.v1": {
+    data: {
+      id: string;
+      orderNumber: string;
+      customerName: string;
+      whatsappNumber: string;
+      email?: string;
+      total: number;
+      status: string;
+      clerkId?: string;
+      idempotencyKey: string;
+    };
+  };
+  "entity/order.status-changed.v1": {
+    data: {
+      id: string;
+      orderNumber: string;
+      previousStatus: string;
+      newStatus: string;
+      actorId?: string;
+      idempotencyKey: string;
+    };
+  };
+  "app/heartbeat.v1": {
+    data: {
+      idempotencyKey: string;
     };
   };
 };

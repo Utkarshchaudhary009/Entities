@@ -1,30 +1,41 @@
+"use client";
+
 /**
  * Cart store with optimistic updates
  */
 import { create } from "zustand";
+import type {
+  CartItem as DbCartItem,
+  Product,
+  ProductVariant,
+} from "@/generated/prisma/client";
+import { createRequestDeduper, fetchApi } from "@/stores/http";
+import type { CartItemWithDetails } from "@/types/domain";
 
-export interface CartItem {
-  id: string;
-  productVariantId: string;
-  quantity: number;
-  productName: string;
-  productPrice: number;
-  productImage: string | null;
-  size: string;
-  color: string;
-  stock: number;
+type CartSummaryItem = Omit<CartItemWithDetails, "cartId">;
+
+type CartItemApi = DbCartItem & {
+  productVariant: ProductVariant & {
+    product: Pick<Product, "name" | "price" | "thumbnailUrl">;
+  };
+};
+
+interface CartSummaryApi {
+  items: CartSummaryItem[];
+  subtotal: number;
+  itemCount: number;
 }
 
 interface CartState {
-  items: CartItem[];
+  items: CartSummaryItem[];
   isLoading: boolean;
   error: string | null;
   sessionId: string | null;
 
   setSessionId: (sessionId: string) => void;
-  setItems: (items: CartItem[]) => void;
+  setItems: (items: CartSummaryItem[]) => void;
 
-  addItem: (item: Omit<CartItem, "id">) => Promise<void>;
+  addItem: (item: Omit<CartSummaryItem, "id" | "subtotal">) => Promise<void>;
   updateQuantity: (variantId: string, quantity: number) => Promise<void>;
   removeItem: (variantId: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -34,181 +45,217 @@ interface CartState {
   clearError: () => void;
 }
 
-const generateOptimisticId = () => `optimistic-${Date.now()}`;
-
-function withSessionId(path: string, sessionId: string) {
-  const url = new URL(path, typeof window === "undefined" ? "http://localhost" : window.location.origin);
-  url.searchParams.set("sessionId", sessionId);
-  return url.pathname + url.search;
+function generateOptimisticId() {
+  return `temp_${crypto.randomUUID()}`;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
-  isLoading: false,
-  error: null,
-  sessionId: null,
+function isOptimisticId(id: string) {
+  return id.startsWith("temp_");
+}
 
-  setSessionId: (sessionId) => set({ sessionId }),
+function toCartSummaryItem(api: CartItemApi): CartSummaryItem {
+  return {
+    id: api.id,
+    productVariantId: api.productVariantId,
+    quantity: api.quantity,
+    productName: api.productVariant.product.name,
+    productPrice: api.productVariant.product.price,
+    productImage: api.productVariant.product.thumbnailUrl,
+    size: api.productVariant.size,
+    color: api.productVariant.color,
+    stock: api.productVariant.stock,
+    subtotal: api.productVariant.product.price * api.quantity,
+  };
+}
 
-  setItems: (items) => set({ items, error: null }),
+async function fetchCartJson<T>(
+  sessionId: string,
+  input: string,
+  init?: RequestInit,
+): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set("x-session-id", sessionId);
+  return fetchApi<T>(input, { ...init, headers });
+}
 
-  addItem: async (item) => {
-    const { sessionId } = get();
-    if (!sessionId) return;
+export const useCartStore = create<CartState>((set, get) => {
+  const dedupe = createRequestDeduper();
 
-    const previousItems = get().items;
-    const items = previousItems;
+  return {
+    items: [],
+    isLoading: false,
+    error: null,
+    sessionId: null,
 
-    const existingIndex = items.findIndex(
-      (i) => i.productVariantId === item.productVariantId,
-    );
+    setSessionId: (sessionId) => set({ sessionId }),
 
-    if (existingIndex >= 0) {
-      const newItems = [...items];
-      newItems[existingIndex] = {
-        ...newItems[existingIndex],
-        quantity: newItems[existingIndex].quantity + item.quantity,
-      };
-      set({ items: newItems });
-    } else {
-      const optimisticItem: CartItem = {
-        ...item,
-        id: generateOptimisticId(),
-      };
-      set({ items: [...items, optimisticItem] });
-    }
+    setItems: (items) => set({ items, error: null }),
 
-    try {
-      set({ isLoading: true });
-      const response = await fetch(withSessionId("/api/cart", sessionId), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productVariantId: item.productVariantId,
-          quantity: item.quantity,
-        }),
-      });
+    addItem: async (item) => {
+      const { sessionId } = get();
+      if (!sessionId) return;
 
-      if (!response.ok) {
+      const previousItems = get().items;
+      const items = previousItems;
+
+      const existingIndex = items.findIndex(
+        (i) => i.productVariantId === item.productVariantId,
+      );
+
+      if (existingIndex >= 0) {
+        const newItems = [...items];
+        newItems[existingIndex] = {
+          ...newItems[existingIndex],
+          quantity: newItems[existingIndex].quantity + item.quantity,
+          subtotal:
+            newItems[existingIndex].productPrice *
+            (newItems[existingIndex].quantity + item.quantity),
+        };
+        set({ items: newItems });
+      } else {
+        const optimisticItem: CartSummaryItem = {
+          ...item,
+          id: generateOptimisticId(),
+          subtotal: item.productPrice * item.quantity,
+        };
+        set({ items: [...items, optimisticItem] });
+      }
+
+      try {
+        set({ isLoading: true });
+        const cartItem = await fetchCartJson<CartItemApi>(
+          sessionId,
+          "/api/cart",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              productVariantId: item.productVariantId,
+              quantity: item.quantity,
+            }),
+          },
+        );
+        const reconciled = toCartSummaryItem(cartItem);
+        set((state) => ({
+          items: state.items.map((i) =>
+            i.productVariantId === reconciled.productVariantId ? reconciled : i,
+          ),
+          error: null,
+        }));
+      } catch {
         set({ items: previousItems, error: "Failed to add item to cart" });
+      } finally {
+        set({ isLoading: false });
+      }
+    },
+
+    updateQuantity: async (variantId, quantity) => {
+      const { sessionId } = get();
+      if (!sessionId) return;
+
+      if (quantity <= 0) {
+        await get().removeItem(variantId);
         return;
       }
 
-      await get().syncWithServer();
-    } catch {
-      set({ items: previousItems, error: "Failed to add item to cart" });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  updateQuantity: async (variantId, quantity) => {
-    const previousItems = get().items;
-    const items = previousItems;
-
-    if (quantity <= 0) {
-      set({ items: items.filter((i) => i.productVariantId !== variantId) });
-    } else {
+      const previousItems = get().items;
       set({
-        items: items.map((i) =>
-          i.productVariantId === variantId ? { ...i, quantity } : i,
+        items: previousItems.map((i) =>
+          i.productVariantId === variantId
+            ? { ...i, quantity, subtotal: i.productPrice * quantity }
+            : i,
         ),
       });
-    }
 
-    try {
-      set({ isLoading: true });
-      const item = items.find((i) => i.productVariantId === variantId);
-      if (!item) return;
+      try {
+        set({ isLoading: true });
+        let item = get().items.find((i) => i.productVariantId === variantId);
+        if (!item) return;
 
-      const response = await fetch(`/api/cart/${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantity }),
-      });
+        if (isOptimisticId(item.id)) {
+          await get().syncWithServer();
+          item = get().items.find((i) => i.productVariantId === variantId);
+          if (!item || isOptimisticId(item.id)) return;
+        }
 
-      if (!response.ok) {
+        await fetchCartJson<unknown>(sessionId, `/api/cart/${item.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantity }),
+        });
+      } catch {
         set({ items: previousItems, error: "Failed to update quantity" });
-        return;
+      } finally {
+        set({ isLoading: false });
       }
+    },
 
-      await get().syncWithServer();
-    } catch {
-      set({ items: previousItems, error: "Failed to update quantity" });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
+    removeItem: async (variantId) => {
+      const { sessionId } = get();
+      if (!sessionId) return;
 
-  removeItem: async (variantId) => {
-    const previousItems = get().items;
-    const item = previousItems.find((i) => i.productVariantId === variantId);
+      const previousItems = get().items;
+      const item = previousItems.find((i) => i.productVariantId === variantId);
 
-    set({
-      items: previousItems.filter((i) => i.productVariantId !== variantId),
-    });
-
-    try {
-      set({ isLoading: true });
-      if (!item) return;
-
-      const response = await fetch(`/api/cart/${item.id}`, {
-        method: "DELETE",
+      set({
+        items: previousItems.filter((i) => i.productVariantId !== variantId),
       });
 
-      if (!response.ok) {
+      try {
+        set({ isLoading: true });
+        if (!item) return;
+        if (isOptimisticId(item.id)) return;
+
+        await fetchCartJson<unknown>(sessionId, `/api/cart/${item.id}`, {
+          method: "DELETE",
+        });
+      } catch {
         set({ items: previousItems, error: "Failed to remove item" });
-        return;
+      } finally {
+        set({ isLoading: false });
       }
-    } catch {
-      set({ items: previousItems, error: "Failed to remove item" });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
+    },
 
-  clearCart: async () => {
-    const { sessionId } = get();
-    if (!sessionId) return;
+    clearCart: async () => {
+      const { sessionId } = get();
+      if (!sessionId) return;
 
-    const previousItems = get().items;
+      const previousItems = get().items;
 
-    set({ items: [] });
+      set({ items: [] });
 
-    try {
-      set({ isLoading: true });
-      const response = await fetch(withSessionId("/api/cart", sessionId), {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
+      try {
+        set({ isLoading: true });
+        await fetchCartJson<unknown>(sessionId, "/api/cart", {
+          method: "DELETE",
+        });
+      } catch {
         set({ items: previousItems, error: "Failed to clear cart" });
-        return;
+      } finally {
+        set({ isLoading: false });
       }
-    } catch {
-      set({ items: previousItems, error: "Failed to clear cart" });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
+    },
 
-  syncWithServer: async () => {
-    const { sessionId } = get();
-    if (!sessionId) return;
+    syncWithServer: async () => {
+      const { sessionId } = get();
+      if (!sessionId) return;
 
-    try {
-      const response = await fetch(withSessionId("/api/cart", sessionId));
-      if (response.ok) {
-        const data = await response.json();
-        set({ items: data.items || [], error: null });
+      try {
+        await dedupe(`GET:/api/cart:${sessionId}`, async () => {
+          const summary = await fetchCartJson<CartSummaryApi>(
+            sessionId,
+            "/api/cart",
+          );
+          set({ items: summary.items ?? [], error: null });
+        });
+      } catch {
+        set({ error: "Failed to sync cart" });
       }
-    } catch {
-      set({ error: "Failed to sync cart" });
-    }
-  },
+    },
 
-  clearError: () => set({ error: null }),
-}));
+    clearError: () => set({ error: null }),
+  };
+});
 
 export const useCartItems = () => useCartStore((state) => state.items);
 export const useCartIsLoading = () => useCartStore((state) => state.isLoading);

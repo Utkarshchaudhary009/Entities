@@ -1,15 +1,15 @@
+import type { Prisma } from "@/generated/prisma/client";
+import { handlePrismaError, NotFoundError } from "@/lib/errors";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
-import { handlePrismaError } from "@/lib/errors";
 
 export class CategoryService {
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  }) {
+  async findAll(
+    params: { page?: number; limit?: number; search?: string } = {},
+  ) {
     try {
-      const { page = 1, limit = 20, search } = params;
+      const page = Math.max(1, Math.floor(params.page ?? 1));
+      const limit = Math.min(100, Math.max(1, Math.floor(params.limit ?? 20)));
+      const { search } = params;
       const skip = (page - 1) * limit;
 
       const where: Prisma.CategoryWhereInput = {
@@ -39,13 +39,13 @@ export class CategoryService {
         },
       };
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
   async findById(id: string) {
     try {
-      return await prisma.category.findUnique({
+      const category = await prisma.category.findUnique({
         where: { id },
         include: {
           products: {
@@ -55,13 +55,17 @@ export class CategoryService {
               name: true,
               slug: true,
               price: true,
-              thumbnailUrl: true
-            }
-          }
-        }
+              thumbnailUrl: true,
+            },
+          },
+        },
       });
+      if (!category) {
+        throw new NotFoundError("Category", id);
+      }
+      return category;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -71,7 +75,7 @@ export class CategoryService {
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -82,7 +86,7 @@ export class CategoryService {
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -92,7 +96,7 @@ export class CategoryService {
         where: { id },
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 }

@@ -1,15 +1,15 @@
+import type { Prisma } from "@/generated/prisma/client";
+import { handlePrismaError, NotFoundError } from "@/lib/errors";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
-import { handlePrismaError } from "@/lib/errors";
 
 export class BrandService {
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  }) {
+  async findAll(
+    params: { page?: number; limit?: number; search?: string } = {},
+  ) {
     try {
-      const { page = 1, limit = 20, search } = params;
+      const page = Math.max(1, Math.floor(params.page ?? 1));
+      const limit = Math.min(100, Math.max(1, Math.floor(params.limit ?? 20)));
+      const { search } = params;
       const skip = (page - 1) * limit;
 
       const where: Prisma.BrandWhereInput = {
@@ -32,24 +32,24 @@ export class BrandService {
               select: {
                 id: true,
                 name: true,
-                thumbnailUrl: true
-              }
+                thumbnailUrl: true,
+              },
             },
             documents: {
               where: { isActive: true },
               select: {
                 id: true,
-                type: true
-              }
+                type: true,
+              },
             },
             socialLinks: {
               where: { isActive: true },
               select: {
                 id: true,
                 platform: true,
-                url: true
-              }
-            }
+                url: true,
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         }),
@@ -66,22 +66,26 @@ export class BrandService {
         },
       };
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
   async findById(id: string) {
     try {
-      return await prisma.brand.findUnique({
+      const brand = await prisma.brand.findUnique({
         where: { id },
         include: {
           founder: true,
           documents: { where: { isActive: true } },
-          socialLinks: { where: { isActive: true } }
+          socialLinks: { where: { isActive: true } },
         },
       });
+      if (!brand) {
+        throw new NotFoundError("Brand", id);
+      }
+      return brand;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -91,7 +95,7 @@ export class BrandService {
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -102,7 +106,7 @@ export class BrandService {
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -112,7 +116,7 @@ export class BrandService {
         where: { id },
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 }

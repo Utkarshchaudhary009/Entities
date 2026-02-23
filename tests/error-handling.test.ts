@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { orderQuerySchema } from "../src/lib/api/query-schemas";
 import { handleError } from "../src/lib/api/response";
 import { ForbiddenError } from "../src/lib/errors";
-import { orderQuerySchema } from "../src/lib/api/query-schemas";
 
 describe("handleError", () => {
   test("returns AppError status and payload", async () => {
@@ -14,7 +14,11 @@ describe("handleError", () => {
 
 describe("orderQuerySchema", () => {
   test("accepts lowercase status and normalizes", () => {
-    const parsed = orderQuerySchema.parse({ page: "1", limit: "20", status: "pending" });
+    const parsed = orderQuerySchema.parse({
+      page: "1",
+      limit: "20",
+      status: "pending",
+    });
     expect(parsed.status).toBe("PENDING");
   });
 

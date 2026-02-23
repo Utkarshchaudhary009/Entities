@@ -1,6 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { handlePrismaError, NotFoundError } from "@/lib/errors";
 import prisma from "@/lib/prisma";
-import { handlePrismaError } from "@/lib/errors";
 
 export class ProductVariantService {
   async findByProductId(productId: string) {
@@ -10,13 +10,13 @@ export class ProductVariantService {
         orderBy: { size: "asc" },
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
   async findById(id: string) {
     try {
-      return await prisma.productVariant.findUnique({
+      const variant = await prisma.productVariant.findUnique({
         where: { id },
         include: {
           product: {
@@ -30,8 +30,12 @@ export class ProductVariantService {
           },
         },
       });
+      if (!variant) {
+        throw new NotFoundError("ProductVariant", id);
+      }
+      return variant;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -59,7 +63,7 @@ export class ProductVariantService {
         },
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -70,7 +74,7 @@ export class ProductVariantService {
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -80,7 +84,7 @@ export class ProductVariantService {
         where: { id },
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 }

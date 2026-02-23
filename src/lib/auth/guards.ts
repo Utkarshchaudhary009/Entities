@@ -56,10 +56,7 @@ export async function requireAuth(): Promise<GuardResult> {
   if (!userId) {
     return {
       success: false,
-      response: NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      ),
+      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
   }
 
@@ -85,17 +82,16 @@ export async function requireAdmin(): Promise<GuardResult> {
   if (result.auth.role !== Role.ADMIN) {
     return {
       success: false,
-      response: NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      ),
+      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     };
   }
 
   return result;
 }
 
-export async function requireRole(allowedRoles: RoleType[]): Promise<GuardResult> {
+export async function requireRole(
+  allowedRoles: RoleType[],
+): Promise<GuardResult> {
   const result = await requireAuth();
 
   if (!result.success) {
@@ -105,10 +101,7 @@ export async function requireRole(allowedRoles: RoleType[]): Promise<GuardResult
   if (!allowedRoles.includes(result.auth.role)) {
     return {
       success: false,
-      response: NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      ),
+      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     };
   }
 
@@ -116,7 +109,7 @@ export async function requireRole(allowedRoles: RoleType[]): Promise<GuardResult
 }
 
 export async function requireOwnership(
-  resourceOwnerId: string | null | undefined
+  resourceOwnerId: string | null | undefined,
 ): Promise<GuardResult> {
   const result = await requireAuth();
 
@@ -131,10 +124,7 @@ export async function requireOwnership(
   if (resourceOwnerId !== result.auth.userId) {
     return {
       success: false,
-      response: NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      ),
+      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     };
   }
 

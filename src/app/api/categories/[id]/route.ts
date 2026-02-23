@@ -1,46 +1,68 @@
-import { categoryService } from "@/services/category.service";
-import { updateCategorySchema } from "@/lib/validations/category";
+import { safeInngestSend } from "@/inngest/safe-send";
+import { idParamSchema } from "@/lib/api/query-schemas";
+import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
-import { handleError, successResponse, notFound } from "@/lib/api/response";
+import { updateCategorySchema } from "@/lib/validations/category";
+import { categoryService } from "@/services/category.service";
+import type { RouteParamsAsync } from "@/types/api";
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, { params }: RouteParamsAsync) {
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const category = await categoryService.findById(id);
-    if (!category) return notFound("Category not found");
-    return successResponse(category);
+    return successDataResponse(category);
   } catch (error) {
     return handleError(error, "Fetch category");
   }
 }
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export async function PUT(request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const json = await request.json();
     const body = updateCategorySchema.parse(json);
     const category = await categoryService.update(id, body);
-    return successResponse(category);
+
+    await safeInngestSend({
+      name: "entity/category.updated.v1",
+      data: {
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        about: category.about ?? undefined,
+        isActive: category.isActive,
+        actorId: guard.auth.userId,
+        idempotencyKey: `entity/category.updated.v1:${category.id}:${Date.now()}`,
+      },
+    });
+
+    return successDataResponse(category);
   } catch (error) {
     return handleError(error, "Update category");
   }
 }
 
-export async function DELETE(_request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     await categoryService.delete(id);
-    return successResponse({ success: true });
+
+    await safeInngestSend({
+      name: "entity/category.deleted.v1",
+      data: {
+        id,
+        actorId: guard.auth.userId,
+        idempotencyKey: `entity/category.deleted.v1:${id}:${Date.now()}`,
+      },
+    });
+
+    return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete category");
   }

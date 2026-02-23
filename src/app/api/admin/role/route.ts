@@ -1,11 +1,13 @@
 import { clerkClient } from "@clerk/nextjs/server";
-import { requireAdmin } from "@/lib/auth/guards";
-import { handleError, successResponse, badRequest } from "@/lib/api/response";
 import { z } from "zod";
+import { handleError, successResponse } from "@/lib/api/response";
+import { requireAdmin } from "@/lib/auth/guards";
 
 const updateRoleSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
-  role: z.enum(["admin", "user"], { message: "Role must be 'admin' or 'user'" }),
+  role: z.enum(["admin", "user"], {
+    message: "Role must be 'admin' or 'user'",
+  }),
 });
 
 export async function POST(request: Request) {

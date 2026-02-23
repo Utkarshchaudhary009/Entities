@@ -1,114 +1,173 @@
+"use client";
+
+import type { z } from "zod";
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
-import type { Brand, BrandDocument, BrandPhilosophy, Founder, SocialLink } from "@/generated/prisma/client";
-import { createGenericStore } from "./factory";
+import { devtools } from "zustand/middleware";
+import type {
+  BrandDocument,
+  BrandPhilosophy,
+  Founder,
+  SocialLink,
+} from "@/generated/prisma/client";
+import type {
+  createBrandSchema,
+  updateBrandSchema,
+} from "@/lib/validations/brand";
+import { createRequestDeduper, fetchApi, fetchJson } from "@/stores/http";
+import type { ApiBrand } from "@/types/api";
+
+type CreateBrandInput = z.infer<typeof createBrandSchema>;
+type UpdateBrandInput = z.infer<typeof updateBrandSchema>;
+type BrandDetails = ApiBrand & {
+  founder: Founder;
+  documents: BrandDocument[];
+  socialLinks: SocialLink[];
+  philosophy?: BrandPhilosophy | null;
+};
 
 interface BrandStoreState {
-  brands: Brand[];
-  brand: Brand | null;
+  brands: ApiBrand[];
+  brand: ApiBrand | null;
   documents: BrandDocument[];
   philosophy: BrandPhilosophy | null;
   founder: Founder | null;
   socialLinks: SocialLink[];
-  
+  isLoading: boolean;
+  error: string | null;
+
   // Actions
-  setBrands: (brands: Brand[]) => void;
-  setBrand: (brand: Brand | null) => void;
-  
+  setBrands: (brands: ApiBrand[]) => void;
+  setBrand: (brand: ApiBrand | null) => void;
+  setError: (error: string | null) => void;
+  setLoading: (loading: boolean) => void;
+
   // Custom logic
   fetchBrandDetails: (id: string) => Promise<void>;
-  createBrand: (data: Partial<Brand>) => Promise<void>;
-  updateBrand: (id: string, data: Partial<Brand>) => Promise<void>;
+  createBrand: (data: CreateBrandInput) => Promise<void>;
+  updateBrand: (id: string, data: UpdateBrandInput) => Promise<void>;
   deleteBrand: (id: string) => Promise<void>;
 }
 
 // Using the factory for simpler stores or parts of it
 export const useBrandStore = create<BrandStoreState>()(
   devtools(
-    (set, get) => ({
-      brands: [],
-      brand: null,
-      documents: [],
-      philosophy: null,
-      founder: null,
-      socialLinks: [],
+    (set, get) => {
+      const dedupe = createRequestDeduper();
+      return {
+        brands: [],
+        brand: null,
+        documents: [],
+        philosophy: null,
+        founder: null,
+        socialLinks: [],
+        isLoading: false,
+        error: null,
 
-      setBrands: (brands) => set({ brands }),
-      setBrand: (brand) => set({ brand }),
+        setBrands: (brands) => set({ brands }),
+        setBrand: (brand) => set({ brand }),
+        setError: (error) => set({ error }),
+        setLoading: (isLoading) => set({ isLoading }),
 
-      fetchBrandDetails: async (id) => {
-        try {
-          const res = await fetch(`/api/brands/${id}`);
-          if (!res.ok) throw new Error("Failed to fetch brand");
-          const json = await res.json();
-          const data = json;
-          
-          set({
-            brand: data,
-            founder: data.founder,
-            documents: data.documents,
-            socialLinks: data.socialLinks,
-            philosophy: data.philosophy
-          });
-        } catch (error) {
-          console.error(error);
-        }
-      },
+        fetchBrandDetails: async (id) => {
+          set({ isLoading: true, error: null });
+          try {
+            await dedupe(`GET:/api/brands/${id}`, async () => {
+              const data = await fetchApi<BrandDetails>(`/api/brands/${id}`);
+              set({
+                brand: data,
+                founder: data.founder,
+                documents: data.documents,
+                socialLinks: data.socialLinks,
+                philosophy: data.philosophy ?? null,
+                isLoading: false,
+                error: null,
+              });
+            });
+          } catch (err: unknown) {
+            set({
+              error: err instanceof Error ? err.message : "Request failed",
+              isLoading: false,
+            });
+          }
+        },
 
-      createBrand: async (data) => {
-        const tempId = `temp-${Date.now()}`;
-        const optimisticBrand = { ...data, id: tempId } as Brand;
-        set((state) => ({ brands: [optimisticBrand, ...state.brands] }));
-
-        try {
-          const res = await fetch("/api/brands", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-          });
-          if (!res.ok) throw new Error("Failed");
-          const json = await res.json();
-          const newBrand = json;
+        createBrand: async (data) => {
+          const tempId = crypto.randomUUID();
+          const optimisticBrand = { ...data, id: tempId } as ApiBrand;
           set((state) => ({
-             brands: state.brands.map((b) => (b.id === tempId ? newBrand : b)),
+            brands: [optimisticBrand, ...state.brands],
+            error: null,
           }));
-        } catch (e) {
-          set((state) => ({ brands: state.brands.filter((b) => b.id !== tempId) }));
-        }
-      },
 
-      updateBrand: async (id, data) => {
-        const prevBrand = get().brand;
-        if (prevBrand) {
-           set({ brand: { ...prevBrand, ...data } as Brand });
-        }
+          try {
+            const newBrand = await fetchApi<ApiBrand>("/api/brands", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+            set((state) => ({
+              brands: state.brands.map((b) => (b.id === tempId ? newBrand : b)),
+              error: null,
+            }));
+          } catch (err: unknown) {
+            set((state) => ({
+              brands: state.brands.filter((b) => b.id !== tempId),
+              error: err instanceof Error ? err.message : "Request failed",
+            }));
+          }
+        },
 
-        try {
-          const res = await fetch(`/api/brands/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-          });
-          if (!res.ok) throw new Error("Failed");
-           const json = await res.json();
-           set({ brand: json });
-        } catch (e) {
-           if (prevBrand) set({ brand: prevBrand });
-        }
-      },
+        updateBrand: async (id, data) => {
+          const prevBrand = get().brand;
+          const prevBrands = get().brands;
 
-      deleteBrand: async (id) => {
-         const prevBrands = get().brands;
-         set({ brands: prevBrands.filter(b => b.id !== id) });
-         
-         try {
-            const res = await fetch(`/api/brands/${id}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("Failed");
-         } catch (e) {
-            set({ brands: prevBrands });
-         }
-      }
-    }),
-    { name: "brand-store" }
-  )
+          if (prevBrand) {
+            set({
+              brand: { ...prevBrand, ...data } as ApiBrand,
+              brands: prevBrands.map((brand) =>
+                brand.id === id ? ({ ...brand, ...data } as ApiBrand) : brand,
+              ),
+              error: null,
+            });
+          }
+
+          try {
+            const updated = await fetchApi<ApiBrand>(`/api/brands/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+            set((state) => ({
+              brand: updated,
+              brands: state.brands.map((brand) =>
+                brand.id === id ? updated : brand,
+              ),
+              error: null,
+            }));
+          } catch (err: unknown) {
+            set({
+              brand: prevBrand,
+              brands: prevBrands,
+              error: err instanceof Error ? err.message : "Request failed",
+            });
+          }
+        },
+
+        deleteBrand: async (id) => {
+          const prevBrands = get().brands;
+          set({ brands: prevBrands.filter((b) => b.id !== id), error: null });
+
+          try {
+            await fetchJson<unknown>(`/api/brands/${id}`, { method: "DELETE" });
+          } catch (err: unknown) {
+            set({
+              brands: prevBrands,
+              error: err instanceof Error ? err.message : "Request failed",
+            });
+          }
+        },
+      };
+    },
+    { name: "brand-store", enabled: process.env.NODE_ENV === "development" },
+  ),
 );

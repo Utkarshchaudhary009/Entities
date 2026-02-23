@@ -1,17 +1,21 @@
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma, Product } from "@/generated/prisma/client";
+import { handlePrismaError, NotFoundError } from "@/lib/errors";
 import prisma from "@/lib/prisma";
-import { handlePrismaError } from "@/lib/errors";
 
 export class ProductService {
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    categoryId?: string;
-    search?: string;
-    sort?: string;
-  }) {
+  async findAll(
+    params: {
+      page?: number;
+      limit?: number;
+      categoryId?: string;
+      search?: string;
+      sort?: string;
+    } = {},
+  ) {
     try {
-      const { page = 1, limit = 20, categoryId, search, sort } = params;
+      const page = Math.max(1, Math.floor(params.page ?? 1));
+      const limit = Math.min(100, Math.max(1, Math.floor(params.limit ?? 20)));
+      const { categoryId, search, sort } = params;
       const skip = (page - 1) * limit;
 
       const where: Prisma.ProductWhereInput = {
@@ -69,13 +73,13 @@ export class ProductService {
         },
       };
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
   async findById(id: string) {
     try {
-      return await prisma.product.findUnique({
+      const product = await prisma.product.findUnique({
         where: { id },
         include: {
           category: {
@@ -99,39 +103,41 @@ export class ProductService {
           },
         },
       });
+      if (!product) throw new NotFoundError("Product", id);
+      return product;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
-  async create(data: Prisma.ProductCreateInput) {
+  async create(data: Prisma.ProductCreateInput): Promise<Product> {
     try {
       return await prisma.product.create({
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
-  async update(id: string, data: Prisma.ProductUpdateInput) {
+  async update(id: string, data: Prisma.ProductUpdateInput): Promise<Product> {
     try {
       return await prisma.product.update({
         where: { id },
         data,
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
-  async delete(id: string) {
+  async delete(id: string): Promise<Product> {
     try {
       return await prisma.product.delete({
         where: { id },
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 }

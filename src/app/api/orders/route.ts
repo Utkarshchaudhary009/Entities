@@ -1,11 +1,17 @@
-import { orderService } from "@/services/order.service";
+import { safeInngestSend } from "@/inngest/safe-send";
+import { orderQuerySchema, parseSearchParams } from "@/lib/api/query-schemas";
+import {
+  badRequest,
+  createdDataResponse,
+  handleError,
+  successDataResponse,
+} from "@/lib/api/response";
+import { requireAuth } from "@/lib/auth/guards";
+import { Role } from "@/lib/auth/roles";
+import { generateOrderNumber } from "@/lib/crypto";
 import { createOrderSchema } from "@/lib/validations/order";
 import { cartService } from "@/services/cart.service";
-import { requireAuth, requireAdmin } from "@/lib/auth/guards";
-import { handleError, createdResponse, successResponse, badRequest } from "@/lib/api/response";
-import { orderQuerySchema, parseSearchParams } from "@/lib/api/query-schemas";
-import { generateOrderNumber } from "@/lib/crypto";
-import { Role } from "@/lib/auth/roles";
+import { orderService } from "@/services/order.service";
 
 export async function GET(request: Request) {
   const guard = await requireAuth();
@@ -24,7 +30,7 @@ export async function GET(request: Request) {
       clerkId: isAdmin ? undefined : guard.auth.userId,
     });
 
-    return successResponse(result);
+    return successDataResponse(result);
   } catch (error) {
     return handleError(error, "Fetch orders");
   }
@@ -38,7 +44,10 @@ export async function POST(request: Request) {
     const json = await request.json();
     const body = createOrderSchema.parse(json);
 
-    const cart = await cartService.getCartWithDetails(body.sessionId, guard.auth.userId);
+    const cart = await cartService.getCartWithDetails(
+      body.sessionId,
+      guard.auth.userId,
+    );
     if (!cart || cart.items.length === 0) {
       return badRequest("Cart is empty");
     }
@@ -47,7 +56,7 @@ export async function POST(request: Request) {
 
     const subtotal = cart.items.reduce(
       (sum, item) => sum + item.productVariant.product.price * item.quantity,
-      0
+      0,
     );
     const total = subtotal;
 
@@ -77,9 +86,30 @@ export async function POST(request: Request) {
 
     const order = await orderService.create(orderData);
 
-    await cartService.clearCart(body.sessionId, guard.auth.userId);
+    await safeInngestSend({
+      name: "entity/order.created.v1",
+      data: {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        whatsappNumber: order.whatsappNumber,
+        email: order.email ?? undefined,
+        total: order.total,
+        status: order.status,
+        clerkId: order.clerkId ?? undefined,
+        idempotencyKey: `entity/order.created.v1:${order.id}:${Date.now()}`,
+      },
+    });
 
-    return createdResponse(order);
+    try {
+      await cartService.clearCart(body.sessionId, guard.auth.userId);
+    } catch (cartError) {
+      // Compensation pattern: if cart clear fails, rollback the order
+      await orderService.softDelete(order.id);
+      throw cartError;
+    }
+
+    return createdDataResponse(order);
   } catch (error) {
     return handleError(error, "Create order");
   }

@@ -1,13 +1,22 @@
-import { Prisma } from "@/generated/prisma/client";
 import {
-  handlePrismaError,
   ForbiddenError,
+  handlePrismaError,
   InsufficientStockError,
   NotFoundError,
+  ValidationError,
 } from "@/lib/errors";
 import prisma from "@/lib/prisma";
 
 export class CartService {
+  private validateCartOwnership(
+    cartClerkId: string | null,
+    requestClerkId?: string,
+  ): void {
+    if (requestClerkId && cartClerkId && cartClerkId !== requestClerkId) {
+      throw new ForbiddenError("You do not have access to this cart");
+    }
+  }
+
   async getCart(sessionId: string, clerkId?: string) {
     try {
       let cart = await prisma.cart.findUnique({
@@ -24,9 +33,7 @@ export class CartService {
         },
       });
 
-      if (cart && clerkId && cart.clerkId && cart.clerkId !== clerkId) {
-        throw new ForbiddenError("You do not have access to this cart");
-      }
+      if (cart) this.validateCartOwnership(cart.clerkId, clerkId);
 
       if (cart && clerkId && !cart.clerkId) {
         cart = await prisma.cart.update({
@@ -63,7 +70,7 @@ export class CartService {
 
       return cart;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -91,9 +98,7 @@ export class CartService {
         },
       });
 
-      if (cart && clerkId && cart.clerkId && cart.clerkId !== clerkId) {
-        throw new ForbiddenError("You do not have access to this cart");
-      }
+      if (cart) this.validateCartOwnership(cart.clerkId, clerkId);
 
       if (cart && clerkId && !cart.clerkId) {
         cart = await prisma.cart.update({
@@ -146,7 +151,7 @@ export class CartService {
 
       return cart;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -158,27 +163,18 @@ export class CartService {
   ) {
     try {
       if (quantity <= 0) {
-        throw new Error("Quantity must be positive");
-      }
-
-      const variant = await prisma.productVariant.findUnique({
-        where: { id: variantId },
-        select: {
-          stock: true,
-          isActive: true,
-          product: { select: { isActive: true } },
-        },
-      });
-
-      if (!variant) {
-        throw new NotFoundError("Product variant", variantId);
-      }
-
-      if (!variant.isActive || !variant.product.isActive) {
-        throw new Error("This product variant is not available");
+        throw new ValidationError("Quantity must be positive");
       }
 
       const result = await prisma.$transaction(async (tx) => {
+        // Serialize add-to-cart operations per-variant to avoid overselling under concurrency.
+        await tx.$queryRaw`
+          SELECT id
+          FROM "product_variants"
+          WHERE id = ${variantId}
+          FOR UPDATE
+        `;
+
         let cart = await tx.cart.findUnique({
           where: { sessionId },
           select: { id: true, clerkId: true },
@@ -191,9 +187,7 @@ export class CartService {
           });
         }
 
-        if (clerkId && cart.clerkId && cart.clerkId !== clerkId) {
-          throw new ForbiddenError("You do not have access to this cart");
-        }
+        this.validateCartOwnership(cart.clerkId, clerkId);
 
         if (clerkId && !cart.clerkId) {
           cart = await tx.cart.update({
@@ -201,6 +195,23 @@ export class CartService {
             data: { clerkId },
             select: { id: true, clerkId: true },
           });
+        }
+
+        const variant = await tx.productVariant.findUnique({
+          where: { id: variantId },
+          select: {
+            stock: true,
+            isActive: true,
+            product: { select: { isActive: true } },
+          },
+        });
+
+        if (!variant) {
+          throw new NotFoundError("Product variant", variantId);
+        }
+
+        if (!variant.isActive || !variant.product.isActive) {
+          throw new ValidationError("This product variant is not available");
         }
 
         const existingItem = await tx.cartItem.findUnique({
@@ -254,53 +265,65 @@ export class CartService {
 
       return result;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
   async updateItem(itemId: string, quantity: number, clerkId?: string) {
     try {
       if (quantity <= 0) {
-        return this.removeItem(itemId, clerkId);
+        return await this.removeItem(itemId, clerkId);
       }
 
-      const item = await prisma.cartItem.findUnique({
-        where: { id: itemId },
-        include: {
-          cart: { select: { clerkId: true } },
-          productVariant: {
-            select: { stock: true, id: true },
+      return await prisma.$transaction(async (tx) => {
+        const item = await tx.cartItem.findUnique({
+          where: { id: itemId },
+          include: {
+            cart: { select: { clerkId: true } },
+            productVariant: {
+              select: { stock: true, id: true },
+            },
           },
-        },
-      });
+        });
 
-      if (!item) {
-        throw new NotFoundError("Cart item", itemId);
-      }
+        if (!item) {
+          throw new NotFoundError("Cart item", itemId);
+        }
 
-      if (clerkId && item.cart.clerkId !== clerkId) {
-        throw new ForbiddenError("You do not have access to this cart");
-      }
+        this.validateCartOwnership(item.cart.clerkId, clerkId);
 
-      if (item.productVariant.stock < quantity) {
-        throw new InsufficientStockError(item.productVariant.stock, quantity);
-      }
+        // Lock the variant row to prevent race conditions
+        await tx.$queryRaw`
+          SELECT id FROM "product_variants"
+          WHERE id = ${item.productVariant.id}
+          FOR UPDATE
+        `;
 
-      return prisma.cartItem.update({
-        where: { id: itemId },
-        data: { quantity },
-        include: {
-          productVariant: {
-            include: {
-              product: {
-                select: { name: true, price: true, thumbnailUrl: true },
+        const variant = await tx.productVariant.findUnique({
+          where: { id: item.productVariant.id },
+          select: { stock: true },
+        });
+
+        if (!variant || variant.stock < quantity) {
+          throw new InsufficientStockError(variant?.stock ?? 0, quantity);
+        }
+
+        return tx.cartItem.update({
+          where: { id: itemId },
+          data: { quantity },
+          include: {
+            productVariant: {
+              include: {
+                product: {
+                  select: { name: true, price: true, thumbnailUrl: true },
+                },
               },
             },
           },
-        },
+        });
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -316,9 +339,7 @@ export class CartService {
           throw new NotFoundError("Cart item", itemId);
         }
 
-        if (item.cart.clerkId !== clerkId) {
-          throw new ForbiddenError("You do not have access to this cart");
-        }
+        this.validateCartOwnership(item.cart.clerkId, clerkId);
       }
 
       const item = await prisma.cartItem.delete({
@@ -327,7 +348,7 @@ export class CartService {
 
       return item;
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -340,15 +361,13 @@ export class CartService {
 
       if (!cart) return;
 
-      if (clerkId && cart.clerkId && cart.clerkId !== clerkId) {
-        throw new ForbiddenError("You do not have access to this cart");
-      }
+      this.validateCartOwnership(cart.clerkId, clerkId);
 
       return prisma.cartItem.deleteMany({
         where: { cartId: cart.id },
       });
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 
@@ -385,7 +404,7 @@ export class CartService {
         itemCount,
       };
     } catch (error) {
-      handlePrismaError(error);
+      return handlePrismaError(error);
     }
   }
 }

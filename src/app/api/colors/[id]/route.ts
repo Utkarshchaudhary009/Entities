@@ -1,47 +1,44 @@
-import { colorService } from "@/services/color.service";
-import { updateColorSchema } from "@/lib/validations/color";
+import { idParamSchema } from "@/lib/api/query-schemas";
+import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
-import { handleError, successResponse } from "@/lib/api/response";
+import { updateColorSchema } from "@/lib/validations/color";
+import { colorService } from "@/services/color.service";
+import type { RouteParamsAsync } from "@/types/api";
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, { params }: RouteParamsAsync) {
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const color = await colorService.findById(id);
-    return successResponse(color);
+    return successDataResponse(color);
   } catch (error) {
     return handleError(error, "Fetch color");
   }
 }
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export async function PUT(request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     const json = await request.json();
     const body = updateColorSchema.parse(json);
     const color = await colorService.update(id, body);
-    return successResponse(color);
+    return successDataResponse(color);
   } catch (error) {
     return handleError(error, "Update color");
   }
 }
 
-export async function DELETE(_request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
   const guard = await requireAdmin();
   if (!guard.success) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = idParamSchema.parse(await params);
     await colorService.delete(id);
-    return successResponse({ success: true });
+    return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete color");
   }
 }
-

@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 
 export function generateSecureId(prefix: string, length = 8): string {
   const bytes = randomBytes(length);

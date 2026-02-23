@@ -16,7 +16,7 @@
 
 ## Project Structure
 - **CLI tools**: Vercel CLI & GitHub CLI globally installed and logged in.
-- **App Router**: `src/app/` (route groups `(auth)`, `(jules)`, `api/`); `page.tsx`/`layout.tsx` per segment.
+- **App Router**: `src/app/` (route groups `api/`); `page.tsx`/`layout.tsx` per segment.
 - **Shared code**: UI → `src/components/`, utils → `src/lib/`, state → `src/stores/`, types → `src/types/`.
 - **Other**: styles → `src/app/globals.css`, assets → `public/`, DB → `prisma/schema.prisma`, docs →  `D:\code\Docs\`.
 
@@ -24,7 +24,10 @@
 - `bun logs:deployment` — inspect latest Vercel deploy (streams logs on failure, summary on success).
 - **Never run locally** (PC too weak): `bun dev|build|start|lint|format|format:check|type-check`.
 
-## Coding Style
+## Coding Pratices
+- Add meaning error log full help in debugging. Copywritted error for user
+- consistence API response
+- It must and stricty USE SOLID principles, No Dublicate Logic
 - Follow Next.js App Router conventions; use `proxy.ts` instead of deprecated `middleware.ts`.
 - **File Conventions (MUST USE where possible)**:
   - `page.tsx`: Route UI
@@ -47,6 +50,16 @@
 - **Tailwind CSS v4**: Use `@import "tw-animate-css";` in `globals.css` (instead of `tailwindcss-animate` plugin).
 - **All errors (type & lint) must be fixed** — never skip or ignore.
 
+## Core UX & Performance (Store-to-UI Layer)
+- **Architecture Flow**: `DB -> Service -> API -> Store -> UI`. The UI **never** talks to the API directly.
+- **Store-Driven Optimistic UI**: Zustand store immediately updates the UI with a temporary state before calling the API (or triggering Inngest). Revert silently on failure, notifying via a toast.
+- **Granular Loading States**: UI avoids global loaders; binds precisely to store-managed granular states (e.g., `isAddingBrand`, `deletingId`) to trigger `tw-animate-css` skeletons/spinners.
+- **Store-Mediated Prefetching**: UI components trigger store prefetch actions on hover/focus to hydrate cache before user click.
+- **Micro-interactions**: Every UI action requires instant visual feedback (< 100ms) like `active:scale-95`, strictly synced to the store's synchronous actions.
+- **Skeletons & Reveals:** Use `tw-animate-css` (`animate-pulse`, `animate-fade-in-up`) for exactly-sized `<Skeleton>` layouts during loading.
+- **Intent Prefetching:** Prefetch heavily on Hover/Focus (e.g., hovering a data table row prefetches the detail page).
+- **Streaming:** Use React `<Suspense>` to unblock critical UI.
+
 ## Commit & PR Guidelines
 - Always branch for new work.
 - After passing Compliance Checklist, ask: "Should I create a pull request?" Then commit + open a detailed PR (summary, key changes, test results, UI screenshots).
@@ -59,8 +72,10 @@
 
 ## Compliance Checklist
 Before submitting:
+- [ ]  Coding Pratices are strictly followed.
 - [ ] `.env.example` up to date for new keys
 - [ ] All logger/console calls use static strings
-- [ ] No sensitive data in error messages or server logs
+- [ ] No sensitive data in error messages or server logs but meaning that can help's debugging.  
 - [ ] UI tested — no data leakage
-- [ ] Per changed file: `bun --bun eslint {filepath}` & `bun --bun tsc {filepath}` (never project-wide)
+- [ ] Per changed file: `bun --bun biome check{filepath}` & `bun --bun tsc {filepath}` (never project-wide)
+- [ ] UX Verified — Store-driven optimistic updates used, UI isolated from API, instant micro-interactions present.

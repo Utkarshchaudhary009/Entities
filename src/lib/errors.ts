@@ -142,7 +142,8 @@ export function handlePrismaError(error: unknown): never {
 }
 
 /**
- * Wrapper to handle async operations with Prisma error transformation
+ * Wrapper to handle async operations with Prisma error transformation.
+ * Use this to ensure proper return types (T instead of T | undefined).
  */
 export async function withErrorHandling<T>(
   operation: () => Promise<T>,
@@ -150,7 +151,18 @@ export async function withErrorHandling<T>(
   try {
     return await operation();
   } catch (error) {
-    handlePrismaError(error);
+    return handlePrismaError(error);
+  }
+}
+
+/**
+ * Sync version for wrapping operations
+ */
+export function withErrorHandlingSync<T>(operation: () => T): T {
+  try {
+    return operation();
+  } catch (error) {
+    return handlePrismaError(error);
   }
 }
 
