@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
+mock.restore();
+
 // --- MOCK SETUP ---
 const mockPrisma = {
   founder: {

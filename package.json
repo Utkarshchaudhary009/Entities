@@ -9,7 +9,7 @@
     "start": "bun --bun next start",
     "lint": "bun --bun biome check",
     "lint:fix": "bun --bun biome check . --write",
-    "test": "bun test tests/unit",
+    "test": "bun test tests/unit/api && bun test tests/unit/services && bun test tests/unit/stores && bun test tests/unit/lib",
     "test:integration": "bun test tests/integration",
     "type-check": "bun tsc --noEmit",
     "format": "bun --bun biome format . --write",

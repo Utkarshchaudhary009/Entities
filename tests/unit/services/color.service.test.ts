@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
+mock.restore();
+
 // --- MOCK SETUP ---
 const mockPrisma = {
   color: {
@@ -15,6 +17,11 @@ const mockPrisma = {
 mock.module("@/lib/prisma", () => ({
   default: mockPrisma,
 }));
+
+const realColorServiceModule = await import(
+  "../../../src/services/color.service"
+);
+mock.module("@/services/color.service", () => realColorServiceModule);
 
 const { colorService } = await import("@/services/color.service");
 

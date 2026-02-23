@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from "bun:test";
 
 // --- MOCK SETUP ---
 mock.module("@/lib/auth/guards", () => ({
@@ -20,6 +28,10 @@ mock.module("@/inngest/safe-send", () => ({
 const { GET, POST } = await import("@/app/api/brands/route");
 const { requireAdmin } = await import("@/lib/auth/guards");
 const { brandService } = await import("@/services/brand.service");
+
+afterAll(() => {
+  mock.restore();
+});
 
 describe("API: Brands", () => {
   beforeEach(() => {

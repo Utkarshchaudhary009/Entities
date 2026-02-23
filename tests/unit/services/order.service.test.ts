@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+
+mock.restore();
+
 import { OrderService } from "@/services/order.service";
 
 // --- MOCK SETUP ---
@@ -20,6 +23,11 @@ mock.module("@/lib/prisma", () => ({
 }));
 
 // Re-import the service AFTER mocking to ensure it uses the mock
+const realOrderServiceModule = await import(
+  "../../../src/services/order.service"
+);
+mock.module("@/services/order.service", () => realOrderServiceModule);
+
 const { orderService } = await import("@/services/order.service");
 
 // --- TESTS ---

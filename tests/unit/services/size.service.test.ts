@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
+mock.restore();
+
 // --- MOCK SETUP ---
 const mockPrisma = {
   size: {
@@ -15,6 +17,11 @@ const mockPrisma = {
 mock.module("@/lib/prisma", () => ({
   default: mockPrisma,
 }));
+
+const realSizeServiceModule = await import(
+  "../../../src/services/size.service"
+);
+mock.module("@/services/size.service", () => realSizeServiceModule);
 
 const { sizeService } = await import("@/services/size.service");
 
