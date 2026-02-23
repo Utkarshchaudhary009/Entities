@@ -36,7 +36,8 @@ describe("ProductService Integration", () => {
       });
       expect(true).toBe(false);
     } catch (e: any) {
-      expect(e.code).toBe("P2002"); // Prisma Unique Constraint Violation
+      expect(e.name).toBe("ConflictError");
+      expect(e.code).toBe("CONFLICT");
     }
   });
 });
