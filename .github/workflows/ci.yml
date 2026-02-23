@@ -28,8 +28,7 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: "postgresql://postgres:password@127.0.0.1:5432/test_db?schema=public"
-      DIRECT_URL: "postgresql://postgres:password@127.0.0.1:5432/test_db?schema=public"
+      SUPABASE_POSTGRES_URL_NON_POOLING: "postgresql://postgres:password@127.0.0.1:5432/test_db?schema=public"
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_mock"
       CLERK_SECRET_KEY: "sk_test_mock"
       NEXT_PUBLIC_SUPABASE_URL: "https://mock.supabase.co"
@@ -54,7 +53,7 @@ jobs:
         run: bun prisma generate
 
       - name: Push Schema to Test DB
-        run: bun prisma db push --accept-data-loss
+        run: bun prisma db push
 
       - name: Lint & Format Check
         run: |
