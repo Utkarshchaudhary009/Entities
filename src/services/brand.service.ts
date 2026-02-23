@@ -89,7 +89,7 @@ export class BrandService {
     }
   }
 
-  async create(data: Prisma.BrandCreateInput) {
+  async create(data: Prisma.BrandUncheckedCreateInput) {
     try {
       return await prisma.brand.create({
         data,
@@ -99,7 +99,7 @@ export class BrandService {
     }
   }
 
-  async update(id: string, data: Prisma.BrandUpdateInput) {
+  async update(id: string, data: Prisma.BrandUncheckedUpdateInput) {
     try {
       return await prisma.brand.update({
         where: { id },

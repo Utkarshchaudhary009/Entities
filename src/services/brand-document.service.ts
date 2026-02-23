@@ -62,7 +62,7 @@ export class BrandDocumentService {
     }
   }
 
-  async create(data: Prisma.BrandDocumentCreateInput) {
+  async create(data: Prisma.BrandDocumentUncheckedCreateInput) {
     try {
       return await prisma.brandDocument.create({
         data,
@@ -72,7 +72,7 @@ export class BrandDocumentService {
     }
   }
 
-  async update(id: string, data: Prisma.BrandDocumentUpdateInput) {
+  async update(id: string, data: Prisma.BrandDocumentUncheckedUpdateInput) {
     try {
       return await prisma.brandDocument.update({
         where: { id },

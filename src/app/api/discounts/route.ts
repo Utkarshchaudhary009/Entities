@@ -1,3 +1,4 @@
+import type { DiscountType } from "@/generated/prisma/client";
 import { paginationSchema, parseSearchParams } from "@/lib/api/query-schemas";
 import {
   cachedPaginatedResponse,
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
     const body = createDiscountSchema.parse(json);
     const discount = await discountService.create({
       ...body,
+      discountType: body.discountType as DiscountType,
       startsAt: body.startsAt ? new Date(body.startsAt) : null,
       expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
     });

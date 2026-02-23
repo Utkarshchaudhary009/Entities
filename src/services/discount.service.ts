@@ -47,7 +47,7 @@ export class DiscountService {
     }
   }
 
-  async create(data: Prisma.DiscountCreateInput) {
+  async create(data: Prisma.DiscountUncheckedCreateInput) {
     try {
       return await prisma.discount.create({ data });
     } catch (error) {
@@ -55,7 +55,7 @@ export class DiscountService {
     }
   }
 
-  async update(id: string, data: Prisma.DiscountUpdateInput) {
+  async update(id: string, data: Prisma.DiscountUncheckedUpdateInput) {
     try {
       return await prisma.discount.update({ where: { id }, data });
     } catch (error) {

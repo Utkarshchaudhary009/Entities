@@ -1,3 +1,4 @@
+import type { DiscountType } from "@/generated/prisma/client";
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -25,6 +26,9 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
     const body = updateDiscountSchema.parse(json);
     const discount = await discountService.update(id, {
       ...body,
+      ...(body.discountType && {
+        discountType: body.discountType as DiscountType,
+      }),
       ...(body.startsAt !== undefined && {
         startsAt: body.startsAt ? new Date(body.startsAt) : null,
       }),
