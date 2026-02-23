@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { productService } from "@/services/product.service";
-import { updateProductSchema } from "@/lib/validations/product";
 import { z } from "zod";
+import { updateProductSchema } from "@/lib/validations/product";
+import { productService } from "@/services/product.service";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const product = await productService.findById(id);
@@ -13,11 +16,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json(product);
   } catch (error) {
     console.error("Error fetching product:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const json = await request.json();
@@ -29,17 +38,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error("Error updating product:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     await productService.delete(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting product:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

@@ -1,7 +1,9 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import { createClient } from "@supabase/supabase-js";
 
+// biome-ignore lint/style/noNonNullAssertion: Test setup
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+// biome-ignore lint/style/noNonNullAssertion: Test setup
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -31,6 +33,7 @@ describe("Database CRUD Tests", () => {
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
       expect(data?.label).toBe("TEST-M");
+      // biome-ignore lint/style/noNonNullAssertion: Test data
       testSizeId = data!.id;
     });
 
@@ -79,6 +82,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
+      // biome-ignore lint/style/noNonNullAssertion: Test data
       testColorId = data!.id;
     });
 
@@ -115,6 +119,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
+      // biome-ignore lint/style/noNonNullAssertion: Test data
       testCategoryId = data!.id;
     });
 
@@ -158,6 +163,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
+      // biome-ignore lint/style/noNonNullAssertion: Test data
       testProductId = data!.id;
     });
 
@@ -200,6 +206,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
+      // biome-ignore lint/style/noNonNullAssertion: Test data
       testVariantId = data!.id;
     });
 
@@ -238,6 +245,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
+      // biome-ignore lint/style/noNonNullAssertion: Test data
       testCartId = data!.id;
     });
 
@@ -303,6 +311,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
+      // biome-ignore lint/style/noNonNullAssertion: Test data
       testOrderId = data!.id;
     });
 
@@ -378,6 +387,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
+      // biome-ignore lint/style/noNonNullAssertion: Test data
       testDiscountId = data!.id;
     });
 

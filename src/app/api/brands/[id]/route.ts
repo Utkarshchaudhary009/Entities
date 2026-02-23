@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { brandService } from "@/services/brand.service";
-import { updateBrandSchema } from "@/lib/validations/brand";
 import { z } from "zod";
+import { updateBrandSchema } from "@/lib/validations/brand";
+import { brandService } from "@/services/brand.service";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const brand = await brandService.findById(id);
@@ -13,11 +16,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json(brand);
   } catch (error) {
     console.error("Error fetching brand:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const json = await request.json();
@@ -29,17 +38,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error("Error updating brand:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     await brandService.delete(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting brand:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

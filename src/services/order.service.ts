@@ -1,12 +1,8 @@
+import type { Prisma } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
 
 export class OrderService {
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    status?: string;
-  }) {
+  async findAll(params: { page?: number; limit?: number; status?: string }) {
     const { page = 1, limit = 20, status } = params;
     const skip = (page - 1) * limit;
 
@@ -21,8 +17,8 @@ export class OrderService {
         take: limit,
         orderBy: { createdAt: "desc" },
         include: {
-            items: true
-        }
+          items: true,
+        },
       }),
       prisma.order.count({ where }),
     ]);
@@ -42,7 +38,7 @@ export class OrderService {
     return prisma.order.findUnique({
       where: { id },
       include: {
-        items: true
+        items: true,
       },
     });
   }
@@ -50,7 +46,7 @@ export class OrderService {
   async create(data: Prisma.OrderCreateInput) {
     return prisma.order.create({
       data,
-      include: { items: true }
+      include: { items: true },
     });
   }
 }

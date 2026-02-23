@@ -1,12 +1,8 @@
+import type { Prisma } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
 
 export class CategoryService {
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  }) {
+  async findAll(params: { page?: number; limit?: number; search?: string }) {
     const { page = 1, limit = 20, search } = params;
     const skip = (page - 1) * limit;
 
@@ -43,16 +39,16 @@ export class CategoryService {
       where: { id },
       include: {
         products: {
-            take: 5,
-            select: {
-                id: true,
-                name: true,
-                slug: true,
-                price: true,
-                thumbnailUrl: true
-            }
-        }
-      }
+          take: 5,
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            price: true,
+            thumbnailUrl: true,
+          },
+        },
+      },
     });
   }
 

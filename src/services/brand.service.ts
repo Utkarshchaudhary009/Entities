@@ -1,12 +1,8 @@
+import type { Prisma } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
 
 export class BrandService {
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  }) {
+  async findAll(params: { page?: number; limit?: number; search?: string }) {
     const { page = 1, limit = 20, search } = params;
     const skip = (page - 1) * limit;
 
@@ -30,24 +26,24 @@ export class BrandService {
             select: {
               id: true,
               name: true,
-              thumbnailUrl: true
-            }
+              thumbnailUrl: true,
+            },
           },
           documents: {
             where: { isActive: true },
             select: {
               id: true,
-              type: true
-            }
+              type: true,
+            },
           },
           socialLinks: {
             where: { isActive: true },
             select: {
               id: true,
               platform: true,
-              url: true
-            }
-          }
+              url: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       }),
@@ -71,7 +67,7 @@ export class BrandService {
       include: {
         founder: true,
         documents: { where: { isActive: true } },
-        socialLinks: { where: { isActive: true } }
+        socialLinks: { where: { isActive: true } },
       },
     });
   }

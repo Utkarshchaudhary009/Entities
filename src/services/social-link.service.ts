@@ -1,5 +1,5 @@
+import type { Prisma } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
 
 export class SocialLinkService {
   async findAll(params: {
@@ -16,7 +16,9 @@ export class SocialLinkService {
       isActive: true,
       ...(brandId && { brandId }),
       ...(founderId && { founderId }),
-      ...(platform && { platform: { contains: platform, mode: "insensitive" } }),
+      ...(platform && {
+        platform: { contains: platform, mode: "insensitive" },
+      }),
     };
 
     const [data, total] = await Promise.all([

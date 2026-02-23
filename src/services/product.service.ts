@@ -1,5 +1,5 @@
+import type { Prisma } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
 
 export class ProductService {
   async findAll(params: {
@@ -72,22 +72,22 @@ export class ProductService {
       where: { id },
       include: {
         category: {
-            select: {
-                id: true,
-                name: true,
-                slug: true
-            }
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
         },
         variants: {
-            where: { isActive: true },
-            select: {
-                id: true,
-                size: true,
-                color: true,
-                stock: true,
-                sku: true
-            }
-        }
+          where: { isActive: true },
+          select: {
+            id: true,
+            size: true,
+            color: true,
+            stock: true,
+            sku: true,
+          },
+        },
       },
     });
   }
