@@ -7,10 +7,9 @@ export function createClerkSupabaseClient() {
   if (!supabaseUrl || !supabaseKey) {
     throw new Error("Missing Supabase environment variables");
   }
-  return createClient(supabaseUrl, supabaseKey,
-    {
-      async accessToken() {
-        return (await (await auth()).getToken());
-      }
-    });
+  return createClient(supabaseUrl, supabaseKey, {
+    async accessToken() {
+      return await (await auth()).getToken();
+    },
+  });
 }

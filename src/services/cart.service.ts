@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
 
 export class CartService {
   async getCart(sessionId: string) {
@@ -14,13 +13,13 @@ export class CartService {
                   select: {
                     name: true,
                     price: true,
-                    thumbnailUrl: true
-                  }
-                }
-              }
-            }
+                    thumbnailUrl: true,
+                  },
+                },
+              },
+            },
           },
-          orderBy: { createdAt: "desc" }
+          orderBy: { createdAt: "desc" },
         },
       },
     });
@@ -29,21 +28,21 @@ export class CartService {
       cart = await prisma.cart.create({
         data: { sessionId },
         include: {
-            items: {
+          items: {
+            include: {
+              productVariant: {
                 include: {
-                    productVariant: {
-                        include: {
-                            product: {
-                                select: {
-                                    name: true,
-                                    price: true,
-                                    thumbnailUrl: true
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                  product: {
+                    select: {
+                      name: true,
+                      price: true,
+                      thumbnailUrl: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
     }
@@ -53,15 +52,15 @@ export class CartService {
 
   async addItem(sessionId: string, variantId: string, quantity: number) {
     let cart = await prisma.cart.findUnique({
-        where: { sessionId },
-        select: { id: true }
+      where: { sessionId },
+      select: { id: true },
     });
 
     if (!cart) {
-        cart = await prisma.cart.create({
-            data: { sessionId },
-            select: { id: true }
-        });
+      cart = await prisma.cart.create({
+        data: { sessionId },
+        select: { id: true },
+      });
     }
 
     const existingItem = await prisma.cartItem.findUnique({
@@ -106,14 +105,14 @@ export class CartService {
   }
 
   async clearCart(sessionId: string) {
-     const cart = await prisma.cart.findUnique({
-        where: { sessionId },
-        select: { id: true }
+    const cart = await prisma.cart.findUnique({
+      where: { sessionId },
+      select: { id: true },
     });
     if (!cart) return;
 
     return prisma.cartItem.deleteMany({
-        where: { cartId: cart.id }
+      where: { cartId: cart.id },
     });
   }
 }

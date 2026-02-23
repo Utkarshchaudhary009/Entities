@@ -1,23 +1,35 @@
 import { NextResponse } from "next/server";
-import { categoryService } from "@/services/category.service";
-import { updateCategorySchema } from "@/lib/validations/category";
 import { z } from "zod";
+import { updateCategorySchema } from "@/lib/validations/category";
+import { categoryService } from "@/services/category.service";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const category = await categoryService.findById(id);
     if (!category) {
-      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 },
+      );
     }
     return NextResponse.json(category);
   } catch (error) {
     console.error("Error fetching category:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const json = await request.json();
@@ -29,17 +41,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error("Error updating category:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     await categoryService.delete(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting category:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

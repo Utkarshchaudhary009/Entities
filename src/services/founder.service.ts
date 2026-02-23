@@ -1,12 +1,8 @@
+import type { Prisma } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
 
 export class FounderService {
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  }) {
+  async findAll(params: { page?: number; limit?: number; search?: string }) {
     const { page = 1, limit = 20, search } = params;
     const skip = (page - 1) * limit;
 
@@ -23,22 +19,22 @@ export class FounderService {
         take: limit,
         orderBy: { createdAt: "desc" },
         include: {
-            brand: {
-                select: {
-                    id: true,
-                    name: true,
-                    logoUrl: true
-                }
+          brand: {
+            select: {
+              id: true,
+              name: true,
+              logoUrl: true,
             },
-            socialLinks: {
-                where: { isActive: true },
-                select: {
-                    id: true,
-                    platform: true,
-                    url: true
-                }
-            }
-        }
+          },
+          socialLinks: {
+            where: { isActive: true },
+            select: {
+              id: true,
+              platform: true,
+              url: true,
+            },
+          },
+        },
       }),
       prisma.founder.count({ where }),
     ]);
@@ -59,7 +55,7 @@ export class FounderService {
       where: { id },
       include: {
         brand: true,
-        socialLinks: { where: { isActive: true } }
+        socialLinks: { where: { isActive: true } },
       },
     });
   }

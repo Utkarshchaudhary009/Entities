@@ -1,0 +1,699 @@
+$ bun --bun biome check
+prisma.config.ts:12:22 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    10 │   },
+    11 │   datasource: {
+  > 12 │     url: process.env["SUPABASE_POSTGRES_URL_NON_POOLING"]
+       │                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    13 │   },
+    14 │ });
+
+  i Unsafe fix: Use a literal key instead.
+
+    10 10 │     },
+    11 11 │     datasource: {
+    12    │ - ····url:·process.env["SUPABASE_POSTGRES_URL_NON_POOLING"]
+       12 │ + ····url:·process.env.SUPABASE_POSTGRES_URL_NON_POOLING
+    13 13 │     },
+    14 14 │   });
+
+
+scripts/fetch-pr-review.ts:2:31 lint/style/useNodejsImportProtocol  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━
+
+  i A Node.js builtin module should be imported with the node: protocol.
+
+    1 │ #!/usr/bin/env bun
+  > 2 │ import { writeFileSync } from 'fs'
+      │                               ^^^^
+    3 │ import { $ } from 'bun'
+    4 │
+
+  i Using the node: protocol is more explicit and signals that the imported module belongs to Node.js.
+
+  i Unsafe fix: Add the node: protocol.
+
+      1   1 │   #!/usr/bin/env bun
+      2     │ - import·{·writeFileSync·}·from·'fs'
+          2 │ + import·{·writeFileSync·}·from·'node:fs'
+      3   3 │   import { $ } from 'bun'
+      4   4 │
+
+
+src/app/api/brand-documents/[id]/route.ts:6:27 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter is unused.
+
+    4 │ import { z } from "zod";
+    5 │
+  > 6 │ export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+      │                           ^^^^^^^
+    7 │   const { id } = await params;
+    8 │   try {
+
+  i Unused parameters might be the result of an incomplete refactoring.
+
+  i Unsafe fix: If this is intentional, prepend request with an underscore.
+
+     4  4 │   import { z } from "zod";
+     5  5 │
+     6    │ - export·async·function·GET(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+        6 │ + export·async·function·GET(_request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+     7  7 │     const { id } = await params;
+     8  8 │     try {
+
+
+src/app/api/brand-documents/[id]/route.ts:36:30 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter is unused.
+
+    34 │ }
+    35 │
+  > 36 │ export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+       │                              ^^^^^^^
+    37 │   const { id } = await params;
+    38 │   try {
+
+  i Unused parameters might be the result of an incomplete refactoring.
+
+  i Unsafe fix: If this is intentional, prepend request with an underscore.
+
+    34 34 │   }
+    35 35 │
+    36    │ - export·async·function·DELETE(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+       36 │ + export·async·function·DELETE(_request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+    37 37 │     const { id } = await params;
+    38 38 │     try {
+
+
+src/app/api/brand-documents/route.ts:30:10 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+
+    28 │         brand: { connect: { id: body.brandId } },
+    29 │         brandId: undefined // Remove brandId from root as we use connect
+  > 30 │     } as any);
+       │          ^^^
+    31 │     return NextResponse.json(brandDocument, { status: 201 });
+    32 │   } catch (error) {
+
+  i any disables many type checking rules. Its use should be avoided.
+
+
+src/app/api/brands/[id]/route.ts:6:27 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter is unused.
+
+    4 │ import { z } from "zod";
+    5 │
+  > 6 │ export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+      │                           ^^^^^^^
+    7 │   const { id } = await params;
+    8 │   try {
+
+  i Unused parameters might be the result of an incomplete refactoring.
+
+  i Unsafe fix: If this is intentional, prepend request with an underscore.
+
+     4  4 │   import { z } from "zod";
+     5  5 │
+     6    │ - export·async·function·GET(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+        6 │ + export·async·function·GET(_request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+     7  7 │     const { id } = await params;
+     8  8 │     try {
+
+
+src/app/api/brands/[id]/route.ts:36:30 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter is unused.
+
+    34 │ }
+    35 │
+  > 36 │ export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+       │                              ^^^^^^^
+    37 │   const { id } = await params;
+    38 │   try {
+
+  i Unused parameters might be the result of an incomplete refactoring.
+
+  i Unsafe fix: If this is intentional, prepend request with an underscore.
+
+    34 34 │   }
+    35 35 │
+    36    │ - export·async·function·DELETE(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+       36 │ + export·async·function·DELETE(_request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+    37 37 │     const { id } = await params;
+    38 38 │     try {
+
+
+src/app/api/brands/route.ts:33:10 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+
+    31 │         founder: { connect: { id: body.founderId } },
+    32 │         founderId: undefined // Remove founderId from root object as we use connect
+  > 33 │     } as any);
+       │          ^^^
+    34 │     return NextResponse.json(brand, { status: 201 });
+    35 │   } catch (error) {
+
+  i any disables many type checking rules. Its use should be avoided.
+
+
+package-tmp.json format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+    20 20 │     },
+    21 21 │     "lint-staged": {
+    22    │ - ····"*.{js,ts,jsx,tsx}":·[
+    23    │ - ······"bun·prettier·--write"
+    24    │ - ····],
+    25    │ - ····"*.{json,css,md}":·[
+    26    │ - ······"bun·prettier·--write"
+    27    │ - ····]
+       22 │ + ····"*.{js,ts,jsx,tsx}":·["bun·prettier·--write"],
+       23 │ + ····"*.{json,css,md}":·["bun·prettier·--write"]
+    28 24 │     },
+    29 25 │     "dependencies": {
+    ····· │
+    76 72 │       "typescript": "^5"
+    77 73 │     },
+    78    │ - ··"ignoreScripts":·[
+    79    │ - ····"sharp",
+    80    │ - ····"unrs-resolver"
+    81    │ - ··],
+    82    │ - ··"trustedDependencies":·[
+    83    │ - ····"sharp",
+    84    │ - ····"unrs-resolver"
+    85    │ - ··]
+    86    │ - }
+       74 │ + ··"ignoreScripts":·["sharp",·"unrs-resolver"],
+       75 │ + ··"trustedDependencies":·["sharp",·"unrs-resolver"]
+       76 │ + }
+       77 │ +
+
+
+prisma.config.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+    12 │ ····url:·process.env["SUPABASE_POSTGRES_URL_NON_POOLING"],
+       │                                                          +
+
+scripts/fetch-pr-review.ts:2:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+
+    1 │ #!/usr/bin/env bun
+  > 2 │ import { writeFileSync } from 'fs'
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    3 │ import { $ } from 'bun'
+    4 │
+
+  i Safe fix: Organize Imports (Biome)
+
+      1   1 │   #!/usr/bin/env bun
+      2     │ - import·{·writeFileSync·}·from·'fs'
+      3     │ - import·{·$·}·from·'bun'
+          2 │ + import·{·$·}·from·'bun'
+          3 │ + import·{·writeFileSync·}·from·'fs'
+      4   4 │
+      5   5 │   interface PRInfo {
+
+
+scripts/fetch-pr-review.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+      1   1 │   #!/usr/bin/env bun
+      2     │ - import·{·writeFileSync·}·from·'fs'
+      3     │ - import·{·$·}·from·'bun'
+          2 │ + import·{·writeFileSync·}·from·"fs";
+          3 │ + import·{·$·}·from·"bun";
+      4   4 │
+      5   5 │   interface PRInfo {
+      6     │ - ··number:·number
+      7     │ - ··title:·string
+      8     │ - ··url:·string
+      9     │ - ··author:·{·login:·string·}
+     10     │ - ··state:·string
+          6 │ + ··number:·number;
+          7 │ + ··title:·string;
+          8 │ + ··url:·string;
+          9 │ + ··author:·{·login:·string·};
+         10 │ + ··state:·string;
+     11  11 │   }
+     12  12 │
+     13  13 │   interface Review {
+     14     │ - ··id:·string,
+         14 │ + ··id:·string;
+     15  15 │     author: {
+     16     │ - ····login:·string
+     17     │ - ··},
+     18     │ - ··authorAssociation:·string,
+     19     │ - ··body:·string,
+     20     │ - ··submittedAt:·string,
+     21     │ - ··includesCreatedEdit:·boolean,
+     22     │ - ··reactionGroups:·[],
+     23     │ - ··state:·string,
+         16 │ + ····login:·string;
+         17 │ + ··};
+         18 │ + ··authorAssociation:·string;
+         19 │ + ··body:·string;
+         20 │ + ··submittedAt:·string;
+         21 │ + ··includesCreatedEdit:·boolean;
+         22 │ + ··reactionGroups:·[];
+         23 │ + ··state:·string;
+     24  24 │     commit: {
+     25     │ - ····oid:·string
+     26     │ - ··}
+         25 │ + ····oid:·string;
+         26 │ + ··};
+     27  27 │   }
+     28  28 │
+     29  29 │   async function getLatestPR(): Promise<PRInfo> {
+     30  30 │     const prs =
+     31     │ - ····await·$`gh·pr·list·--limit·1·--json·number,title,url,author,state`.json()
+     32     │ - ··return·prs[0]
+         31 │ + ····await·$`gh·pr·list·--limit·1·--json·number,title,url,author,state`.json();
+         32 │ + ··return·prs[0];
+     33  33 │   }
+     34  34 │
+     35  35 │   async function getPRReviews(prNumber: number): Promise<Review[]> {
+     36     │ - ··const·result·=·await·$`gh·pr·view·${prNumber}·--json·reviews`.json()
+     37     │ - ··return·result.reviews·||·[]
+         36 │ + ··const·result·=·await·$`gh·pr·view·${prNumber}·--json·reviews`.json();
+         37 │ + ··return·result.reviews·||·[];
+     38  38 │   }
+     39  39 │
+     40  40 │   function generateReviewMD(pr: PRInfo, reviews: Review[]): string {
+     41     │ - ··const·timestamp·=·new·Date().toISOString()
+     42     │ - ··const·lines:·string[]·=·[]
+         41 │ + ··const·timestamp·=·new·Date().toISOString();
+         42 │ + ··const·lines:·string[]·=·[];
+     43  43 │
+     44     │ - ··lines.push(`#·Code·Review:·PR·#${pr.number}`)
+     45     │ - ··lines.push('')
+     46     │ - ··lines.push(`**Title:**·${pr.title}`)
+     47     │ - ··lines.push(`**Author:**·${pr.author.login}`)
+     48     │ - ··lines.push(`**State:**·${pr.state}`)
+     49     │ - ··lines.push(`**URL:**·${pr.url}`)
+     50     │ - ··lines.push(`**Generated:**·${timestamp}`)
+     51     │ - ··lines.push('')
+     52     │ - ··lines.push('---')
+     53     │ - ··lines.push('')
+         44 │ + ··lines.push(`#·Code·Review:·PR·#${pr.number}`);
+         45 │ + ··lines.push("");
+         46 │ + ··lines.push(`**Title:**·${pr.title}`);
+         47 │ + ··lines.push(`**Author:**·${pr.author.login}`);
+         48 │ + ··lines.push(`**State:**·${pr.state}`);
+         49 │ + ··lines.push(`**URL:**·${pr.url}`);
+         50 │ + ··lines.push(`**Generated:**·${timestamp}`);
+         51 │ + ··lines.push("");
+         52 │ + ··lines.push("---");
+         53 │ + ··lines.push("");
+     54  54 │
+     55  55 │     const detailedReviews = reviews.filter(
+     56     │ - ····(r)·=>·r.body·&&·r.body.trim().length·>·0
+     57     │ - ··)
+         56 │ + ····(r)·=>·r.body·&&·r.body.trim().length·>·0,
+         57 │ + ··);
+     58  58 │
+     59  59 │     if (detailedReviews.length > 0) {
+     60     │ - ····lines.push('##·Reviews')
+     61     │ - ····lines.push('')
+         60 │ + ····lines.push("##·Reviews");
+         61 │ + ····lines.push("");
+     62  62 │
+     63  63 │       for (const review of detailedReviews) {
+     64     │ - ······const·reviewer·=·review.author?.login·||·'Bot'
+     65     │ - ······lines.push(`###·Review·by·${reviewer}`)
+     66     │ - ······lines.push('')
+         64 │ + ······const·reviewer·=·review.author?.login·||·"Bot";
+         65 │ + ······lines.push(`###·Review·by·${reviewer}`);
+         66 │ + ······lines.push("");
+     67  67 │
+     68     │ - ······const·body·=·review.body
+         68 │ + ······const·body·=·review.body;
+     69  69 │
+     70     │ - ······lines.push(body.trim())
+     71     │ - ······lines.push('')
+     72     │ - ······lines.push('---')
+     73     │ - ······lines.push('')
+         70 │ + ······lines.push(body.trim());
+         71 │ + ······lines.push("");
+         72 │ + ······lines.push("---");
+         73 │ + ······lines.push("");
+     74  74 │       }
+     75  75 │     }
+     76  76 │
+     77  77 │     if (detailedReviews.length === 0) {
+     78     │ - ····lines.push('##·No·Reviews·Found')
+     79     │ - ····lines.push('')
+     80     │ - ····lines.push('No·review·feedback·found·on·this·PR.')
+     81     │ - ····lines.push('')
+         78 │ + ····lines.push("##·No·Reviews·Found");
+         79 │ + ····lines.push("");
+         80 │ + ····lines.push("No·review·feedback·found·on·this·PR.");
+         81 │ + ····lines.push("");
+     82  82 │     }
+     83  83 │
+     84     │ - ··return·lines.join('\n')
+         84 │ + ··return·lines.join("\n");
+     85  85 │   }
+     86  86 │
+     87  87 │   async function main() {
+     88     │ - ··console.log('Fetching·latest·PR...')
+         88 │ + ··console.log("Fetching·latest·PR...");
+     89  89 │
+     90     │ - ··const·pr·=·await·getLatestPR()
+         90 │ + ··const·pr·=·await·getLatestPR();
+     91  91 │
+     92  92 │     if (!pr) {
+     93     │ - ····console.error('No·open·PRs·found')
+     94     │ - ····process.exit(1)
+         93 │ + ····console.error("No·open·PRs·found");
+         94 │ + ····process.exit(1);
+     95  95 │     }
+  25 more lines truncated
+
+
+src/app/api/brand-documents/[id]/route.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+
+  > 1 │ import { NextResponse } from "next/server";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { brandDocumentService } from "@/services/brand-document.service";
+    3 │ import { updateBrandDocumentSchema } from "@/lib/validations/brand-document";
+
+  i Safe fix: Organize Imports (Biome)
+
+     1  1 │   import { NextResponse } from "next/server";
+     2    │ - import·{·brandDocumentService·}·from·"@/services/brand-document.service";
+        2 │ + import·{·z·}·from·"zod";
+     3  3 │   import { updateBrandDocumentSchema } from "@/lib/validations/brand-document";
+     4    │ - import·{·z·}·from·"zod";
+        4 │ + import·{·brandDocumentService·}·from·"@/services/brand-document.service";
+     5  5 │
+     6  6 │   export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+
+
+src/app/api/brand-documents/[id]/route.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+     4  4 │   import { z } from "zod";
+     5  5 │
+     6    │ - export·async·function·GET(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+        6 │ + export·async·function·GET(
+        7 │ + ··request:·Request,
+        8 │ + ··{·params·}:·{·params:·Promise<{·id:·string·}>·},
+        9 │ + )·{
+     7 10 │     const { id } = await params;
+     8 11 │     try {
+     9 12 │       const brandDocument = await brandDocumentService.findById(id);
+    10 13 │       if (!brandDocument) {
+    11    │ - ······return·NextResponse.json({·error:·"Brand·document·not·found"·},·{·status:·404·});
+       14 │ + ······return·NextResponse.json(
+       15 │ + ········{·error:·"Brand·document·not·found"·},
+       16 │ + ········{·status:·404·},
+       17 │ + ······);
+    12 18 │       }
+    13 19 │       return NextResponse.json(brandDocument);
+    14 20 │     } catch (error) {
+    15 21 │       console.error("Error fetching brand document:", error);
+    16    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       22 │ + ····return·NextResponse.json(
+       23 │ + ······{·error:·"Internal·Server·Error"·},
+       24 │ + ······{·status:·500·},
+       25 │ + ····);
+    17 26 │     }
+    18 27 │   }
+    19 28 │
+    20    │ - export·async·function·PUT(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+       29 │ + export·async·function·PUT(
+       30 │ + ··request:·Request,
+       31 │ + ··{·params·}:·{·params:·Promise<{·id:·string·}>·},
+       32 │ + )·{
+    21 33 │     const { id } = await params;
+    22 34 │     try {
+    ····· │
+    30 42 │       }
+    31 43 │       console.error("Error updating brand document:", error);
+    32    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       44 │ + ····return·NextResponse.json(
+       45 │ + ······{·error:·"Internal·Server·Error"·},
+       46 │ + ······{·status:·500·},
+       47 │ + ····);
+    33 48 │     }
+    34 49 │   }
+    35 50 │
+    36    │ - export·async·function·DELETE(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+       51 │ + export·async·function·DELETE(
+       52 │ + ··request:·Request,
+       53 │ + ··{·params·}:·{·params:·Promise<{·id:·string·}>·},
+       54 │ + )·{
+    37 55 │     const { id } = await params;
+    38 56 │     try {
+    ····· │
+    41 59 │     } catch (error) {
+    42 60 │       console.error("Error deleting brand document:", error);
+    43    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       61 │ + ····return·NextResponse.json(
+       62 │ + ······{·error:·"Internal·Server·Error"·},
+       63 │ + ······{·status:·500·},
+       64 │ + ····);
+    44 65 │     }
+    45 66 │   }
+
+
+src/app/api/brand-documents/route.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+
+  > 1 │ import { NextResponse } from "next/server";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { brandDocumentService } from "@/services/brand-document.service";
+    3 │ import { createBrandDocumentSchema } from "@/lib/validations/brand-document";
+
+  i Safe fix: Organize Imports (Biome)
+
+     1  1 │   import { NextResponse } from "next/server";
+     2    │ - import·{·brandDocumentService·}·from·"@/services/brand-document.service";
+        2 │ + import·{·z·}·from·"zod";
+     3  3 │   import { createBrandDocumentSchema } from "@/lib/validations/brand-document";
+     4    │ - import·{·z·}·from·"zod";
+        4 │ + import·{·brandDocumentService·}·from·"@/services/brand-document.service";
+     5  5 │
+     6  6 │   export async function GET(request: Request) {
+
+
+src/app/api/brand-documents/route.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+    12 12 │
+    13 13 │     try {
+    14    │ - ····const·result·=·await·brandDocumentService.findAll({·page,·limit,·brandId,·type·});
+       14 │ + ····const·result·=·await·brandDocumentService.findAll({
+       15 │ + ······page,
+       16 │ + ······limit,
+       17 │ + ······brandId,
+       18 │ + ······type,
+       19 │ + ····});
+    15 20 │       return NextResponse.json(result);
+    16 21 │     } catch (error) {
+    17 22 │       console.error("Error fetching brand documents:", error);
+    18    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       23 │ + ····return·NextResponse.json(
+       24 │ + ······{·error:·"Internal·Server·Error"·},
+       25 │ + ······{·status:·500·},
+       26 │ + ····);
+    19 27 │     }
+    20 28 │   }
+    ····· │
+    25 33 │       const body = createBrandDocumentSchema.parse(json);
+    26 34 │       const brandDocument = await brandDocumentService.create({
+    27    │ - ········...body,
+    28    │ - ········brand:·{·connect:·{·id:·body.brandId·}·},
+    29    │ - ········brandId:·undefined·//·Remove·brandId·from·root·as·we·use·connect
+       35 │ + ······...body,
+       36 │ + ······brand:·{·connect:·{·id:·body.brandId·}·},
+       37 │ + ······brandId:·undefined,·//·Remove·brandId·from·root·as·we·use·connect
+    30 38 │       } as any);
+    31 39 │       return NextResponse.json(brandDocument, { status: 201 });
+    ····· │
+    35 43 │       }
+    36 44 │       console.error("Error creating brand document:", error);
+    37    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       45 │ + ····return·NextResponse.json(
+       46 │ + ······{·error:·"Internal·Server·Error"·},
+       47 │ + ······{·status:·500·},
+       48 │ + ····);
+    38 49 │     }
+    39 50 │   }
+
+
+src/app/api/brands/[id]/route.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+
+  > 1 │ import { NextResponse } from "next/server";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { brandService } from "@/services/brand.service";
+    3 │ import { updateBrandSchema } from "@/lib/validations/brand";
+
+  i Safe fix: Organize Imports (Biome)
+
+     1  1 │   import { NextResponse } from "next/server";
+     2    │ - import·{·brandService·}·from·"@/services/brand.service";
+        2 │ + import·{·z·}·from·"zod";
+     3  3 │   import { updateBrandSchema } from "@/lib/validations/brand";
+     4    │ - import·{·z·}·from·"zod";
+        4 │ + import·{·brandService·}·from·"@/services/brand.service";
+     5  5 │
+     6  6 │   export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+
+
+src/app/api/brands/[id]/route.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+     4  4 │   import { z } from "zod";
+     5  5 │
+     6    │ - export·async·function·GET(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+        6 │ + export·async·function·GET(
+        7 │ + ··request:·Request,
+        8 │ + ··{·params·}:·{·params:·Promise<{·id:·string·}>·},
+        9 │ + )·{
+     7 10 │     const { id } = await params;
+     8 11 │     try {
+    ····· │
+    14 17 │     } catch (error) {
+    15 18 │       console.error("Error fetching brand:", error);
+    16    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       19 │ + ····return·NextResponse.json(
+       20 │ + ······{·error:·"Internal·Server·Error"·},
+       21 │ + ······{·status:·500·},
+       22 │ + ····);
+    17 23 │     }
+    18 24 │   }
+    19 25 │
+    20    │ - export·async·function·PUT(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+       26 │ + export·async·function·PUT(
+       27 │ + ··request:·Request,
+       28 │ + ··{·params·}:·{·params:·Promise<{·id:·string·}>·},
+       29 │ + )·{
+    21 30 │     const { id } = await params;
+    22 31 │     try {
+    ····· │
+    30 39 │       }
+    31 40 │       console.error("Error updating brand:", error);
+    32    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       41 │ + ····return·NextResponse.json(
+       42 │ + ······{·error:·"Internal·Server·Error"·},
+       43 │ + ······{·status:·500·},
+       44 │ + ····);
+    33 45 │     }
+    34 46 │   }
+    35 47 │
+    36    │ - export·async·function·DELETE(request:·Request,·{·params·}:·{·params:·Promise<{·id:·string·}>·})·{
+       48 │ + export·async·function·DELETE(
+       49 │ + ··request:·Request,
+       50 │ + ··{·params·}:·{·params:·Promise<{·id:·string·}>·},
+       51 │ + )·{
+    37 52 │     const { id } = await params;
+    38 53 │     try {
+    ····· │
+    41 56 │     } catch (error) {
+    42 57 │       console.error("Error deleting brand:", error);
+    43    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       58 │ + ····return·NextResponse.json(
+       59 │ + ······{·error:·"Internal·Server·Error"·},
+       60 │ + ······{·status:·500·},
+       61 │ + ····);
+    44 62 │     }
+    45 63 │   }
+
+
+src/app/api/brands/route.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+
+  > 1 │ import { NextResponse } from "next/server";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { brandService } from "@/services/brand.service";
+    3 │ import { createBrandSchema } from "@/lib/validations/brand";
+
+  i Safe fix: Organize Imports (Biome)
+
+     1  1 │   import { NextResponse } from "next/server";
+     2    │ - import·{·brandService·}·from·"@/services/brand.service";
+        2 │ + import·{·z·}·from·"zod";
+     3  3 │   import { createBrandSchema } from "@/lib/validations/brand";
+     4    │ - import·{·z·}·from·"zod";
+        4 │ + import·{·brandService·}·from·"@/services/brand.service";
+     5  5 │
+     6  6 │   export async function GET(request: Request) {
+
+
+src/app/api/brands/route.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+    13 13 │       const result = await brandService.findAll({ page, limit, search });
+    14 14 │       return NextResponse.json(result, {
+    15    │ - ········headers:·{
+    16    │ - ············"Cache-Control":·"public,·s-maxage=300,·stale-while-revalidate=60"
+    17    │ - ········}
+       15 │ + ······headers:·{
+       16 │ + ········"Cache-Control":·"public,·s-maxage=300,·stale-while-revalidate=60",
+       17 │ + ······},
+    18 18 │       });
+    19 19 │     } catch (error) {
+    20 20 │       console.error("Error fetching brands:", error);
+    21    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       21 │ + ····return·NextResponse.json(
+       22 │ + ······{·error:·"Internal·Server·Error"·},
+       23 │ + ······{·status:·500·},
+       24 │ + ····);
+    22 25 │     }
+    23 26 │   }
+    ····· │
+    28 31 │       const body = createBrandSchema.parse(json);
+    29 32 │       const brand = await brandService.create({
+    30    │ - ········...body,
+    31    │ - ········founder:·{·connect:·{·id:·body.founderId·}·},
+    32    │ - ········founderId:·undefined·//·Remove·founderId·from·root·object·as·we·use·connect
+       33 │ + ······...body,
+       34 │ + ······founder:·{·connect:·{·id:·body.founderId·}·},
+       35 │ + ······founderId:·undefined,·//·Remove·founderId·from·root·object·as·we·use·connect
+    33 36 │       } as any);
+    34 37 │       return NextResponse.json(brand, { status: 201 });
+    ····· │
+    38 41 │       }
+    39 42 │       console.error("Error creating brand:", error);
+    40    │ - ····return·NextResponse.json({·error:·"Internal·Server·Error"·},·{·status:·500·});
+       43 │ + ····return·NextResponse.json(
+       44 │ + ······{·error:·"Internal·Server·Error"·},
+       45 │ + ······{·status:·500·},
+       46 │ + ····);
+    41 47 │     }
+    42 48 │   }
+
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 119.
+Checked 66 files in 53ms. No fixes applied.
+Found 91 errors.
+Found 46 warnings.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+
+
+error: "biome" exited with code 1
+error: script "lint" exited with code 1
