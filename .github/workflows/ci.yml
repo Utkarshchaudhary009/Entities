@@ -29,8 +29,8 @@ jobs:
 
     env:
       SUPABASE_POSTGRES_URL_NON_POOLING: "postgresql://postgres:password@127.0.0.1:5432/test_db?schema=public"
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_mock"
-      CLERK_SECRET_KEY: "sk_test_mock"
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
       NEXT_PUBLIC_SUPABASE_URL: "https://mock.supabase.co"
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "mock-key"
       INNGEST_EVENT_KEY: "mock-key"
