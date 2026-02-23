@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
+mock.restore();
+
 // --- MOCK SETUP ---
 const mockPrisma = {
   brand: {
@@ -18,6 +20,11 @@ mock.module("@/lib/prisma", () => ({
 }));
 
 // Re-import the service AFTER mocking
+const realBrandServiceModule = await import(
+  "../../../src/services/brand.service"
+);
+mock.module("@/services/brand.service", () => realBrandServiceModule);
+
 const { brandService } = await import("@/services/brand.service");
 
 // --- TESTS ---
