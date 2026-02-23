@@ -58,7 +58,7 @@ jobs:
       - name: Lint & Format Check
         run: |
           bun run lint
-          bun run format:check
+          bun run format
 
       - name: Type Check
         run: bun run type-check
