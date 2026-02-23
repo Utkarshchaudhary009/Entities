@@ -24,7 +24,7 @@ import {
   NotificationIcon,
   PaintBoardIcon,
   PlusSignIcon,
-  SearchIcon,
+  Search02Icon,
   SettingsIcon,
   ShieldIcon,
   SunIcon,
@@ -254,7 +254,10 @@ function FormExample() {
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                           <DropdownMenuItem>
-                            <HugeiconsIcon icon={SearchIcon} strokeWidth={2} />
+                            <HugeiconsIcon
+                              icon={Search02Icon}
+                              strokeWidth={2}
+                            />
                             Browse...
                           </DropdownMenuItem>
                         </DropdownMenuGroup>

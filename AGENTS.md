@@ -8,17 +8,6 @@
 ## Learnings
 - User values clear architectural explanations — professional tone, descriptive "what and why."
 
-## Before You Start
-- Don't read `README.md` by default — state why it's needed first, then use a subagent to summarize relevant parts.
-- Invoke skills once the task domain is clear.
-- Use subagents (with precise, scoped instructions) for docs, research, internet, or non-coding work.
-- Docs: Bun → `refrence/bun`, Vercel SDK → `D:\code\Docs\vercelsdk`, Jules API → `D:\code\Docs\jules`.
-
-## Project Structure
-- **CLI tools**: Vercel CLI & GitHub CLI globally installed and logged in.
-- **App Router**: `src/app/` (route groups `api/`); `page.tsx`/`layout.tsx` per segment.
-- **Shared code**: UI → `src/components/`, utils → `src/lib/`, state → `src/stores/`, types → `src/types/`.
-- **Other**: styles → `src/app/globals.css`, assets → `public/`, DB → `prisma/schema.prisma`, docs →  `D:\code\Docs\`.
 
 ## Commands (Bun only — never npm/pnpm)
 - `bun logs:deployment` — inspect latest Vercel deploy (streams logs on failure, summary on success).
@@ -27,6 +16,7 @@
 ## Coding Pratices
 - Add meaning error log full help in debugging. Copywritted error for user
 - consistence API response
+- use @hugeicons/core-free-icons and @hugeicons/react instead of lucide-react.
 - It must and stricty USE SOLID principles, No Dublicate Logic
 - Follow Next.js App Router conventions; use `proxy.ts` instead of deprecated `middleware.ts`.
 - **File Conventions (MUST USE where possible)**:
@@ -49,6 +39,15 @@
 - **shadcn/ui**: install via `bunx --bun shadcn@latest add <name>` — don't write manually. Existing components in `components/ui/`. [Docs](https://ui.shadcn.com/).
 - **Tailwind CSS v4**: Use `@import "tw-animate-css";` in `globals.css` (instead of `tailwindcss-animate` plugin).
 - **All errors (type & lint) must be fixed** — never skip or ignore.
+ **Full User**: Use `currentUser()` only when full profile needed (extra DB call). Prefer adding required fields to session claims/token via Clerk Dashboard → Sessions → Customize session token
+Session Token Customization (Clerk Dashboard → Sessions)
+Add custom claims instead of calling currentUser():
+{
+  "email": "{{user.primary_email_address}}",
+  "role": "{{user.public_metadata.role}}"
+}
+Then access in code: const { sessionClaims } = await auth()
+const userRole = sessionClaims?.role
 
 ## Core UX & Performance (Store-to-UI Layer)
 - **Architecture Flow**: `DB -> Service -> API -> Store -> UI`. The UI **never** talks to the API directly.

@@ -1,0 +1,84 @@
+name: Auto Update Docs (Kilo)
+
+on:
+  push:
+    branches: ["**"]
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-docs-kilo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update-docs:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      KILOCODE_MODEL: "z-ai/glm-5:free"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install Kilo CLI
+        run: |
+          bun add -g @kilocode/cli
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Build docs prompt from changed files
+        run: |
+          BEFORE_SHA="${{ github.event.before }}"
+          AFTER_SHA="${{ github.sha }}"
+
+          if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            CHANGED_FILES="$(git show --name-only --pretty='' "$AFTER_SHA")"
+          else
+            CHANGED_FILES="$(git diff --name-only "$BEFORE_SHA" "$AFTER_SHA")"
+          fi
+
+          {
+            echo "Update internal project documentation based on the latest code changes."
+            echo
+            echo "Rules:"
+            echo "- Only edit Markdown docs in docs/ and README.md."
+            echo "- Do not edit source code, configs, package files, tests, or workflows."
+            echo "- Keep docs concise, accurate, and implementation-focused."
+            echo "- If no documentation change is needed, make no edits."
+            echo
+            echo "Files changed in this push:"
+            echo "$CHANGED_FILES"
+          } > .kilo-docs-prompt.txt
+
+      - name: Run Kilo docs update
+        run: |
+          export KILOCODE_MODEL="${KILOCODE_MODEL:-kilo/auto}"
+          PROMPT="$(cat .kilo-docs-prompt.txt)"
+          kilo run --auto --model "$KILOCODE_MODEL" "$PROMPT"
+
+      - name: Commit and push docs updates
+        run: |
+          if [ -d docs ]; then
+            git add docs
+          fi
+          git add README.md || true
+
+          if git diff --cached --quiet; then
+            echo "No docs changes detected."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: auto-update docs with kilo [skip-docs]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

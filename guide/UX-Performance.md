@@ -80,7 +80,7 @@ export const useBrandStore = create<BrandStore>((set, get) => ({
 ```tsx
 // UI Layer - Reacting to granular store states
 import { useBrandStore } from '@/stores/ui-store'
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 
 const BrandRow = ({ brand }) => {
