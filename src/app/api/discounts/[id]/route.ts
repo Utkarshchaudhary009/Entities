@@ -23,18 +23,15 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
   try {
     const { id } = idParamSchema.parse(await params);
     const json = await request.json();
-    const body = updateDiscountSchema.parse(json);
+    const { discountType, startsAt, expiresAt, ...rest } =
+      updateDiscountSchema.parse(json);
     const discount = await discountService.update(id, {
-      ...body,
-      ...(body.discountType && {
-        discountType: body.discountType as DiscountType,
-      }),
-      ...(body.startsAt !== undefined && {
-        startsAt: body.startsAt ? new Date(body.startsAt) : null,
-      }),
-      ...(body.expiresAt !== undefined && {
-        expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
-      }),
+      ...rest,
+      ...(discountType && { discountType: discountType as DiscountType }),
+      ...(startsAt !== undefined &&
+        { startsAt: startsAt ? new Date(startsAt) : null }),
+      ...(expiresAt !== undefined &&
+        { expiresAt: expiresAt ? new Date(expiresAt) : null }),
     });
     return successDataResponse(discount);
   } catch (error) {

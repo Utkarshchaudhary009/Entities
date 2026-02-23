@@ -34,12 +34,13 @@ export async function POST(request: Request) {
 
   try {
     const json = await request.json();
-    const body = createDiscountSchema.parse(json);
+    const { discountType, startsAt, expiresAt, ...rest } =
+      createDiscountSchema.parse(json);
     const discount = await discountService.create({
-      ...body,
-      discountType: body.discountType as DiscountType,
-      startsAt: body.startsAt ? new Date(body.startsAt) : null,
-      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+      ...rest,
+      discountType: discountType as DiscountType,
+      startsAt: startsAt ? new Date(startsAt) : null,
+      expiresAt: expiresAt ? new Date(expiresAt) : null,
     });
     return createdDataResponse(discount);
   } catch (error) {
