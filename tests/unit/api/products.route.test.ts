@@ -34,7 +34,7 @@ describe("API: Products", () => {
 
       // ACT
       const response = await GET(new Request("http://localhost/api/products"));
-      
+
       // ASSERT
       expect(response.status).toBe(200);
     });

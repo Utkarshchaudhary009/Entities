@@ -19,7 +19,7 @@ mock.module("@/services/cart.service", () => ({
   },
 }));
 
-const { GET, POST, DELETE } = await import("@/app/api/cart/route");
+const { GET, POST } = await import("@/app/api/cart/route");
 const { cartService } = await import("@/services/cart.service");
 
 describe("API: Cart", () => {
@@ -54,7 +54,10 @@ describe("API: Cart", () => {
       const request = new Request("http://localhost/api/cart", {
         method: "POST",
         headers: { "x-session-id": "sess_1" },
-        body: JSON.stringify({ productVariantId: "550e8400-e29b-41d4-a716-446655440000", quantity: 1 }),
+        body: JSON.stringify({
+          productVariantId: "550e8400-e29b-41d4-a716-446655440000",
+          quantity: 1,
+        }),
       });
 
       // ACT

@@ -11,9 +11,15 @@ mock.module("@/inngest/safe-send", () => ({
 }));
 
 // Mock services
-mock.module("@/services/category.service", () => ({ categoryService: { findAll: mock(), create: mock() } }));
-mock.module("@/services/color.service", () => ({ colorService: { findAll: mock(), create: mock() } }));
-mock.module("@/services/size.service", () => ({ sizeService: { findAll: mock(), create: mock() } }));
+mock.module("@/services/category.service", () => ({
+  categoryService: { findAll: mock(), create: mock() },
+}));
+mock.module("@/services/color.service", () => ({
+  colorService: { findAll: mock(), create: mock() },
+}));
+mock.module("@/services/size.service", () => ({
+  sizeService: { findAll: mock(), create: mock() },
+}));
 
 // Import routes
 const CategoryRoute = await import("@/app/api/categories/route");
@@ -26,9 +32,27 @@ const { colorService } = await import("@/services/color.service");
 const { sizeService } = await import("@/services/size.service");
 
 const ROUTES = [
-  { name: "Categories", route: CategoryRoute, service: categoryService, endpoint: "categories", validBody: { name: "C1", slug: "c1" } },
-  { name: "Colors", route: ColorRoute, service: colorService, endpoint: "colors", validBody: { name: "Red", hex: "#FF0000" } },
-  { name: "Sizes", route: SizeRoute, service: sizeService, endpoint: "sizes", validBody: { label: "XL" } },
+  {
+    name: "Categories",
+    route: CategoryRoute,
+    service: categoryService,
+    endpoint: "categories",
+    validBody: { name: "C1", slug: "c1" },
+  },
+  {
+    name: "Colors",
+    route: ColorRoute,
+    service: colorService,
+    endpoint: "colors",
+    validBody: { name: "Red", hex: "#FF0000" },
+  },
+  {
+    name: "Sizes",
+    route: SizeRoute,
+    service: sizeService,
+    endpoint: "sizes",
+    validBody: { label: "XL" },
+  },
 ];
 
 describe("API: Generic Routes", () => {
@@ -44,13 +68,21 @@ describe("API: Generic Routes", () => {
       });
 
       it(`GET /api/${endpoint} should return items`, async () => {
-        (service.findAll as any).mockResolvedValue({ data: [], meta: { total: 0 } });
-        const response = await route.GET(new Request(`http://localhost/api/${endpoint}`));
+        (service.findAll as any).mockResolvedValue({
+          data: [],
+          meta: { total: 0 },
+        });
+        const response = await route.GET(
+          new Request(`http://localhost/api/${endpoint}`),
+        );
         expect(response.status).toBe(200);
       });
 
       it(`POST /api/${endpoint} should create item if admin`, async () => {
-        (requireAdmin as any).mockResolvedValue({ success: true, auth: { userId: "admin" } });
+        (requireAdmin as any).mockResolvedValue({
+          success: true,
+          auth: { userId: "admin" },
+        });
         (service.create as any).mockResolvedValue({ id: "1", ...validBody });
 
         const request = new Request(`http://localhost/api/${endpoint}`, {

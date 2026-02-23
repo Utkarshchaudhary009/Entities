@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import { orderService } from "@/services/order.service";
-import { resetDb, prisma } from "../../../helpers/reset-db";
+import { prisma, resetDb } from "../../../helpers/reset-db";
 
 describe("OrderService Integration", () => {
   beforeAll(async () => {
@@ -12,7 +12,7 @@ describe("OrderService Integration", () => {
     const category = await prisma.category.create({
       data: { name: "Test Cat", slug: "test-cat" },
     });
-    
+
     const product = await prisma.product.create({
       data: {
         name: "Test Product",
@@ -76,7 +76,9 @@ describe("OrderService Integration", () => {
 
   it("should fail validation if stock is insufficient and NOT modify DB", async () => {
     // ARRANGE: Use same variant (now stock 8)
-    const variant = await prisma.productVariant.findFirst({ where: { sku: "TEST-SKU" } });
+    const variant = await prisma.productVariant.findFirst({
+      where: { sku: "TEST-SKU" },
+    });
     if (!variant) throw new Error("Variant not found");
 
     const orderInput = {

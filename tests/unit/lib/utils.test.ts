@@ -10,7 +10,11 @@ describe("Utils", () => {
 
     it("should handle conditional classes", () => {
       const condition = true;
-      const result = cn("base", condition && "active", !condition && "inactive");
+      const result = cn(
+        "base",
+        condition && "active",
+        !condition && "inactive",
+      );
       expect(result).toBe("base active");
     });
 

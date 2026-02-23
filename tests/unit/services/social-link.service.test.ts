@@ -74,7 +74,11 @@ describe("SocialLinkService", () => {
   describe("create", () => {
     it("should create link successfully", async () => {
       // ARRANGE
-      const input = { platform: "GitHub", url: "https://github.com", brandId: "b1" };
+      const input = {
+        platform: "GitHub",
+        url: "https://github.com",
+        brandId: "b1",
+      };
       const mockLink = { id: "2", ...input };
       mockPrisma.socialLink.create.mockResolvedValue(mockLink);
 
@@ -83,7 +87,9 @@ describe("SocialLinkService", () => {
 
       // ASSERT
       expect(result).toEqual(mockLink);
-      expect(mockPrisma.socialLink.create).toHaveBeenCalledWith({ data: input });
+      expect(mockPrisma.socialLink.create).toHaveBeenCalledWith({
+        data: input,
+      });
     });
   });
 

@@ -47,7 +47,11 @@ describe("API: Discounts", () => {
       // ACT
       const request = new Request("http://localhost/api/discounts", {
         method: "POST",
-        body: JSON.stringify({ code: "SALE", value: 10, discountType: "PERCENTAGE" }),
+        body: JSON.stringify({
+          code: "SALE",
+          value: 10,
+          discountType: "PERCENTAGE",
+        }),
       });
       const response = await POST(request);
 

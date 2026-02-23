@@ -53,12 +53,18 @@ describe("API: Brands", () => {
         success: true,
         auth: { userId: "admin" },
       });
-      (brandService.create as any).mockResolvedValue({ id: "b1", name: "Nike" });
+      (brandService.create as any).mockResolvedValue({
+        id: "b1",
+        name: "Nike",
+      });
 
       // ACT
       const request = new Request("http://localhost/api/brands", {
         method: "POST",
-        body: JSON.stringify({ name: "Nike", founderId: "550e8400-e29b-41d4-a716-446655440000" }),
+        body: JSON.stringify({
+          name: "Nike",
+          founderId: "550e8400-e29b-41d4-a716-446655440000",
+        }),
       });
       const response = await POST(request);
       const json = await response.json();

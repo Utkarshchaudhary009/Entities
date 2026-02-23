@@ -82,12 +82,12 @@ describe("CartService", () => {
         isActive: true,
         product: { isActive: true },
       };
-      
+
       // Mocks for transaction flow
       mockPrisma.cart.findUnique.mockResolvedValue(cart);
       mockPrisma.productVariant.findUnique.mockResolvedValue(variant);
       mockPrisma.cartItem.findUnique.mockResolvedValue(null); // Item doesn't exist yet
-      
+
       const createdItem = { id: "i1", quantity: 1 };
       mockPrisma.cartItem.create.mockResolvedValue(createdItem);
 

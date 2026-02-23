@@ -49,7 +49,9 @@ describe("BrandStore", () => {
       (fetchApi as any).mockRejectedValue(new Error("Fail"));
 
       // ACT
-      await useBrandStore.getState().createBrand({ name: "Nike", founderId: "f1" });
+      await useBrandStore
+        .getState()
+        .createBrand({ name: "Nike", founderId: "f1" });
 
       // ASSERT
       expect(useBrandStore.getState().brands).toHaveLength(0);

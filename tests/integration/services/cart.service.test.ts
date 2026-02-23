@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import { cartService } from "@/services/cart.service";
-import { resetDb, prisma } from "../../../helpers/reset-db";
+import { prisma, resetDb } from "../../../helpers/reset-db";
 
 describe("CartService Integration", () => {
   beforeAll(async () => {
@@ -9,9 +9,15 @@ describe("CartService Integration", () => {
 
   it("should handle cart item upserts", async () => {
     // ARRANGE
-    const category = await prisma.category.create({ data: { name: "C", slug: "c" } });
-    const product = await prisma.product.create({ data: { name: "P", slug: "p", price: 10, categoryId: category.id } });
-    const variant = await prisma.productVariant.create({ data: { productId: product.id, size: "S", color: "B", stock: 100 } });
+    const category = await prisma.category.create({
+      data: { name: "C", slug: "c" },
+    });
+    const product = await prisma.product.create({
+      data: { name: "P", slug: "p", price: 10, categoryId: category.id },
+    });
+    const variant = await prisma.productVariant.create({
+      data: { productId: product.id, size: "S", color: "B", stock: 100 },
+    });
 
     // ACT 1: Add Item
     const item1 = await cartService.addItem("sess_1", variant.id, 1);

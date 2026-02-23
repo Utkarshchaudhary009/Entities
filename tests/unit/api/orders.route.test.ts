@@ -23,7 +23,7 @@ mock.module("@/inngest/safe-send", () => ({
 }));
 
 // Import implementations
-const { GET, PUT, DELETE } = await import("@/app/api/orders/[id]/route");
+const { GET, PUT } = await import("@/app/api/orders/[id]/route");
 const { requireAuth, requireAdmin } = await import("@/lib/auth/guards");
 const { orderService } = await import("@/services/order.service");
 
