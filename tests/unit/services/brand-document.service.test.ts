@@ -16,7 +16,6 @@ const mockPrisma = {
 const { brandDocumentService } = await setupServiceModule<
   typeof import("@/services/brand-document.service")
 >({
-  serviceAlias: "@/services/brand-document.service",
   serviceSourcePath: "../../../src/services/brand-document.service",
   prismaMock: mockPrisma,
 });

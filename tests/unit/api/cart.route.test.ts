@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from "bun:test";
 
 mock.restore();
 
@@ -23,6 +31,10 @@ mock.module("@/services/cart.service", () => ({
 
 const { GET, POST } = await import("@/app/api/cart/route");
 const { cartService } = await import("@/services/cart.service");
+
+afterAll(() => {
+  mock.restore();
+});
 
 describe("API: Cart", () => {
   beforeEach(() => {

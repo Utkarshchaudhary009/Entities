@@ -1,7 +1,6 @@
 import { mock } from "bun:test";
 
 export async function setupServiceModule<TModule>(options: {
-  serviceAlias: string;
   serviceSourcePath: string;
   prismaMock: unknown;
 }): Promise<TModule> {
@@ -11,8 +10,6 @@ export async function setupServiceModule<TModule>(options: {
     default: options.prismaMock,
   }));
 
-  const realServiceModule = await import(options.serviceSourcePath);
-  mock.module(options.serviceAlias, () => realServiceModule);
-
-  return (await import(options.serviceAlias)) as TModule;
+  const cacheBust = `service-test-${Date.now()}-${Math.random()}`;
+  return (await import(`${options.serviceSourcePath}?${cacheBust}`)) as TModule;
 }
