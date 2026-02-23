@@ -47,13 +47,11 @@ function InputGroupAddon({
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>) {
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: Progressive enhancement for mouse users
-    // biome-ignore lint/a11y/noStaticElementInteractions: Progressive enhancement for mouse users
     <div
       data-slot="input-group-addon"
       data-align={align}
       className={cn(inputGroupAddonVariants({ align }), className)}
-      onClick={(e) => {
+      onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest("button")) {
           return;
         }
