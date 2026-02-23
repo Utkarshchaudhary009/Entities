@@ -110,6 +110,39 @@ export class ProductService {
     }
   }
 
+  async findBySlug(slug: string) {
+    try {
+      const product = await prisma.product.findUnique({
+        where: { slug },
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          variants: {
+            where: { isActive: true },
+            select: {
+              id: true,
+              size: true,
+              color: true,
+              colorHex: true,
+              images: true,
+              stock: true,
+              sku: true,
+            },
+          },
+        },
+      });
+      if (!product) throw new NotFoundError("Product", slug);
+      return product;
+    } catch (error) {
+      return handlePrismaError(error);
+    }
+  }
+
   async create(data: Prisma.ProductCreateInput): Promise<Product> {
     try {
       return await prisma.product.create({
