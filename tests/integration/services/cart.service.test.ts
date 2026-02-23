@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import { cartService } from "@/services/cart.service";
-import { prisma, resetDb } from "../../../helpers/reset-db";
+import { prisma, resetDb } from "../../helpers/reset-db";
 
 describe("CartService Integration", () => {
   beforeAll(async () => {
