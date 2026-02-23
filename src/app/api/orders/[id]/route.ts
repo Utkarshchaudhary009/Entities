@@ -36,7 +36,10 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
     const body = updateOrderStatusSchema.parse(json);
 
     const currentOrder = await orderService.findById(id);
-    const order = await orderService.updateStatus(id, body.status as OrderStatus);
+    const order = await orderService.updateStatus(
+      id,
+      body.status as OrderStatus,
+    );
 
     await safeInngestSend({
       name: "entity/order.status-changed.v1",

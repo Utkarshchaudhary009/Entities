@@ -28,10 +28,12 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
     const discount = await discountService.update(id, {
       ...rest,
       ...(discountType && { discountType: discountType as DiscountType }),
-      ...(startsAt !== undefined &&
-        { startsAt: startsAt ? new Date(startsAt) : null }),
-      ...(expiresAt !== undefined &&
-        { expiresAt: expiresAt ? new Date(expiresAt) : null }),
+      ...(startsAt !== undefined && {
+        startsAt: startsAt ? new Date(startsAt) : null,
+      }),
+      ...(expiresAt !== undefined && {
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      }),
     });
     return successDataResponse(discount);
   } catch (error) {
