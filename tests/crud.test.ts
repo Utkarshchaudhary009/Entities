@@ -1,8 +1,15 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error(
+    "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables",
+  );
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 describe("Database CRUD Tests", () => {
@@ -31,7 +38,7 @@ describe("Database CRUD Tests", () => {
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
       expect(data?.label).toBe("TEST-M");
-      testSizeId = data!.id;
+      testSizeId = data?.id;
     });
 
     test("Read Size", async () => {
@@ -79,7 +86,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
-      testColorId = data!.id;
+      testColorId = data?.id;
     });
 
     test("Read Color", async () => {
@@ -115,7 +122,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
-      testCategoryId = data!.id;
+      testCategoryId = data?.id;
     });
 
     test("Read Category", async () => {
@@ -158,7 +165,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
-      testProductId = data!.id;
+      testProductId = data?.id;
     });
 
     test("Read Product with Category", async () => {
@@ -200,7 +207,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
-      testVariantId = data!.id;
+      testVariantId = data?.id;
     });
 
     test("Read ProductVariant", async () => {
@@ -238,7 +245,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
-      testCartId = data!.id;
+      testCartId = data?.id;
     });
 
     test("Create CartItem", async () => {
@@ -303,7 +310,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
-      testOrderId = data!.id;
+      testOrderId = data?.id;
     });
 
     test("Create OrderItem", async () => {
@@ -378,7 +385,7 @@ describe("Database CRUD Tests", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeDefined();
-      testDiscountId = data!.id;
+      testDiscountId = data?.id;
     });
 
     test("Read Discount", async () => {
