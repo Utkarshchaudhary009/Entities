@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-
-mock.restore();
+import { setupServiceModule } from "./service-test.utils";
 
 // --- MOCK SETUP ---
 const mockPrisma = {
@@ -14,11 +13,13 @@ const mockPrisma = {
   },
 };
 
-mock.module("@/lib/prisma", () => ({
-  default: mockPrisma,
-}));
-
-const { socialLinkService } = await import("@/services/social-link.service");
+const { socialLinkService } = await setupServiceModule<
+  typeof import("@/services/social-link.service")
+>({
+  serviceAlias: "@/services/social-link.service",
+  serviceSourcePath: "../../../src/services/social-link.service",
+  prismaMock: mockPrisma,
+});
 
 // --- TESTS ---
 describe("SocialLinkService", () => {

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-
-mock.restore();
+import { setupServiceModule } from "./service-test.utils";
 
 // --- MOCK SETUP ---
 // We need to support nested transactions
@@ -26,17 +25,13 @@ const mockPrisma = {
   $queryRaw: mock(),
 };
 
-mock.module("@/lib/prisma", () => ({
-  default: mockPrisma,
-}));
-
-// Re-import the service AFTER mocking
-const realCartServiceModule = await import(
-  "../../../src/services/cart.service"
-);
-mock.module("@/services/cart.service", () => realCartServiceModule);
-
-const { cartService } = await import("@/services/cart.service");
+const { cartService } = await setupServiceModule<
+  typeof import("@/services/cart.service")
+>({
+  serviceAlias: "@/services/cart.service",
+  serviceSourcePath: "../../../src/services/cart.service",
+  prismaMock: mockPrisma,
+});
 
 describe("CartService", () => {
   beforeEach(() => {

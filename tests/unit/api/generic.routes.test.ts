@@ -1,12 +1,6 @@
-import {
-  afterAll,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  mock,
-} from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+
+mock.restore();
 
 // --- MOCK SETUP ---
 mock.module("@/lib/auth/guards", () => ({
@@ -62,10 +56,6 @@ const ROUTES = [
     validBody: { label: "XL" },
   },
 ];
-
-afterAll(() => {
-  mock.restore();
-});
 
 describe("API: Generic Routes", () => {
   beforeEach(() => {
