@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-
-mock.restore();
-
 import { OrderService } from "@/services/order.service";
+import { setupServiceModule } from "./service-test.utils";
 
 // --- MOCK SETUP ---
 // We create "spies" that we can control and inspect in our tests
@@ -18,17 +16,13 @@ const mockPrisma = {
 };
 
 // Replace the real Prisma client with our mock
-mock.module("@/lib/prisma", () => ({
-  default: mockPrisma,
-}));
-
-// Re-import the service AFTER mocking to ensure it uses the mock
-const realOrderServiceModule = await import(
-  "../../../src/services/order.service"
-);
-mock.module("@/services/order.service", () => realOrderServiceModule);
-
-const { orderService } = await import("@/services/order.service");
+const { orderService } = await setupServiceModule<
+  typeof import("@/services/order.service")
+>({
+  serviceAlias: "@/services/order.service",
+  serviceSourcePath: "../../../src/services/order.service",
+  prismaMock: mockPrisma,
+});
 
 // --- TESTS ---
 describe("OrderService", () => {

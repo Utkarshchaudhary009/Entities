@@ -1,12 +1,6 @@
-import {
-  afterAll,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  mock,
-} from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+
+mock.restore();
 
 // --- MOCK SETUP ---
 // Mock guards
@@ -34,10 +28,6 @@ mock.module("@/inngest/safe-send", () => ({
 const { GET, PUT } = await import("@/app/api/orders/[id]/route");
 const { requireAuth, requireAdmin } = await import("@/lib/auth/guards");
 const { orderService } = await import("@/services/order.service");
-
-afterAll(() => {
-  mock.restore();
-});
 
 describe("API: Orders [id]", () => {
   const VALID_ID = "550e8400-e29b-41d4-a716-446655440000";

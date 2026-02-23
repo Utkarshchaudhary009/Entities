@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-
-mock.restore();
+import { setupServiceModule } from "./service-test.utils";
 
 // --- MOCK SETUP ---
 const mockPrisma = {
@@ -15,17 +14,13 @@ const mockPrisma = {
 };
 
 // Replace the real Prisma client with our mock
-mock.module("@/lib/prisma", () => ({
-  default: mockPrisma,
-}));
-
-// Re-import the service AFTER mocking
-const realCategoryServiceModule = await import(
-  "../../../src/services/category.service"
-);
-mock.module("@/services/category.service", () => realCategoryServiceModule);
-
-const { categoryService } = await import("@/services/category.service");
+const { categoryService } = await setupServiceModule<
+  typeof import("@/services/category.service")
+>({
+  serviceAlias: "@/services/category.service",
+  serviceSourcePath: "../../../src/services/category.service",
+  prismaMock: mockPrisma,
+});
 
 // --- TESTS ---
 describe("CategoryService", () => {
