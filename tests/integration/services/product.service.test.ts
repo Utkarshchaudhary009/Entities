@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import { productService } from "@/services/product.service";
-import { prisma, resetDb } from "../../../helpers/reset-db";
+import { prisma, resetDb } from "../../helpers/reset-db";
 
 describe("ProductService Integration", () => {
   beforeAll(async () => {

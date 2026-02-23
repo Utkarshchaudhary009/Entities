@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export async function resetDb() {
   if (process.env.NODE_ENV === "production") {
@@ -14,6 +12,10 @@ export async function resetDb() {
   const tablesToTruncate = tablenames
     .map(({ tablename }) => `"${tablename}"`)
     .filter((name) => name !== '"_prisma_migrations"');
+
+  if (tablesToTruncate.length === 0) {
+    return;
+  }
 
   try {
     // Truncate all tables in a single command with CASCADE to handle foreign keys
