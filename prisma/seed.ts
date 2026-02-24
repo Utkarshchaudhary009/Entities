@@ -42,7 +42,9 @@ class ProgressBar {
     const filled = Math.round(percent * this.width);
     const empty = this.width - filled;
     const bar = `[${"X".repeat(filled)}${".".repeat(empty)}]`;
-    process.stdout.write(`\r${this.label} ${bar} ${this.current}/${this.total}`);
+    process.stdout.write(
+      `\r${this.label} ${bar} ${this.current}/${this.total}`,
+    );
   }
 
   done() {
@@ -560,7 +562,7 @@ async function main() {
 
 main()
   .catch((error: unknown) => {
-    console.log(error)
+    console.log(error);
     const errorName = error instanceof Error ? error.name : "UnknownError";
     const errorCode =
       typeof error === "object" &&

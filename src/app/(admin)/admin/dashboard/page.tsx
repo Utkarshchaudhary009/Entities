@@ -22,7 +22,8 @@ function formatCurrency(value: number): string {
 }
 
 export default function AdminDashboardPage() {
-  const { overview, isLoading, error, fetchOverview } = useAdminDashboardStore();
+  const { overview, isLoading, error, fetchOverview } =
+    useAdminDashboardStore();
 
   useEffect(() => {
     void fetchOverview();
@@ -31,7 +32,9 @@ export default function AdminDashboardPage() {
   return (
     <section className="space-y-6 p-4 sm:p-6 lg:p-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Dashboard Overview
+        </h1>
         <p className="text-sm text-muted-foreground">
           Store-powered KPI summary across orders, inventory, and discounts.
         </p>
@@ -96,7 +99,9 @@ export default function AdminDashboardPage() {
                     className="grid grid-cols-1 gap-2 rounded-md border p-3 text-sm md:grid-cols-4 md:items-center"
                   >
                     <span className="font-medium">#{order.orderNumber}</span>
-                    <span className="text-muted-foreground">{order.customerName}</span>
+                    <span className="text-muted-foreground">
+                      {order.customerName}
+                    </span>
                     <span>{formatCurrency(order.total)}</span>
                     <span className="md:text-right">
                       <Badge variant="secondary">{order.status}</Badge>
@@ -105,7 +110,9 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No recent orders found.</p>
+              <p className="text-sm text-muted-foreground">
+                No recent orders found.
+              </p>
             )}
           </CardContent>
         </Card>
@@ -131,7 +138,9 @@ export default function AdminDashboardPage() {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">No status data available.</p>
+              <p className="text-sm text-muted-foreground">
+                No status data available.
+              </p>
             )}
 
             <div className="mt-4 rounded-md border border-warning/30 bg-warning/5 p-3 text-sm">

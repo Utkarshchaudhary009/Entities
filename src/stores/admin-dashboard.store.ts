@@ -2,8 +2,8 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import type { AdminDashboardOverview } from "@/types/api";
 import { fetchApi } from "@/stores/http";
+import type { AdminDashboardOverview } from "@/types/api";
 
 interface AdminDashboardStoreState {
   overview: AdminDashboardOverview | null;
