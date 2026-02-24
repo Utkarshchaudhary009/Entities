@@ -20,6 +20,60 @@ function randomFrom<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length) as number];
 }
 
+class ProgressBar {
+  private current = 0;
+  private total: number;
+  private label: string;
+  private width: number;
+
+  constructor(label: string, total: number, width = 30) {
+    this.label = label;
+    this.total = total;
+    this.width = width;
+  }
+
+  tick(step = 1) {
+    this.current += step;
+    this.render();
+  }
+
+  private render() {
+    const percent = Math.min(this.current / this.total, 1);
+    const filled = Math.round(percent * this.width);
+    const empty = this.width - filled;
+    const bar = `[${"X".repeat(filled)}${".".repeat(empty)}]`;
+    process.stdout.write(`\r${this.label} ${bar} ${this.current}/${this.total}`);
+  }
+
+  done() {
+    process.stdout.write("\n");
+  }
+}
+
+function getDbTargetInfo() {
+  const connectionString =
+    process.env.SUPABASE_POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL ||
+    process.env.SUPABASE_POSTGRES_URL;
+
+  if (!connectionString) {
+    return "DBTarget: missing database URL env";
+  }
+
+  try {
+    const parsed = new URL(connectionString);
+    const protocol = parsed.protocol.replace(":", "");
+    const host = parsed.hostname || "unknown-host";
+    const port = parsed.port || "default";
+    const sslmode = parsed.searchParams.get("sslmode") || "not-set";
+    const libpqCompat = parsed.searchParams.get("uselibpqcompat") || "false";
+
+    return `DBTarget: protocol=${protocol} host=${host} port=${port} sslmode=${sslmode} uselibpqcompat=${libpqCompat}`;
+  } catch {
+    return "DBTarget: invalid database URL format";
+  }
+}
+
 async function cleanSeedData() {
   console.log("Cleaning seed/test data only...");
 
@@ -32,7 +86,7 @@ async function cleanSeedData() {
     ],
   };
 
-  await prisma.orderItem.deleteMany({ where: { order: orderWhere } });
+  await prisma.orderItem.deleteMany({ where: { order: { is: orderWhere } } });
   await prisma.order.deleteMany({ where: orderWhere });
 
   const seededCarts = await prisma.cart.findMany({
@@ -56,7 +110,7 @@ async function cleanSeedData() {
     where: {
       OR: [
         { sku: { startsWith: SEED_SKU_PREFIX } },
-        { product: { name: { startsWith: SEED_TAG } } },
+        { product: { is: { name: { startsWith: SEED_TAG } } } },
       ],
     },
   });
@@ -83,21 +137,21 @@ async function cleanSeedData() {
     where: {
       OR: [
         { content: { contains: SEED_TAG } },
-        { brand: { name: { startsWith: SEED_TAG } } },
+        { brand: { is: { name: { startsWith: SEED_TAG } } } },
       ],
     },
   });
 
   await prisma.brandPhilosophy.deleteMany({
-    where: { brand: { name: { startsWith: SEED_TAG } } },
+    where: { brand: { is: { name: { startsWith: SEED_TAG } } } },
   });
 
   await prisma.socialLink.deleteMany({
     where: {
       OR: [
         { url: { contains: "seed.entities.local" } },
-        { brand: { name: { startsWith: SEED_TAG } } },
-        { founder: { id: { startsWith: SEED_TAG } } },
+        { brand: { is: { name: { startsWith: SEED_TAG } } } },
+        { founder: { is: { id: { startsWith: SEED_TAG } } } },
       ],
     },
   });
@@ -292,6 +346,9 @@ async function seedCatalogData() {
     }>;
   }>;
 
+  const totalProducts = categories.length * 6;
+  const productProgress = new ProgressBar("Products", totalProducts);
+
   for (let c = 0; c < categories.length; c++) {
     const category = categories[c];
 
@@ -309,18 +366,22 @@ async function seedCatalogData() {
         .sort(() => 0.5 - Math.random())
         .slice(0, 4);
 
+      let variantIndex = 0;
       const variants = productColors.flatMap((color) =>
-        productSizes.map((size) => ({
-          size: size.label,
-          color: color.name,
-          colorHex: color.hex,
-          stock: Math.floor(Math.random() * 50) + 10,
-          sku: `${SEED_SKU_PREFIX}${category.slug.substring(0, 3).toUpperCase()}-${p}-${color.name.substring(0, 2).toUpperCase()}-${size.label.slice(-2)}`,
-          images: [
-            `https://example.com/seed-products/${category.slug}-${p}-${color.name}-1.jpg`,
-            `https://example.com/seed-products/${category.slug}-${p}-${color.name}-2.jpg`,
-          ],
-        })),
+        productSizes.map((size) => {
+          variantIndex++;
+          return {
+            size: size.label,
+            color: color.name,
+            colorHex: color.hex,
+            stock: Math.floor(Math.random() * 50) + 10,
+            sku: `${SEED_SKU_PREFIX}C${c + 1}P${p}V${variantIndex}`,
+            images: [
+              `https://example.com/seed-products/${category.slug}-${p}-${color.name}-1.jpg`,
+              `https://example.com/seed-products/${category.slug}-${p}-${color.name}-2.jpg`,
+            ],
+          };
+        }),
       );
 
       const product = await prisma.product.create({
@@ -345,8 +406,10 @@ async function seedCatalogData() {
       });
 
       products.push(product);
+      productProgress.tick();
     }
   }
+  productProgress.done();
 
   const discountTypes = ["PERCENTAGE", "FIXED", "BOGO"] as const;
   for (let i = 1; i <= 12; i++) {
@@ -373,6 +436,8 @@ async function seedCatalogData() {
     "DELIVERED",
     "CANCELLED",
   ];
+
+  const orderProgress = new ProgressBar("Orders", 100);
 
   for (let i = 1; i <= 100; i++) {
     const status = randomFrom(statuses);
@@ -438,7 +503,11 @@ async function seedCatalogData() {
         items: { create: items },
       },
     });
+    orderProgress.tick();
   }
+  orderProgress.done();
+
+  const cartProgress = new ProgressBar("Carts", 20);
 
   for (let i = 1; i <= 20; i++) {
     const itemCount = Math.floor(Math.random() * 3) + 1;
@@ -467,7 +536,9 @@ async function seedCatalogData() {
         },
       },
     });
+    cartProgress.tick();
   }
+  cartProgress.done();
 
   console.log("Seed data created successfully.");
 }
@@ -488,9 +559,23 @@ async function main() {
 }
 
 main()
-  .catch(() => {
+  .catch((error: unknown) => {
+    console.log(error)
+    const errorName = error instanceof Error ? error.name : "UnknownError";
+    const errorCode =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      typeof (error as { code?: unknown }).code === "string"
+        ? (error as { code: string }).code
+        : "N/A";
+
+    console.error("Error seeding database. Check seed diagnostics below.");
+    console.error(`SeedErrorName: ${errorName}`);
+    console.error(`SeedErrorCode: ${errorCode}`);
+    console.error(getDbTargetInfo());
     console.error(
-      "Error seeding database. Check database connectivity, SSL configuration, and required environment variables.",
+      "Validate database connectivity, SSL configuration, and required environment variables.",
     );
     process.exit(1);
   })
