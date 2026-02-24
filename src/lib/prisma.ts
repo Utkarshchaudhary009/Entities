@@ -13,17 +13,31 @@ if (!rawConnectionString) {
   );
 }
 
-function buildConnectionString(url: string): string {
+function parseConnectionConfig(url: string): {
+  connectionString: string;
+  ssl: { rejectUnauthorized: boolean } | false;
+} {
   try {
     const parsed = new URL(url);
-    parsed.searchParams.delete("sslmode");
-    return parsed.toString();
+    const host = parsed.hostname.toLowerCase();
+    const isSupabase =
+      host.includes("supabase.com") || host.includes("supabase.co");
+
+    if (isSupabase) {
+      parsed.searchParams.delete("sslmode");
+      return {
+        connectionString: parsed.toString(),
+        ssl: { rejectUnauthorized: false },
+      };
+    }
+
+    return { connectionString: url, ssl: false };
   } catch {
-    return url;
+    return { connectionString: url, ssl: false };
   }
 }
 
-const connectionString = buildConnectionString(rawConnectionString);
+const { connectionString, ssl } = parseConnectionConfig(rawConnectionString);
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -32,7 +46,7 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient() {
   const pool = new Pool({
     connectionString,
-    ssl: { rejectUnauthorized: false },
+    ssl,
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
