@@ -53,6 +53,20 @@ Components access sidebar state via `useSidebar()` hook from `src/contexts/sideb
 - **DataTable** (`src/components/admin/data-table.tsx`): Generic, paginated table component. Receives data/meta from store, emits page/search callbacks. No internal fetching.
 - **AdminSidebar** (`src/components/admin/sidebar.tsx`): Slide-in navigation panel. Mobile overlay, desktop fixed-width.
 
+## Admin Dashboard
+The admin dashboard provides KPI summary and order insights via the standard architecture flow:
+
+- **Route**: `GET /api/admin/dashboard` — protected by `requireAdmin` guard
+- **Service**: `src/services/admin-dashboard.service.ts` aggregates:
+  - Order counts (total, pending)
+  - Revenue total
+  - Low-stock variants (threshold: 5)
+  - Active discounts
+  - Recent orders (last 6)
+  - Status breakdown (groupBy)
+- **Store**: `src/stores/admin-dashboard.store.ts` manages `overview`, `isLoading`, `error` states
+- **UI**: `src/app/(admin)/admin/dashboard/page.tsx` renders stat cards, recent orders, and status breakdown
+
 ## Icon Library
 Uses `@hugeicons/core-free-icons` and `@hugeicons/react` for all iconography. Do not use `lucide-react`.
 
