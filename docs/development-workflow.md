@@ -10,10 +10,11 @@
 - `bun test tests/integration` runs integration tests
 - `bun logs:deployment` inspects latest Vercel deployment logs
 - Database utilities:
-  - `bun db:generate`
-  - `bun db:push`
-  - `bun db:migrate`
-  - `bun db:seed`
+  - `bun db:generate` — generate Prisma client
+  - `bun db:push` — push schema changes without migration
+  - `bun db:migrate` — create and apply migrations
+  - `bun db:seed` — clean seed data then seed fresh test data
+  - `bun db:clean` — remove all seed/test data only (no seeding)
 
 ## Architecture Rule
 - Keep strict flow: `DB -> Service -> API -> Store -> UI`.
