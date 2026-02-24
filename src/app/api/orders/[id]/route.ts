@@ -36,22 +36,24 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
     const body = updateOrderDetailsSchema.parse(json);
 
     const currentOrder = await orderService.findById(id);
-    const order = await orderService.updateOrderDetails(
-      id,
-      { status: body.status as OrderStatus | undefined, adminNotes: body.adminNotes }
-    );
-
-    await safeInngestSend({
-      name: "entity/order.status-changed.v1",
-      data: {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        previousStatus: currentOrder.status,
-        newStatus: order.status,
-        actorId: guard.auth.userId,
-        idempotencyKey: `entity/order.status-changed.v1:${order.id}:${Date.now()}`,
-      },
+    const order = await orderService.updateOrderDetails(id, {
+      status: body.status as OrderStatus | undefined,
+      adminNotes: body.adminNotes,
     });
+
+    if (body.status && currentOrder.status !== body.status) {
+      await safeInngestSend({
+        name: "entity/order.status-changed.v1",
+        data: {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          previousStatus: currentOrder.status,
+          newStatus: order.status,
+          actorId: guard.auth.userId,
+          idempotencyKey: `entity/order.status-changed.v1:${order.id}:${Date.now()}`,
+        },
+      });
+    }
 
     return successDataResponse(order);
   } catch (error) {

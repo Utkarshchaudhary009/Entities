@@ -22,7 +22,9 @@
     "db:push": "bun --bun prisma db push",
     "db:migrate": "bun --bun prisma migrate dev",
     "db:studio": "bun --bun prisma studio",
-    "db:seed": "bun prisma/seed.ts"
+    "db:seed": "bun prisma/seed.ts",
+    "db:clean": "bun prisma/seed.ts --clean",
+    "db:clean:seed": "bun prisma/seed.ts --clean"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

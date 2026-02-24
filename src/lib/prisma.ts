@@ -14,9 +14,18 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
+  const shouldUseSsl =
+    process.env.NODE_ENV === "production" ||
+    process.env.PRISMA_USE_SSL === "true";
+  const allowInsecureSslInNonProd =
+    process.env.NODE_ENV !== "production" &&
+    process.env.PRISMA_ALLOW_INSECURE_SSL === "true";
+
   const pool = new Pool({
     connectionString,
-    ssl: process.env.NODE_ENV !== "production" ? { rejectUnauthorized: false } : undefined,
+    ssl: shouldUseSsl
+      ? { rejectUnauthorized: !allowInsecureSslInNonProd }
+      : undefined,
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });

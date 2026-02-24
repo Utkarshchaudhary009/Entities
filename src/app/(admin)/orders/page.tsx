@@ -1,9 +1,11 @@
+"use client";
+
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { DataTableColumn } from "@/components/admin/data-table";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { DataTableColumn } from "@/components/admin/data-table";
 import { DataTable } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
@@ -33,11 +35,15 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState(
     searchParams.get("status") || "ALL",
   );
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = Number(searchParams.get("page"));
+    return Number.isFinite(page) && page > 0 ? page : 1;
+  });
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams();
     if (debouncedSearch) {
       params.set("search", debouncedSearch);
     } else {
@@ -50,25 +56,20 @@ export default function OrdersPage() {
       params.delete("status");
     }
 
-    // Keep page if it exists, otherwise reset to 1 on new search/filter
-    if (!params.get("page")) {
-      params.set("page", "1");
-    }
+    params.set("page", currentPage.toString());
 
     router.replace(`${pathname}?${params.toString()}`);
 
     fetchAll({
-      page: Number(params.get("page")) || 1,
+      page: currentPage,
       limit: 20,
       search: debouncedSearch || undefined,
       status: statusFilter !== "ALL" ? statusFilter : undefined,
     });
-  }, [debouncedSearch, statusFilter, router, pathname, searchParams, fetchAll]);
+  }, [currentPage, debouncedSearch, statusFilter, router, pathname, fetchAll]);
 
   const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("page", newPage.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    setCurrentPage(newPage);
   };
 
   const columns: DataTableColumn<ApiOrder>[] = [
@@ -88,7 +89,11 @@ export default function OrdersPage() {
     {
       key: "createdAt",
       label: "Date",
-      render: (_, row) => <span className="text-muted-foreground">{formatDate(row.createdAt)}</span>,
+      render: (_, row) => (
+        <span className="text-muted-foreground">
+          {formatDate(row.createdAt)}
+        </span>
+      ),
     },
     {
       key: "customerName",
@@ -116,7 +121,7 @@ export default function OrdersPage() {
           <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
         </Link>
       ),
-    }
+    },
   ];
 
   return (
@@ -134,10 +139,19 @@ export default function OrdersPage() {
         <Input
           placeholder="Search order #, customer, or email..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className="max-w-sm"
         />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => {
+            setStatusFilter(value);
+            setCurrentPage(1);
+          }}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
@@ -156,6 +170,7 @@ export default function OrdersPage() {
             onClick={() => {
               setSearchTerm("");
               setStatusFilter("ALL");
+              setCurrentPage(1);
             }}
           >
             Clear Filters
