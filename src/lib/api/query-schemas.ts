@@ -38,7 +38,7 @@ export const socialLinkQuerySchema = paginationSchema.extend({
   platform: z.string().max(100).optional(),
 });
 
-export const orderQuerySchema = paginationSchema.extend({
+export const orderQuerySchema = searchPaginationSchema.extend({
   status: z
     .preprocess(
       (value: unknown) =>

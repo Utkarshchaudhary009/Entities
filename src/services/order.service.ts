@@ -12,6 +12,7 @@ export interface OrderFindAllParams {
   limit?: number;
   status?: OrderStatus | string;
   clerkId?: string;
+  search?: string;
 }
 
 export interface CreateOrderInput {
@@ -47,13 +48,21 @@ export class OrderService {
     try {
       const page = Math.max(1, Math.floor(params.page ?? 1));
       const limit = Math.min(100, Math.max(1, Math.floor(params.limit ?? 20)));
-      const { status, clerkId } = params;
+      const { status, clerkId, search } = params;
       const skip = (page - 1) * limit;
 
       const where: Prisma.OrderWhereInput = {
         deletedAt: null,
         ...(status && { status: status as OrderStatus }),
         ...(clerkId && { clerkId }),
+        ...(search && {
+          OR: [
+            { orderNumber: { contains: search, mode: "insensitive" } },
+            { customerName: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+            { whatsappNumber: { contains: search, mode: "insensitive" } },
+          ],
+        }),
       };
 
       const [data, total] = await Promise.all([
@@ -214,15 +223,21 @@ export class OrderService {
     }
   }
 
-  async updateStatus(id: string, status: OrderStatus) {
+  async updateOrderDetails(
+    id: string,
+    data: { status?: OrderStatus | undefined; adminNotes?: string | undefined },
+  ) {
     try {
-      if (!ORDER_STATUSES.includes(status)) {
-        throw new ValidationError(`Invalid order status: ${status}`);
+      if (data.status && !ORDER_STATUSES.includes(data.status)) {
+        throw new ValidationError(`Invalid order status: ${data.status}`);
       }
 
       const order = await prisma.order.update({
         where: { id },
-        data: { status },
+        data: {
+          ...(data.status && { status: data.status }),
+          ...(data.adminNotes !== undefined && { adminNotes: data.adminNotes }),
+        },
         include: { items: true },
       });
 

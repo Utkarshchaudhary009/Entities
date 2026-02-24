@@ -9,6 +9,7 @@ import type {
   Color,
   Discount,
   Order,
+  OrderItem,
   Product,
   Size,
 } from "@/generated/prisma/client";
@@ -92,6 +93,7 @@ export type ApiOrder = Omit<Order, "createdAt" | "updatedAt" | "deletedAt"> & {
   createdAt: JsonDateString;
   updatedAt: JsonDateString;
   deletedAt: JsonDateString | null;
+  items: (Omit<OrderItem, "createdAt"> & { createdAt: JsonDateString })[];
 };
 
 export type ApiDiscount = Omit<

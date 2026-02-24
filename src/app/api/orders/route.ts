@@ -27,6 +27,7 @@ export async function GET(request: Request) {
       page: query.page,
       limit: query.limit,
       status: query.status,
+      search: query.search,
       clerkId: isAdmin ? undefined : guard.auth.userId,
     });
 
