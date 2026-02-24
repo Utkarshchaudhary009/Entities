@@ -122,10 +122,10 @@ describe("API: Orders [id]", () => {
       // ASSERT
       expect(response.status).toBe(200);
       expect(json.data.status).toBe("SHIPPED");
-      expect(orderService.updateOrderDetails).toHaveBeenCalledWith(
-        VALID_ID,
-        { status: "SHIPPED", adminNotes: undefined },
-      );
+      expect(orderService.updateOrderDetails).toHaveBeenCalledWith(VALID_ID, {
+        status: "SHIPPED",
+        adminNotes: undefined,
+      });
     });
   });
 });

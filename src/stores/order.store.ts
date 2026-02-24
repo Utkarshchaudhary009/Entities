@@ -7,7 +7,6 @@ import type {
 } from "@/lib/validations/order";
 import { createEntityStore } from "@/stores/factory";
 import type { ApiOrder } from "@/types/api";
-import type { OrderStatus } from "@/types/domain";
 
 type CreateOrderInput = z.infer<typeof createOrderSchema>;
 type UpdateOrderDetailsInput = z.infer<typeof updateOrderDetailsSchema>;

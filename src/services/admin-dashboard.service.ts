@@ -1,5 +1,5 @@
-import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/errors";
+import prisma from "@/lib/prisma";
 import type { AdminDashboardOverview } from "@/types/api";
 
 const LOW_STOCK_THRESHOLD = 5;
