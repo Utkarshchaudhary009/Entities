@@ -74,6 +74,6 @@ Before submitting:
 - [ ]  Coding Practices are strictly followed.
 - [ ] `.env.example` up to date for new keys
 - [ ] All logger/console calls use static strings
-- [ ] No sensitive data in error messages or server logs but meaning that can help's debugging.  
+- [ ] No sensitive data in error messages or server logs but meaning that can help with debugging.  
 - [ ] UI tested — no data leakage
 - [ ] UX Verified — Store-driven optimistic updates used, UI isolated from API, instant micro-interactions present.

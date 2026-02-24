@@ -1,223 +1,499 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
+import type { OrderStatus } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
 
-async function main() {
-    console.log("Starting DB seed...");
+const SEED_TAG = "SEED::ENTITIES";
+const SEED_DOMAIN = "seed.entities.local";
+const SEED_CATEGORY_SLUG_PREFIX = "seed-entities";
+const SEED_ORDER_PREFIX = `${SEED_TAG}-ORD-`;
+const SEED_DISCOUNT_PREFIX = `${SEED_TAG}-PROMO-`;
+const SEED_SESSION_PREFIX = `${SEED_TAG}:session:`;
+const SEED_CLERK_PREFIX = `${SEED_TAG}:clerk:`;
+const SEED_SIZE_PREFIX = `${SEED_TAG}-SIZE-`;
+const SEED_COLOR_PREFIX = `${SEED_TAG}-COLOR-`;
+const SEED_SKU_PREFIX = `${SEED_TAG}-SKU-`;
 
-    // Clean existing data in correct order to respect foreign keys
-    await prisma.orderItem.deleteMany();
-    await prisma.order.deleteMany();
-    await prisma.cartItem.deleteMany();
-    await prisma.cart.deleteMany();
-    await prisma.productVariant.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.category.deleteMany();
+function seededEmail(localPart: string) {
+  return `${localPart}@${SEED_DOMAIN}`;
+}
 
-    await prisma.brandDocument.deleteMany();
-    await prisma.brandPhilosophy.deleteMany();
-    await prisma.socialLink.deleteMany();
-    await prisma.brand.deleteMany();
-    await prisma.founder.deleteMany();
+function randomFrom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length) as number];
+}
 
-    await prisma.color.deleteMany();
-    await prisma.size.deleteMany();
-    await prisma.discount.deleteMany();
+async function cleanSeedData() {
+  console.log("Cleaning seed/test data only...");
 
-    console.log("Deleted old data.");
+  const orderWhere = {
+    OR: [
+      { orderNumber: { startsWith: SEED_ORDER_PREFIX } },
+      { clerkId: { startsWith: SEED_CLERK_PREFIX } },
+      { email: { endsWith: SEED_DOMAIN } },
+      { customerName: { startsWith: SEED_TAG } },
+    ],
+  };
 
-    // Constants
-    const testFounderId = "user_2testfounder";
+  await prisma.orderItem.deleteMany({ where: { order: orderWhere } });
+  await prisma.order.deleteMany({ where: orderWhere });
 
-    // 1. Founder
-    const founder = await prisma.founder.create({
-        data: {
-            id: testFounderId,
-            name: "Alice Smith",
-            age: 32,
-            story: "Passionate about sustainable fashion.",
-            education: "Design Institute",
-            quote: "Fashion is how we walk into the world.",
-            thumbnailUrl: "https://example.com/alice.jpg",
-        }
-    });
+  const seededCarts = await prisma.cart.findMany({
+    where: {
+      OR: [
+        { sessionId: { startsWith: SEED_SESSION_PREFIX } },
+        { clerkId: { startsWith: SEED_CLERK_PREFIX } },
+        { customerEmail: { endsWith: SEED_DOMAIN } },
+      ],
+    },
+    select: { id: true },
+  });
 
-    // 2. Brand
-    const brand = await prisma.brand.create({
-        data: {
-            name: "Entities",
-            tagline: "Premium Sustainable Fashion",
-            brandStory: "A brand born out of love for the planet.",
-            supportEmail: "support@entities.co",
-            supportPhone: "+1234567890",
-            founderId: founder.id,
-            philosophy: {
-                create: {
-                    mission: "To create clothes without harming the earth",
-                    vision: "A green future",
-                    values: ["Sustainability", "Quality", "Ethics"],
-                    story: "Founded in 2024...",
-                    heroImageUrl: "https://example.com/hero.jpg"
-                }
-            }
-        }
-    });
+  if (seededCarts.length > 0) {
+    const cartIds = seededCarts.map((cart) => cart.id);
+    await prisma.cartItem.deleteMany({ where: { cartId: { in: cartIds } } });
+    await prisma.cart.deleteMany({ where: { id: { in: cartIds } } });
+  }
 
-    console.log(`Created Brand: ${brand.name}`);
+  await prisma.productVariant.deleteMany({
+    where: {
+      OR: [
+        { sku: { startsWith: SEED_SKU_PREFIX } },
+        { product: { name: { startsWith: SEED_TAG } } },
+      ],
+    },
+  });
 
-    // 3. Sizes and Colors
-    const sizes = await Promise.all([
-        prisma.size.create({ data: { label: "S", sortOrder: 1 } }),
-        prisma.size.create({ data: { label: "M", sortOrder: 2 } }),
-        prisma.size.create({ data: { label: "L", sortOrder: 3 } }),
-    ]);
+  await prisma.product.deleteMany({
+    where: {
+      OR: [
+        { name: { startsWith: SEED_TAG } },
+        { slug: { startsWith: SEED_CATEGORY_SLUG_PREFIX } },
+      ],
+    },
+  });
 
-    const colors = await Promise.all([
-        prisma.color.create({ data: { name: "Black", hex: "#000000", sortOrder: 1 } }),
-        prisma.color.create({ data: { name: "White", hex: "#ffffff", sortOrder: 2 } }),
-        prisma.color.create({ data: { name: "Olive", hex: "#808000", sortOrder: 3 } }),
-    ]);
+  await prisma.category.deleteMany({
+    where: {
+      OR: [
+        { name: { startsWith: SEED_TAG } },
+        { slug: { startsWith: SEED_CATEGORY_SLUG_PREFIX } },
+      ],
+    },
+  });
 
-    // 4. Categories
-    const categoryShirts = await prisma.category.create({
-        data: { name: "Shirts", slug: "shirts", discountPercent: 0, sortOrder: 1 }
-    });
-    const categoryPants = await prisma.category.create({
-        data: { name: "Pants", slug: "pants", discountPercent: 10, sortOrder: 2 }
-    });
+  await prisma.brandDocument.deleteMany({
+    where: {
+      OR: [
+        { content: { contains: SEED_TAG } },
+        { brand: { name: { startsWith: SEED_TAG } } },
+      ],
+    },
+  });
 
-    // 5. Products & Variants
-    const product1 = await prisma.product.create({
-        data: {
-            name: "Classic Linen Shirt",
-            slug: "classic-linen-shirt",
-            description: "Breathable summer shirt.",
-            price: 4500,
-            compareAtPrice: 5000,
-            categoryId: categoryShirts.id,
-            material: "Linen",
-            fit: "Relaxed",
-            isFeatured: true,
-            variants: {
-                create: [
-                    { size: "M", color: "White", colorHex: "#ffffff", stock: 50, sku: "SHRT-LIN-M-WH" },
-                    { size: "L", color: "White", colorHex: "#ffffff", stock: 30, sku: "SHRT-LIN-L-WH" },
-                    { size: "M", color: "Black", colorHex: "#000000", stock: 20, sku: "SHRT-LIN-M-BK" },
-                ]
-            }
+  await prisma.brandPhilosophy.deleteMany({
+    where: { brand: { name: { startsWith: SEED_TAG } } },
+  });
+
+  await prisma.socialLink.deleteMany({
+    where: {
+      OR: [
+        { url: { contains: "seed.entities.local" } },
+        { brand: { name: { startsWith: SEED_TAG } } },
+        { founder: { id: { startsWith: SEED_TAG } } },
+      ],
+    },
+  });
+
+  await prisma.brand.deleteMany({ where: { name: { startsWith: SEED_TAG } } });
+  await prisma.founder.deleteMany({ where: { id: { startsWith: SEED_TAG } } });
+
+  await prisma.color.deleteMany({
+    where: { name: { startsWith: SEED_COLOR_PREFIX } },
+  });
+  await prisma.size.deleteMany({
+    where: { label: { startsWith: SEED_SIZE_PREFIX } },
+  });
+  await prisma.discount.deleteMany({
+    where: { code: { startsWith: SEED_DISCOUNT_PREFIX } },
+  });
+
+  console.log("Finished cleaning seed/test data.");
+}
+
+async function seedCatalogData() {
+  const founder = await prisma.founder.create({
+    data: {
+      id: `${SEED_TAG}:founder:alice`,
+      name: `${SEED_TAG} Alice Smith`,
+      age: 32,
+      story: "Seed founder profile for testing brand and admin pages.",
+      education: "Seed Design Institute",
+      quote: "Seeded fashion data for functional testing.",
+      thumbnailUrl: "https://example.com/seed-alice.jpg",
+      socialLinks: {
+        create: [
+          {
+            platform: "Twitter",
+            url: "https://seed.entities.local/alice-twitter",
+          },
+          {
+            platform: "Instagram",
+            url: "https://seed.entities.local/alice-instagram",
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.brand.create({
+    data: {
+      name: `${SEED_TAG} Entities`,
+      tagline: "Seeded Sustainable Fashion",
+      brandStory: "Seed brand story for integration and UI tests.",
+      supportEmail: seededEmail("support"),
+      supportPhone: "+19990000000",
+      founderId: founder.id,
+      philosophy: {
+        create: {
+          mission: "Seed mission for predictable UI rendering.",
+          vision: "Seed vision for test scenarios.",
+          values: ["Seed", "Quality", "Consistency"],
+          story: `${SEED_TAG} brand philosophy for automated tests.`,
+          heroImageUrl: "https://example.com/seed-hero.jpg",
         },
-        include: { variants: true }
-    });
+      },
+      documents: {
+        create: [
+          {
+            type: "RETURN_POLICY",
+            content: `${SEED_TAG} return policy content.`,
+          },
+          {
+            type: "SHIPPING_POLICY",
+            content: `${SEED_TAG} shipping policy content.`,
+          },
+          {
+            type: "REFUND_POLICY",
+            content: `${SEED_TAG} refund policy content.`,
+          },
+          {
+            type: "PRIVACY_POLICY",
+            content: `${SEED_TAG} privacy policy content.`,
+          },
+          {
+            type: "TERMS_AND_CONDITIONS",
+            content: `${SEED_TAG} terms content.`,
+          },
+        ],
+      },
+      socialLinks: {
+        create: [
+          {
+            platform: "LinkedIn",
+            url: "https://seed.entities.local/brand-linkedin",
+          },
+          {
+            platform: "YouTube",
+            url: "https://seed.entities.local/brand-youtube",
+          },
+        ],
+      },
+    },
+  });
 
-    const product2 = await prisma.product.create({
+  const sizeLabels = ["XS", "S", "M", "L", "XL", "XXL"];
+  const sizes = await Promise.all(
+    sizeLabels.map((label, index) =>
+      prisma.size.create({
         data: {
-            name: "Cargo Pants",
-            slug: "cargo-pants",
-            description: "Utility pants with multiple pockets.",
-            price: 6500,
-            categoryId: categoryPants.id,
-            material: "Cotton Blend",
-            fit: "Regular",
-            variants: {
-                create: [
-                    { size: "M", color: "Olive", colorHex: "#808000", stock: 15, sku: "PANT-CAR-M-OL" },
-                    { size: "L", color: "Olive", colorHex: "#808000", stock: 10, sku: "PANT-CAR-L-OL" },
-                ]
-            }
+          label: `${SEED_SIZE_PREFIX}${label}`,
+          sortOrder: index + 1,
+          measurements: { chest: 30 + index * 2, waist: 28 + index * 2 },
         },
-        include: { variants: true }
-    });
+      }),
+    ),
+  );
 
-    console.log(`Created Products: ${product1.name}, ${product2.name}`);
+  const baseColors = [
+    { name: "Black", hex: "#000000" },
+    { name: "White", hex: "#ffffff" },
+    { name: "Olive", hex: "#808000" },
+    { name: "Navy", hex: "#000080" },
+    { name: "Crimson", hex: "#DC143C" },
+    { name: "Beige", hex: "#F5F5DC" },
+    { name: "Charcoal", hex: "#36454F" },
+    { name: "Teal", hex: "#008080" },
+  ];
 
-    // 6. Discount
+  const colors = await Promise.all(
+    baseColors.map((color, index) =>
+      prisma.color.create({
+        data: {
+          name: `${SEED_COLOR_PREFIX}${color.name}`,
+          hex: color.hex,
+          sortOrder: index + 1,
+        },
+      }),
+    ),
+  );
+
+  const categoryNames = [
+    "Shirts",
+    "Pants",
+    "Jackets",
+    "T-Shirts",
+    "Accessories",
+    "Dresses",
+    "Activewear",
+    "Loungewear",
+  ];
+
+  const categories = await Promise.all(
+    categoryNames.map((name, index) =>
+      prisma.category.create({
+        data: {
+          name: `${SEED_TAG} ${name}`,
+          slug: `${SEED_CATEGORY_SLUG_PREFIX}-${name.toLowerCase().replace(/ /g, "-")}`,
+          discountPercent: index % 3 === 0 ? 10 : 0,
+          sortOrder: index + 1,
+          thumbnailUrl: `https://example.com/seed-category-${name.toLowerCase()}.jpg`,
+          about: `${SEED_TAG} category ${name.toLowerCase()} for table and card tests.`,
+        },
+      }),
+    ),
+  );
+
+  const styles = [
+    "Classic",
+    "Modern",
+    "Essential",
+    "Premium",
+    "Vintage",
+    "Signature",
+  ];
+  const materials = [
+    "Cotton",
+    "Linen",
+    "Wool Blend",
+    "Silk",
+    "Recycled Polyester",
+    "Denim",
+  ];
+  const fits = ["Regular", "Slim", "Relaxed", "Oversized", "Athletic"];
+
+  const products = [] as Array<{
+    id: string;
+    price: number;
+    name: string;
+    thumbnailUrl: string | null;
+    variants: Array<{
+      id: string;
+      size: string;
+      color: string;
+      images: string[];
+    }>;
+  }>;
+
+  for (let c = 0; c < categories.length; c++) {
+    const category = categories[c];
+
+    for (let p = 1; p <= 6; p++) {
+      const style = randomFrom(styles);
+      const material = randomFrom(materials);
+      const fit = randomFrom(fits);
+      const name = `${SEED_TAG} ${style} ${categoryNames[c].replace(/s$/, "")} ${p}`;
+      const basePrice = Math.floor(Math.random() * 5000) + 1500;
+
+      const productColors = [...colors]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3);
+      const productSizes = [...sizes]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 4);
+
+      const variants = productColors.flatMap((color) =>
+        productSizes.map((size) => ({
+          size: size.label,
+          color: color.name,
+          colorHex: color.hex,
+          stock: Math.floor(Math.random() * 50) + 10,
+          sku: `${SEED_SKU_PREFIX}${category.slug.substring(0, 3).toUpperCase()}-${p}-${color.name.substring(0, 2).toUpperCase()}-${size.label.slice(-2)}`,
+          images: [
+            `https://example.com/seed-products/${category.slug}-${p}-${color.name}-1.jpg`,
+            `https://example.com/seed-products/${category.slug}-${p}-${color.name}-2.jpg`,
+          ],
+        })),
+      );
+
+      const product = await prisma.product.create({
+        data: {
+          name,
+          slug: `${SEED_CATEGORY_SLUG_PREFIX}-${c + 1}-${p}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          description: `${SEED_TAG} product made with ${material}.`,
+          price: basePrice,
+          compareAtPrice: basePrice + Math.floor(Math.random() * 1000) + 300,
+          categoryId: category.id,
+          material,
+          fit,
+          fabric: `${Math.floor(Math.random() * 100)}% ${material}`,
+          careInstruction: "Machine wash cold, tumble dry low.",
+          defaultColor: productColors[0].name,
+          defaultSize: productSizes[0].label,
+          isFeatured: p <= 2,
+          thumbnailUrl: `https://example.com/seed-products/thumb-${category.slug}-${p}.jpg`,
+          variants: { create: variants },
+        },
+        include: { variants: true },
+      });
+
+      products.push(product);
+    }
+  }
+
+  const discountTypes = ["PERCENTAGE", "FIXED", "BOGO"] as const;
+  for (let i = 1; i <= 12; i++) {
+    const type = discountTypes[i % 3];
     await prisma.discount.create({
-        data: {
-            code: "WELCOME10",
-            description: "10% off first order",
-            discountType: "PERCENTAGE",
-            value: 10,
-            usageLimit: 100,
-            isActive: true,
-        }
+      data: {
+        code: `${SEED_DISCOUNT_PREFIX}${i}`,
+        description: `${SEED_TAG} ${type} discount for testing checkout behavior.`,
+        discountType: type,
+        value: type === "PERCENTAGE" ? 15 : type === "FIXED" ? 500 : 0,
+        minOrderValue: 2000,
+        usageLimit: 500,
+        isActive: i <= 8,
+        startsAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+      },
     });
+  }
 
-    // 7. Orders
+  const statuses: OrderStatus[] = [
+    "PENDING",
+    "PROCESSING",
+    "SHIPPED",
+    "DELIVERED",
+    "CANCELLED",
+  ];
+
+  for (let i = 1; i <= 100; i++) {
+    const status = randomFrom(statuses);
+    const itemCount = Math.floor(Math.random() * 4) + 1;
+
+    const items: Array<{
+      productVariantId: string;
+      productName: string;
+      productImage: string | null;
+      size: string;
+      color: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+    }> = [];
+
+    let subtotal = 0;
+
+    for (let j = 0; j < itemCount; j++) {
+      const product = randomFrom(products);
+      const variant = randomFrom(product.variants);
+      const quantity = Math.floor(Math.random() * 3) + 1;
+      const totalPrice = product.price * quantity;
+      subtotal += totalPrice;
+
+      items.push({
+        productVariantId: variant.id,
+        productName: product.name,
+        productImage: variant.images[0] || product.thumbnailUrl,
+        size: variant.size,
+        color: variant.color,
+        quantity,
+        unitPrice: product.price,
+        totalPrice,
+      });
+    }
+
+    const discountAmount = Math.random() > 0.5 ? 500 : 0;
+    const shippingCost = subtotal > 5000 ? 0 : 200;
+
     await prisma.order.create({
-        data: {
-            orderNumber: "ORD-1001",
-            customerName: "Alice Wonder",
-            whatsappNumber: "+1987654321",
-            email: "alice@example.com",
-            address: "123 Rabbit Hole",
-            city: "Wonderland",
-            state: "WL",
-            pincode: "12345",
-            subtotal: 4500,
-            total: 4500,
-            status: "DELIVERED",
-            items: {
-                create: [
-                    {
-                        productVariantId: product1.variants[0].id,
-                        productName: product1.name,
-                        size: product1.variants[0].size,
-                        color: product1.variants[0].color,
-                        quantity: 1,
-                        unitPrice: product1.price,
-                        totalPrice: product1.price,
-                    }
-                ]
-            }
-        }
+      data: {
+        orderNumber: `${SEED_ORDER_PREFIX}${2000 + i}`,
+        clerkId: `${SEED_CLERK_PREFIX}${i}`,
+        customerName: `${SEED_TAG} Customer ${i}`,
+        whatsappNumber: `+1000000${i.toString().padStart(4, "0")}`,
+        email: seededEmail(`customer${i}`),
+        address: `${i} Seed Testing Street`,
+        city: "Seedville",
+        state: "SD",
+        pincode: Math.floor(10000 + Math.random() * 90000).toString(),
+        subtotal,
+        discountCode: discountAmount > 0 ? `${SEED_DISCOUNT_PREFIX}1` : null,
+        discountAmount,
+        shippingCost,
+        total: subtotal - discountAmount + shippingCost,
+        status,
+        notes: i % 10 === 0 ? `${SEED_TAG} deliver on weekends only.` : null,
+        adminNotes: i % 7 === 0 ? `${SEED_TAG} admin note.` : null,
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24 * 115),
+        ),
+        items: { create: items },
+      },
     });
+  }
 
-    await prisma.order.create({
-        data: {
-            orderNumber: "ORD-1002",
-            customerName: "Bob Builder",
-            whatsappNumber: "+1122334455",
-            email: "bob@example.com",
-            address: "456 Construction Site",
-            city: "Builder Town",
-            state: "BT",
-            pincode: "54321",
-            subtotal: 11000,
-            total: 11000,
-            status: "PENDING",
-            items: {
-                create: [
-                    {
-                        productVariantId: product1.variants[1].id,
-                        productName: product1.name,
-                        size: product1.variants[1].size,
-                        color: product1.variants[1].color,
-                        quantity: 1,
-                        unitPrice: product1.price,
-                        totalPrice: product1.price,
-                    },
-                    {
-                        productVariantId: product2.variants[0].id,
-                        productName: product2.name,
-                        size: product2.variants[0].size,
-                        color: product2.variants[0].color,
-                        quantity: 1,
-                        unitPrice: product2.price,
-                        totalPrice: product2.price,
-                    }
-                ]
-            }
-        }
+  for (let i = 1; i <= 20; i++) {
+    const itemCount = Math.floor(Math.random() * 3) + 1;
+    const cartItems = [] as Array<{
+      productVariantId: string;
+      quantity: number;
+    }>;
+
+    for (let j = 0; j < itemCount; j++) {
+      const product = randomFrom(products);
+      const variant = randomFrom(product.variants);
+      cartItems.push({
+        productVariantId: variant.id,
+        quantity: Math.floor(Math.random() * 3) + 1,
+      });
+    }
+
+    await prisma.cart.create({
+      data: {
+        sessionId: `${SEED_SESSION_PREFIX}${i}`,
+        clerkId: i % 2 === 0 ? `${SEED_CLERK_PREFIX}cart-${i}` : null,
+        customerEmail: seededEmail(`cart${i}`),
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
+        items: {
+          create: cartItems,
+        },
+      },
     });
+  }
 
-    console.log("DB seed finished successfully.");
+  console.log("Seed data created successfully.");
+}
+
+async function main() {
+  const isCleanOnly = process.argv.includes("--clean");
+
+  await cleanSeedData();
+
+  if (isCleanOnly) {
+    console.log("Clean-only mode complete.");
+    return;
+  }
+
+  console.log("Starting database seed...");
+  await seedCatalogData();
+  console.log("Database seed completed.");
 }
 
 main()
-    .catch((e) => {
-        console.error("Error seeding database:", e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+  .catch(() => {
+    console.error(
+      "Error seeding database. Check database connectivity, SSL configuration, and required environment variables.",
+    );
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

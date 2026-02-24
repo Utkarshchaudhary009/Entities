@@ -181,20 +181,24 @@ function AdminManagementCard({ order }: { order: ApiOrder }) {
   const { updateOrderDetails } = useOrderStore();
 
   const handleUpdate = async () => {
-    setIsUpdating(true);
-    await updateOrderDetails(order.id, {
-      status,
-      adminNotes: adminNotes.trim(),
-    });
+    try {
+      setIsUpdating(true);
+      await updateOrderDetails(order.id, {
+        status,
+        adminNotes: adminNotes.trim(),
+      });
 
-    const error = useOrderStore.getState().error;
-    if (error) {
-      toast.error(error || "Failed to update order");
-    } else {
-      toast.success("Order updated successfully");
+      const error = useOrderStore.getState().error;
+      if (error) {
+        toast.error(error || "Failed to update order");
+      } else {
+        toast.success("Order updated successfully");
+      }
+    } catch {
+      toast.error("Failed to update order");
+    } finally {
+      setIsUpdating(false);
     }
-
-    setIsUpdating(false);
   };
 
   return (
@@ -258,7 +262,7 @@ function AdminManagementCard({ order }: { order: ApiOrder }) {
             disabled={
               isUpdating ||
               (status === order.status &&
-                adminNotes === (order.adminNotes || ""))
+                adminNotes.trim() === (order.adminNotes || "").trim())
             }
             className="w-full md:w-auto transition-transform active:scale-95"
           >
