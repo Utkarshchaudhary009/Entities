@@ -76,5 +76,4 @@ Before submitting:
 - [ ] All logger/console calls use static strings
 - [ ] No sensitive data in error messages or server logs but meaning that can help's debugging.  
 - [ ] UI tested — no data leakage
-- [ ] Per changed file: `bun --bun biome check{filepath}` & `bun --bun tsc {filepath}` (never project-wide)
 - [ ] UX Verified — Store-driven optimistic updates used, UI isolated from API, instant micro-interactions present.

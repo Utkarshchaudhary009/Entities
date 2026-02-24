@@ -22,7 +22,7 @@ mock.module("@/services/order.service", () => ({
   orderService: {
     findById: mock(),
     findByIdWithOwnership: mock(),
-    updateStatus: mock(),
+    updateOrderDetails: mock(),
     softDelete: mock(),
   },
 }));
@@ -49,7 +49,7 @@ describe("API: Orders [id]", () => {
     (requireAuth as any).mockReset();
     (requireAdmin as any).mockReset();
     (orderService.findById as any).mockReset();
-    (orderService.updateStatus as any).mockReset();
+    (orderService.updateOrderDetails as any).mockReset();
   });
 
   describe("GET", () => {
@@ -106,7 +106,7 @@ describe("API: Orders [id]", () => {
         status: "PENDING",
         orderNumber: "ORD-1",
       });
-      (orderService.updateStatus as any).mockResolvedValue({
+      (orderService.updateOrderDetails as any).mockResolvedValue({
         id: VALID_ID,
         status: "SHIPPED",
       });
@@ -122,9 +122,9 @@ describe("API: Orders [id]", () => {
       // ASSERT
       expect(response.status).toBe(200);
       expect(json.data.status).toBe("SHIPPED");
-      expect(orderService.updateStatus).toHaveBeenCalledWith(
+      expect(orderService.updateOrderDetails).toHaveBeenCalledWith(
         VALID_ID,
-        "SHIPPED",
+        { status: "SHIPPED", adminNotes: undefined },
       );
     });
   });

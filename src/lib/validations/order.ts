@@ -12,6 +12,11 @@ export const createOrderSchema = z.object({
   sessionId: z.string().min(1).max(128),
 });
 
-export const updateOrderStatusSchema = z.object({
-  status: z.enum(ORDER_STATUSES as [string, ...string[]]),
-});
+export const updateOrderDetailsSchema = z
+  .object({
+    status: z.enum(ORDER_STATUSES as [string, ...string[]]).optional(),
+    adminNotes: z.string().optional(),
+  })
+  .refine((data) => data.status || data.adminNotes !== undefined, {
+    message: "Provide either status or adminNotes to update",
+  });

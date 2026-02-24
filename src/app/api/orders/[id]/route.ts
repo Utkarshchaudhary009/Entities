@@ -4,7 +4,7 @@ import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin, requireAuth } from "@/lib/auth/guards";
 import { Role } from "@/lib/auth/roles";
-import { updateOrderStatusSchema } from "@/lib/validations/order";
+import { updateOrderDetailsSchema } from "@/lib/validations/order";
 import { orderService } from "@/services/order.service";
 import type { RouteParamsAsync } from "@/types/api";
 
@@ -33,12 +33,12 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
   try {
     const { id } = idParamSchema.parse(await params);
     const json = await request.json();
-    const body = updateOrderStatusSchema.parse(json);
+    const body = updateOrderDetailsSchema.parse(json);
 
     const currentOrder = await orderService.findById(id);
-    const order = await orderService.updateStatus(
+    const order = await orderService.updateOrderDetails(
       id,
-      body.status as OrderStatus,
+      { status: body.status as OrderStatus | undefined, adminNotes: body.adminNotes }
     );
 
     await safeInngestSend({
