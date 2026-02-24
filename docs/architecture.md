@@ -93,8 +93,10 @@ Relationships: `Founder -> Brand (1:1) -> BrandPhilosophy (1:1)`, `Brand -> Bran
   - API (`/api/orders/[id]`): GET (auth required; admins see all, users see their own), PUT (admin only; triggers Inngest event on status change), DELETE (admin only; soft delete).
 - **Intent Prefetching**: Order list rows trigger `fetchOne` on hover to hydrate detail page cache before navigation.
 
-## Icon Library
-Uses `@hugeicons/core-free-icons` and `@hugeicons/react` for all iconography. Do not use `lucide-react`.
+## UI Components
+- **shadcn/ui**: Install via `bunx --bun shadcn@latest add <name>`. Components in `components/ui/`.
+- **Drawer**: `vaul`-based drawer component (`src/components/ui/drawer.tsx`) supports bottom/left/right/top directions with animated overlay.
+- **Icon Library**: Uses `@hugeicons/core-free-icons` and `@hugeicons/react` for all iconography. Do not use `lucide-react`.
 
 ## Seed Data System (`prisma/seed.ts`)
 - Tagged seed data with `SEED::ENTITIES` prefix for safe identification and cleanup.
