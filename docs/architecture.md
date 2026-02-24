@@ -67,8 +67,27 @@ The admin dashboard provides KPI summary and order insights via the standard arc
 - **Store**: `src/stores/admin-dashboard.store.ts` manages `overview`, `isLoading`, `error` states
 - **UI**: `src/app/(admin)/admin/dashboard/page.tsx` renders stat cards, recent orders, and status breakdown
 
+## Brand Domain Architecture
+The brand domain models support multi-brand commerce with founder profiles:
+
+- **Brand**: Core brand entity with `name`, `tagline`, `brandStory`, support contacts, and `founderId`. One-to-one with `Founder`.
+- **BrandPhilosophy**: Optional brand philosophy with `mission`, `vision`, `values[]`, `story`, `heroImageUrl`. One-to-one with `Brand`.
+- **Founder**: Founder profile with `name`, `age`, `story`, `education`, `quote`, `thumbnailUrl`. Can have multiple `SocialLink`s.
+- **SocialLink**: Platform links attached to either `Brand` or `Founder` (nullable foreign keys).
+- **BrandDocument**: Policy documents (`DocumentType` enum: `RETURN_POLICY`, `SHIPPING_POLICY`, `REFUND_POLICY`, `PRIVACY_POLICY`, `TERMS_AND_CONDITIONS`) with versioning.
+
+Relationships: `Founder -> Brand (1:1) -> BrandPhilosophy (1:1)`, `Brand -> BrandDocument[]`, `Brand -> SocialLink[]`, `Founder -> SocialLink[]`.
+
+## Order Domain
+- **OrderStatus enum**: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Managed via `ORDER_STATUSES` in `src/types/domain.ts`.
+- **Soft delete**: Orders use `deletedAt` timestamp for soft deletes. Queries filter `deletedAt: null` by default in `OrderService`.
+- **Stock management**: Order creation atomically decrements variant stock within a transaction; fails with `ValidationError` if insufficient.
+
 ## Icon Library
 Uses `@hugeicons/core-free-icons` and `@hugeicons/react` for all iconography. Do not use `lucide-react`.
+
+## Utility Hooks (`src/hooks`)
+- **useDebounce**: Debounces a value with configurable delay (default 500ms). Used for search input debouncing in admin tables.
 
 ## Auth and Access Control
 - `src/proxy.ts` applies Clerk middleware and protects non-public routes.
