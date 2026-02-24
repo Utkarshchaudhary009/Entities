@@ -12,7 +12,6 @@ export function formatCurrency(amount: number) {
     maximumFractionDigits: 0,
   }).format(amount);
 }
-
 export function formatDate(dateString: string) {
   return new Intl.DateTimeFormat("en-IN", {
     day: "numeric",

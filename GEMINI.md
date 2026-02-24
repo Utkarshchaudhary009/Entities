@@ -44,10 +44,10 @@ Session Token Customization (Clerk Dashboard → Sessions)
 Add custom claims instead of calling currentUser():
 {
   "email": "{{user.primary_email_address}}",
-  "role": "{{user.public_metadata.role}}"
+  "role": "{{user.public_metadata}}"
 }
 Then access in code: const { sessionClaims } = await auth()
-const userRole = sessionClaims?.role
+const userRole = sessionClaims?.metadata.role
 
 ## Core UX & Performance (Store-to-UI Layer)
 - **Architecture Flow**: `DB -> Service -> API -> Store -> UI`. The UI **never** talks to the API directly.
