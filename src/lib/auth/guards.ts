@@ -1,10 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { isValidRole, Role, type RoleType } from "./roles";
 
 export interface AuthResult {
   userId: string;
-  role: RoleType;
+  role: "user" | "admin";
   sessionId: string | null;
 }
 
@@ -17,37 +16,12 @@ export type GuardResult =
   | { success: true; auth: AuthResult }
   | { success: false; response: NextResponse };
 
-function getRoleFromSessionClaims(sessionClaims: unknown): RoleType {
-  if (!sessionClaims || typeof sessionClaims !== "object") return Role.USER;
-
-  const claims = sessionClaims as Record<string, unknown>;
-  const direct = claims.role;
-
-  const metadataRole =
-    typeof claims.metadata === "object" && claims.metadata
-      ? (claims.metadata as Record<string, unknown>).role
-      : undefined;
-
-  const publicMetadataRole =
-    typeof claims.publicMetadata === "object" && claims.publicMetadata
-      ? (claims.publicMetadata as Record<string, unknown>).role
-      : undefined;
-
-  const public_metadataRole =
-    typeof claims.public_metadata === "object" && claims.public_metadata
-      ? (claims.public_metadata as Record<string, unknown>).role
-      : undefined;
-
-  for (const value of [
-    direct,
-    metadataRole,
-    publicMetadataRole,
-    public_metadataRole,
-  ]) {
-    if (typeof value === "string" && isValidRole(value)) return value;
-  }
-
-  return Role.USER;
+function getRoleFromSessionClaims(sessionClaims: {
+  metadata: {
+    role?: "user" | "admin";
+  };
+}) {
+  return sessionClaims?.metadata.role || "user"
 }
 
 export async function requireAuth(): Promise<GuardResult> {
@@ -79,7 +53,7 @@ export async function requireAdmin(): Promise<GuardResult> {
     return result;
   }
 
-  if (result.auth.role !== Role.ADMIN) {
+  if (result.auth.role !== "admin") {
     return {
       success: false,
       response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
@@ -90,7 +64,7 @@ export async function requireAdmin(): Promise<GuardResult> {
 }
 
 export async function requireRole(
-  allowedRoles: RoleType[],
+  allowedRoles:"user" | "admin",
 ): Promise<GuardResult> {
   const result = await requireAuth();
 
@@ -117,7 +91,7 @@ export async function requireOwnership(
     return result;
   }
 
-  if (result.auth.role === Role.ADMIN) {
+  if (result.auth.role === "admin") {
     return result;
   }
 

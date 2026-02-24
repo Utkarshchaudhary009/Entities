@@ -7,7 +7,6 @@ import {
   successDataResponse,
 } from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/guards";
-import { Role } from "@/lib/auth/roles";
 import { generateOrderNumber } from "@/lib/crypto";
 import { createOrderSchema } from "@/lib/validations/order";
 import { cartService } from "@/services/cart.service";
@@ -21,7 +20,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = parseSearchParams(searchParams, orderQuerySchema);
 
-    const isAdmin = guard.auth.role === Role.ADMIN;
+    const isAdmin = guard.auth.role === "admin";
 
     const result = await orderService.findAll({
       page: query.page,

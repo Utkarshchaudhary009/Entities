@@ -3,7 +3,6 @@ import { safeInngestSend } from "@/inngest/safe-send";
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin, requireAuth } from "@/lib/auth/guards";
-import { Role } from "@/lib/auth/roles";
 import { updateOrderDetailsSchema } from "@/lib/validations/order";
 import { orderService } from "@/services/order.service";
 import type { RouteParamsAsync } from "@/types/api";
@@ -14,7 +13,7 @@ export async function GET(_request: Request, { params }: RouteParamsAsync) {
 
   try {
     const { id } = idParamSchema.parse(await params);
-    const isAdmin = guard.auth.role === Role.ADMIN;
+    const isAdmin = guard.auth.role === "admin";
 
     const order = isAdmin
       ? await orderService.findById(id)

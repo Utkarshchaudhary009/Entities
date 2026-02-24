@@ -12,14 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminDashboardStore } from "@/stores/admin-dashboard.store";
+import { formatCurrency } from "@/lib/utils"
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 export default function AdminDashboardPage() {
   const { overview, isLoading, error, fetchOverview } =
