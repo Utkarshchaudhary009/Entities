@@ -33,6 +33,7 @@
 - Expose granular loading states and bind targeted skeletons/spinners.
 - Keep micro-interactions immediate (`active:scale-95`, scoped loading feedback).
 - Use `tw-animate-css` for skeleton and reveal animations.
+- Use `@hugeicons/core-free-icons` and `@hugeicons/react` for icons (not `lucide-react`).
 
 ## Contribution Checklist
 1. Follow file conventions (`page.tsx`, `layout.tsx`, `route.ts`, `error.tsx`, etc.).

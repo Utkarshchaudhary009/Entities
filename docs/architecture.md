@@ -36,6 +36,26 @@ The codebase follows this flow:
 - Renders store state and triggers store actions.
 - Should remain side-effect-light and network-agnostic.
 
+## Admin Layout Architecture
+The admin section uses a server/client component split:
+- `layout.tsx` (server): Guards access via Clerk `auth()` and checks `user_role === "admin"`.
+- `layout-client.tsx` (client): Activates sidebar context and renders `<AdminSidebar>`.
+
+## Sidebar State Management
+Sidebar visibility is managed via a Zustand store (`src/stores/sidebar.store.ts`):
+- `isOpen`: Controls slide-in panel visibility (mobile).
+- `enabled`: Set by admin layout to show hamburger in Topbar.
+- Actions: `toggle()`, `open()`, `close()`, `setEnabled()`.
+
+Components access sidebar state via `useSidebar()` hook from `src/contexts/sidebar-context.tsx`.
+
+## Shared Admin Components
+- **DataTable** (`src/components/admin/data-table.tsx`): Generic, paginated table component. Receives data/meta from store, emits page/search callbacks. No internal fetching.
+- **AdminSidebar** (`src/components/admin/sidebar.tsx`): Slide-in navigation panel. Mobile overlay, desktop fixed-width.
+
+## Icon Library
+Uses `@hugeicons/core-free-icons` and `@hugeicons/react` for all iconography. Do not use `lucide-react`.
+
 ## Auth and Access Control
 - `src/proxy.ts` applies Clerk middleware and protects non-public routes.
 - Route handlers still enforce operation-level authorization with guard helpers.
