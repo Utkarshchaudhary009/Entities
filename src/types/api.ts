@@ -102,3 +102,27 @@ export type ApiDiscount = Omit<
   expiresAt: JsonDateString | null;
   createdAt: JsonDateString;
 };
+
+export interface AdminDashboardStatusBreakdownItem {
+  status: string;
+  count: number;
+}
+
+export interface AdminDashboardRecentOrderItem {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  total: number;
+  status: string;
+  createdAt: JsonDateString;
+}
+
+export interface AdminDashboardOverview {
+  totalOrders: number;
+  totalRevenue: number;
+  pendingOrders: number;
+  lowStockVariants: number;
+  activeDiscounts: number;
+  recentOrders: AdminDashboardRecentOrderItem[];
+  statusBreakdown: AdminDashboardStatusBreakdownItem[];
+}
