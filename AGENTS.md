@@ -13,11 +13,11 @@
 - `bun logs:deployment` — inspect latest Vercel deploy (streams logs on failure, summary on success).
 - **Never run locally** (PC too weak): `bun dev|build|start|lint|format|format:check|type-check`.
 
-## Coding Pratices
+## Coding Practices
 - Add meaning error log full help in debugging. Copywritted error for user
-- consistence API response
+- consistent API responses
 - use @hugeicons/core-free-icons and @hugeicons/react instead of lucide-react.
-- It must and stricty USE SOLID principles, No Dublicate Logic
+- It must and strictly USE SOLID principles, No duplicate logic
 - Follow Next.js App Router conventions; use `proxy.ts` instead of deprecated `middleware.ts`.
 - **File Conventions (MUST USE where possible)**:
   - `page.tsx`: Route UI
@@ -71,7 +71,7 @@ const userRole = sessionClaims?.role
 
 ## Compliance Checklist
 Before submitting:
-- [ ]  Coding Pratices are strictly followed.
+- [ ]  Coding Practices are strictly followed.
 - [ ] `.env.example` up to date for new keys
 - [ ] All logger/console calls use static strings
 - [ ] No sensitive data in error messages or server logs but meaning that can help's debugging.  
