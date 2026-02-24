@@ -38,6 +38,7 @@ bun db:generate
 bun db:push
 bun db:migrate
 bun db:seed
+bun db:clean
 ```
 
 ## Development Rules

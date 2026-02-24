@@ -11,6 +11,11 @@ The codebase follows this flow:
 - Source of truth: `prisma/schema.prisma`
 - Prisma client output: `src/generated/prisma`
 - Models cover commerce and brand domains: products, variants, carts, orders, discounts, brands, founders, social links, documents.
+- **Prisma Client Setup** (`src/lib/prisma.ts`):
+  - Uses `PrismaPg` adapter with a `pg` Pool connection for serverless compatibility.
+  - Connection string priority: `SUPABASE_POSTGRES_URL_NON_POOLING` (preferred) → `DATABASE_URL` → `SUPABASE_POSTGRES_URL`.
+  - SSL configured with `rejectUnauthorized: false` for Supabase/managed Postgres.
+  - Global singleton pattern in development to prevent connection pool exhaustion.
 
 ### 2. Service Layer (`src/services`)
 - Owns business logic and Prisma calls.
@@ -82,9 +87,22 @@ Relationships: `Founder -> Brand (1:1) -> BrandPhilosophy (1:1)`, `Brand -> Bran
 - **OrderStatus enum**: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Managed via `ORDER_STATUSES` in `src/types/domain.ts`.
 - **Soft delete**: Orders use `deletedAt` timestamp for soft deletes. Queries filter `deletedAt: null` by default in `OrderService`.
 - **Stock management**: Order creation atomically decrements variant stock within a transaction; fails with `ValidationError` if insufficient.
+- **Admin Order Management**:
+  - List view (`/admin/orders`): Paginated table with search (order #, customer, email) and status filter. URL-synced query params.
+  - Detail view (`/admin/orders/[orderId]`): Customer info, shipping address, order items, and admin management card for status updates and internal notes.
+  - API (`/api/orders/[id]`): GET (auth required; admins see all, users see their own), PUT (admin only; triggers Inngest event on status change), DELETE (admin only; soft delete).
+- **Intent Prefetching**: Order list rows trigger `fetchOne` on hover to hydrate detail page cache before navigation.
 
 ## Icon Library
 Uses `@hugeicons/core-free-icons` and `@hugeicons/react` for all iconography. Do not use `lucide-react`.
+
+## Seed Data System (`prisma/seed.ts`)
+- Tagged seed data with `SEED::ENTITIES` prefix for safe identification and cleanup.
+- Creates: founders, brands, categories, products, variants, colors, sizes, discounts, orders (100), carts (20).
+- Modes:
+  - Default (`bun db:seed`): Cleans existing seed data, then creates fresh test data.
+  - Clean-only (`--clean` flag): Removes seed data without reseeding.
+- Includes progress bars for visual feedback during bulk operations.
 
 ## Utility Hooks (`src/hooks`)
 - **useDebounce**: Debounces a value with configurable delay (default 500ms). Used for search input debouncing in admin tables.
