@@ -87,6 +87,7 @@ Relationships: `Founder -> Brand (1:1) -> BrandPhilosophy (1:1)`, `Brand -> Bran
 - **OrderStatus enum**: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Managed via `ORDER_STATUSES` in `src/types/domain.ts`.
 - **Soft delete**: Orders use `deletedAt` timestamp for soft deletes. Queries filter `deletedAt: null` by default in `OrderService`.
 - **Stock management**: Order creation atomically decrements variant stock within a transaction; fails with `ValidationError` if insufficient.
+- **Compensation pattern**: Order creation includes rollback logic — if cart clearing fails after order creation, the order is soft-deleted to maintain consistency.
 - **Admin Order Management**:
   - List view (`/admin/orders`): Paginated table with search (order #, customer, email) and status filter. URL-synced query params.
   - Detail view (`/admin/orders/[orderId]`): Customer info, shipping address, order items, and admin management card for status updates and internal notes.
@@ -113,6 +114,11 @@ Relationships: `Founder -> Brand (1:1) -> BrandPhilosophy (1:1)`, `Brand -> Bran
 - `src/proxy.ts` applies Clerk middleware and protects non-public routes.
 - Route handlers still enforce operation-level authorization with guard helpers.
 - Role extraction is centralized in `src/lib/auth/guards.ts`.
+- **Available guards**:
+  - `requireAuth()`: Validates authenticated user, returns role from session claims.
+  - `requireAdmin()`: Requires `role === "admin"`, returns 403 otherwise.
+  - `requireOwnership(resourceOwnerId)`: Validates user owns the resource; admins bypass ownership check.
+  - `requireRole(allowedRole)`: Validates user has specific role.
 
 ## API Response Contract Notes
 - Primary success patterns:
