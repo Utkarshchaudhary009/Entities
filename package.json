@@ -7,7 +7,7 @@
     "safe": "bun run type-check && bun run lint && bun run lint:fix && bun run format",
     "build": "bun run safe && bun db:generate && bun --bun next build",
     "start": "bun --bun next start",
-    "lint": "bun --bun biome check",
+    "lint": "bun --bun tsc --noEmit",
     "lint:fix": "bun --bun biome check . --write",
     "test": "bun test tests/unit/api && bun test tests/unit/services && bun test tests/unit/stores && bun test tests/unit/lib",
     "test:integration": "bun test tests/integration",

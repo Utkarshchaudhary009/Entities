@@ -60,7 +60,7 @@ function toCartSummaryItem(api: CartItemApi): CartSummaryItem {
     quantity: api.quantity,
     productName: api.productVariant.product.name,
     productPrice: api.productVariant.product.price,
-    productImage: api.productVariant.product.thumbnailUrl,
+    productImage: api.productVariant.product.thumbnailUrl ?? null,
     size: api.productVariant.size,
     color: api.productVariant.color,
     stock: api.productVariant.stock,
