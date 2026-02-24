@@ -62,9 +62,9 @@ jobs:
 
       - name: Run Kilo docs update
         run: |
-          export KILOCODE_MODEL="${KILOCODE_MODEL:-kilo/auto}"
+          # export KILOCODE_MODEL="${KILOCODE_MODEL:-kilo/auto}"
           PROMPT="$(cat .kilo-docs-prompt.txt)"
-          kilo run --auto --model "$KILOCODE_MODEL" "$PROMPT"
+          kilo run --auto "$PROMPT"
 
       - name: Commit and push docs updates
         run: |
