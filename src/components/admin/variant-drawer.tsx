@@ -303,6 +303,7 @@ export function VariantDrawer({
               onChange={(urls) =>
                 setForm((prev) => ({ ...prev, images: urls }))
               }
+              bucket="variants"
               maxImages={10}
             />
           </div>

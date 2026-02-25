@@ -117,6 +117,24 @@ type EntityEvents = {
       idempotencyKey: string;
     };
   };
+  "storage/file.upload.v1": {
+    data: {
+      bucket: string;
+      filename: string;
+      fileBuffer: string;
+      contentType: string;
+      actorId?: string;
+      idempotencyKey: string;
+    };
+  };
+  "storage/file.delete.v1": {
+    data: {
+      bucket: string;
+      urls: string[];
+      actorId?: string;
+      idempotencyKey: string;
+    };
+  };
 };
 
 export const inngest = new Inngest({

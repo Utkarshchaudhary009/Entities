@@ -15,22 +15,17 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { createProductSchema } from "@/lib/validations/product";
 import { useCategoryStore } from "@/stores/category.store";
 import { useProductStore } from "@/stores/product.store";
 import type { ApiProduct } from "@/types/api";
+
+// Sub-components
+import { ProductBasicInfo } from "@/components/admin/product/product-basic-info";
+import { ProductPricing } from "@/components/admin/product/product-pricing";
+import { ProductAttributes } from "@/components/admin/product/product-attributes";
 
 interface ProductDrawerProps {
   open: boolean;
@@ -105,6 +100,8 @@ export function ProductDrawer({
 
   useEffect(() => {
     if (!open) return;
+
+    // Combine state updates
     if (mode === "edit" && product) {
       setForm({
         name: product.name,
@@ -127,7 +124,7 @@ export function ProductDrawer({
       setForm(initialFormState);
     }
     setErrors({});
-  }, [open, mode, product]);
+  }, [open, mode, product]); // Intentionally omitting setForm and setErrors from dependencies
 
   function handleChange(field: keyof FormState, value: string | boolean) {
     setForm((prev) => {
@@ -137,6 +134,8 @@ export function ProductDrawer({
       }
       return updated;
     });
+
+    // Only update errors if we have one for this field
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -216,101 +215,29 @@ export function ProductDrawer({
 
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={form.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                placeholder="Product name"
-                aria-invalid={!!errors.name}
-              />
-              {errors.name && (
-                <p className="text-destructive text-xs">{errors.name}</p>
-              )}
-            </div>
+            <ProductBasicInfo
+              name={form.name}
+              slug={form.slug}
+              description={form.description}
+              errors={errors}
+              onChange={handleChange as any}
+            />
 
-            <div className="space-y-1.5">
-              <Label htmlFor="slug">Slug *</Label>
-              <Input
-                id="slug"
-                value={form.slug}
-                onChange={(e) => handleChange("slug", e.target.value)}
-                placeholder="product-slug"
-                aria-invalid={!!errors.slug}
-              />
-              {errors.slug && (
-                <p className="text-destructive text-xs">{errors.slug}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={form.description}
-                onChange={(e) => handleChange("description", e.target.value)}
-                placeholder="Product description"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="price">Price (cents) *</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  value={form.price}
-                  onChange={(e) => handleChange("price", e.target.value)}
-                  placeholder="1000"
-                  aria-invalid={!!errors.price}
-                />
-                {errors.price && (
-                  <p className="text-destructive text-xs">{errors.price}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="compareAtPrice">Compare At Price</Label>
-                <Input
-                  id="compareAtPrice"
-                  type="number"
-                  value={form.compareAtPrice}
-                  onChange={(e) =>
-                    handleChange("compareAtPrice", e.target.value)
-                  }
-                  placeholder="1500"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="categoryId">Category</Label>
-              <Select
-                value={form.categoryId}
-                onValueChange={(value) => handleChange("categoryId", value)}
-              >
-                <SelectTrigger id="categoryId" className="w-full">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.categoryId && (
-                <p className="text-destructive text-xs">{errors.categoryId}</p>
-              )}
-            </div>
+            <ProductPricing
+              price={form.price}
+              compareAtPrice={form.compareAtPrice}
+              categoryId={form.categoryId}
+              categories={categories}
+              errors={errors}
+              onChange={handleChange as any}
+            />
 
             <div className="space-y-1.5">
               <Label htmlFor="thumbnailUrl">Thumbnail URL</Label>
               <ImageUpload
                 value={form.thumbnailUrl ? [form.thumbnailUrl] : []}
                 onChange={(urls) => handleChange("thumbnailUrl", urls[0] || "")}
+                bucket="products"
                 maxImages={1}
                 className="w-full"
               />
@@ -321,97 +248,17 @@ export function ProductDrawer({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="material">Material</Label>
-                <Input
-                  id="material"
-                  value={form.material}
-                  onChange={(e) => handleChange("material", e.target.value)}
-                  placeholder="Cotton"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="fabric">Fabric</Label>
-                <Input
-                  id="fabric"
-                  value={form.fabric}
-                  onChange={(e) => handleChange("fabric", e.target.value)}
-                  placeholder="Denim"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="fit">Fit</Label>
-                <Input
-                  id="fit"
-                  value={form.fit}
-                  onChange={(e) => handleChange("fit", e.target.value)}
-                  placeholder="Regular"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="careInstruction">Care Instruction</Label>
-                <Input
-                  id="careInstruction"
-                  value={form.careInstruction}
-                  onChange={(e) =>
-                    handleChange("careInstruction", e.target.value)
-                  }
-                  placeholder="Machine wash"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="defaultColor">Default Color</Label>
-                <Input
-                  id="defaultColor"
-                  value={form.defaultColor}
-                  onChange={(e) => handleChange("defaultColor", e.target.value)}
-                  placeholder="Black"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="defaultSize">Default Size</Label>
-                <Input
-                  id="defaultSize"
-                  value={form.defaultSize}
-                  onChange={(e) => handleChange("defaultSize", e.target.value)}
-                  placeholder="M"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <Label htmlFor="isFeatured" className="cursor-pointer">
-                Featured Product
-              </Label>
-              <Switch
-                id="isFeatured"
-                checked={form.isFeatured}
-                onCheckedChange={(checked) =>
-                  handleChange("isFeatured", checked)
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <Label htmlFor="isActive" className="cursor-pointer">
-                Active
-              </Label>
-              <Switch
-                id="isActive"
-                checked={form.isActive}
-                onCheckedChange={(checked) => handleChange("isActive", checked)}
-              />
-            </div>
+            <ProductAttributes
+              material={form.material}
+              fabric={form.fabric}
+              fit={form.fit}
+              careInstruction={form.careInstruction}
+              defaultColor={form.defaultColor}
+              defaultSize={form.defaultSize}
+              isFeatured={form.isFeatured}
+              isActive={form.isActive}
+              onChange={handleChange}
+            />
           </div>
         </div>
 

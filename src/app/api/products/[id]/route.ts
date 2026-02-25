@@ -51,8 +51,23 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
 
   try {
     const { id } = idParamSchema.parse(await params);
+
+    // Fetch product first to get image URLs for storage cleanup
+    const product = await productService.findById(id);
+    const imageUrls: string[] = [];
+    if (product.thumbnailUrl) imageUrls.push(product.thumbnailUrl);
+
+    // If product has variants with images, we might want to collect those too,
+    // but usually product deletion cascades in DB, so we handle variant images here if they exist.
+    if (product.variants) {
+      for (const variant of product.variants) {
+        if (variant.images) imageUrls.push(...variant.images);
+      }
+    }
+
     await productService.delete(id);
 
+    // Emit product deletion event
     await safeInngestSend({
       name: "entity/product.deleted.v1",
       data: {
@@ -61,6 +76,19 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
         idempotencyKey: `entity/product.deleted.v1:${id}:${Date.now()}`,
       },
     });
+
+    // Emit storage deletion event
+    if (imageUrls.length > 0) {
+      await safeInngestSend({
+        name: "storage/file.delete.v1",
+        data: {
+          bucket: "products",
+          urls: imageUrls,
+          actorId: guard.auth.userId,
+          idempotencyKey: `storage/delete:${id}:${Date.now()}`,
+        },
+      });
+    }
 
     return successDataResponse({ success: true });
   } catch (error) {
