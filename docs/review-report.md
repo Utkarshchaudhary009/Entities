@@ -53,7 +53,7 @@ Date: 2026-02-25
 6. Admin Category Management follows established patterns:
    - Store uses `createEntityStore` factory for consistent CRUD behavior
    - `CategoryDrawer` demonstrates react-hook-form + Zod resolver pattern
-   - Auto-generated slug from name field via form watchers
+   - Auto-generated slug from name field via form watchers; respects manual edits via `dirtyFields` tracking
 
 ## Recommended Next Actions
 1. Standardize list response envelopes for paginated GET endpoints.

@@ -123,7 +123,7 @@ Category administration follows the standard architecture flow:
 The `CategoryDrawer` component demonstrates the project's form pattern:
 - `react-hook-form` with `@hookform/resolvers` for Zod schema integration
 - `useForm` with `zodResolver(createCategorySchema)` for validation
-- Auto-generated slug from name field using `watch` and `setValue`
+- Auto-generated slug from name field using `watch` and `setValue`; respects manual edits via `dirtyFields.slug` tracking
 - Store-driven submission with loading states and toast feedback
 
 ## Order Domain
