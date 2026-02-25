@@ -25,54 +25,54 @@ src/app/layout.tsx  (root — wraps entire site)
 ---
 
 ## Phase 0 — Foundation
-- [ ] Branch: `feat/admin-foundation`
+- [x] Branch: `feat/admin-foundation`
 
 ### Shared (lives in root layout, used site-wide)
-- [ ] `src/contexts/sidebar-context.tsx` — `SidebarProvider` + `useSidebar()` hook; holds `{ isOpen, toggle, enabled }` state
-- [ ] `src/components/layout/topbar.tsx` — site-wide topbar: logo, nav, 🍔 (conditional on `enabled`), "Admin" button (conditional on `role="admin"`), user avatar
-- [ ] Update `src/app/layout.tsx` — wrap with `<SidebarProvider>`, add `<Topbar />`
+- [x] `src/contexts/sidebar-context.tsx` — `SidebarProvider` + `useSidebar()` hook; holds `{ isOpen, toggle, enabled }` state
+- [x] `src/components/layout/topbar.tsx` — site-wide topbar: logo, nav, 🍔 (conditional on `enabled`), "Admin" button (conditional on `role="admin"`), user avatar
+- [x] Update `src/app/layout.tsx` — wrap with `<SidebarProvider>`, add `<Topbar />`
 
 ### Admin-only
-- [ ] `src/app/admin/layout.tsx` — Clerk `role="admin"` guard; calls `setSidebarEnabled(true)` on mount; renders `<AdminSidebar />` next to `{children}`
-- [ ] `src/app/admin/page.tsx` — redirect to `/admin/dashboard`
-- [ ] `src/components/admin/sidebar.tsx` — admin nav links, active state; reads `{ isOpen }` from `useSidebar()`
-- [ ] `src/components/admin/data-table.tsx` — generic paginated table (columns, search, skeleton)
-- [ ] `src/components/admin/stat-card.tsx` — KPI card (icon, title, value, delta badge)
-- [ ] `src/components/admin/status-badge.tsx` — `OrderStatus` colored badge
+- [x] `src/app/admin/layout.tsx` — Clerk `role="admin"` guard; calls `setSidebarEnabled(true)` on mount; renders `<AdminSidebar />` next to `{children}`
+- [x] `src/app/admin/page.tsx` — redirect to `/admin/dashboard`
+- [x] `src/components/admin/sidebar.tsx` — admin nav links, active state; reads `{ isOpen }` from `useSidebar()`
+- [x] `src/components/admin/data-table.tsx` — generic paginated table (columns, search, skeleton)
+- [x] `src/components/admin/stat-card.tsx` — KPI card (icon, title, value, delta badge)
+- [x] `src/components/admin/status-badge.tsx` — `OrderStatus` colored badge
 
-- [ ] Lint & TSC all files
-- [ ] PR → merge
+- [x] Lint & TSC all files
+- [x] PR → merge
 
 ---
 
 ## Phase 1 — Dashboard Overview
-- [ ] Branch: `feat/admin-dashboard`
-- [ ] `src/app/admin/dashboard/page.tsx`
+- [x] Branch: `feat/admin-dashboard`
+- [x] `src/app/admin/dashboard/page.tsx`
   - KPI cards: total orders, revenue, pending orders, low-stock SKUs, active discounts
   - Recent orders mini-table (last 10)
   - Order status breakdown bar/donut
-- [ ] Lint & TSC
-- [ ] PR → merge
+- [x] Lint & TSC
+- [x] PR → merge
 
 ---
 
 ## Phase 2 — Orders
-- [ ] Branch: `feat/admin-orders`
-- [ ] `src/app/admin/orders/page.tsx` — filterable + paginated table; filter by `OrderStatus`, date range, search by order# / customer
-- [ ] `src/app/admin/orders/[orderId]/page.tsx` — order detail: items, address block, status editor, admin notes textarea
-- [ ] Lint & TSC
-- [ ] PR → merge
+- [x] Branch: `feat/admin-orders`
+- [x] `src/app/admin/orders/page.tsx` — filterable + paginated table; filter by `OrderStatus`, date range, search by order# / customer
+- [x] `src/app/admin/orders/[orderId]/page.tsx` — order detail: items, address block, status editor, admin notes textarea
+- [x] Lint & TSC
+- [x] PR → merge
 
 ---
 
 ## Phase 3 — Products & Variants
 - [x] Branch: `feat/admin-products`
 - [x] `src/app/admin/products/page.tsx` — table: thumbnail, name, category chip, price, active toggle
-- [x] use Drawer component — product creation form and variety creation.
+- [x] use drawer(open : bottom) component — product creation form and variety creation.
 - [x] create a component for img upload and live preview. It must be independent with proper UX and UI. add micro interactions.
-- [x] `src/app/admin/products/[productId]/page.tsx` — product details display and edit drawer +  ProductVariant -> button to add and edit and delete || display variants.
+- [x] `src/app/admin/products/[productId]/page.tsx` — product details display and edit drawer(open : bottom) +  ProductVariant -> button to add and edit and delete || display variants.
 - [x] task already done ( 
-          Vaul drawer with controlled open/close state                                
+          Vaul drawer(open : bottom) with controlled open/close state                                
         • Form fields for size (dropdown using label), color (dropdown with hex preview), colorHex (auto-filled),images (ImageUpload), stock, SKU, isActive
         • Zod validation before submit 
         • Store-driven CRUD via useProductStore, useSizeStore, useColorStore
@@ -86,7 +86,7 @@ src/app/layout.tsx  (root — wraps entire site)
 ## Phase 4 — Categories
 - [ ] Branch: `feat/admin-categories`
 - [ ] `src/app/admin/categories/page.tsx` — table: name, slug, discount %, active toggle, sort-order controls
-- [ ] Create / edit drawer (thumbnail URL, about, discount %, sort order)
+- [ ] Create / edit drawer(open : bottom)(open : bottom) (thumbnail URL, about, discount %, sort order)
 - [ ] Lint & TSC
 - [ ] PR → merge
 
@@ -95,7 +95,7 @@ src/app/layout.tsx  (root — wraps entire site)
 ## Phase 5 — Discounts
 - [ ] Branch: `feat/admin-discounts`
 - [ ] `src/app/admin/discounts/page.tsx` — table: code, type (%, FIXED, BOGO), value, usage count / limit, active, expiry
-- [ ] Create / edit drawer (all `Discount` fields, date pickers for `startsAt` / `expiresAt`)
+- [ ] Create / edit drawer(open : bottom) (all `Discount` fields, date pickers for `startsAt` / `expiresAt`)
 - [ ] Lint & TSC
 - [ ] PR → merge
 
