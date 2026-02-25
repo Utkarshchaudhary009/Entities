@@ -126,6 +126,44 @@ The `CategoryDrawer` component demonstrates the project's form pattern:
 - Auto-generated slug from name field using `watch` and `setValue`
 - Store-driven submission with loading states and toast feedback
 
+## Admin Color Management
+Color administration follows the standard architecture flow:
+
+- **Routes**:
+  - `GET/POST /api/colors` — list (paginated) and create
+  - `GET/PUT/DELETE /api/colors/[id]` — color CRUD
+- **Service**: `src/services/color.service.ts` handles color operations with sort ordering.
+- **Store**: `src/stores/color.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
+- **Validation**: `src/lib/validations/color.ts` defines `createColorSchema` (name, hex, sortOrder).
+- **UI**:
+  - `/admin/colors` — DataTable with color swatches
+  - `ColorDrawer` — bottom drawer for create/edit with native color picker synced to hex text input
+
+### Hex Color Picker Pattern
+The `ColorDrawer` implements a dual-input hex picker:
+- Native browser color picker (`<input type="color">`) for visual selection
+- Text input stays synced via `watch` and `setValue` with `shouldValidate: true`
+- Color swatch preview updates in real-time via inline `backgroundColor` style
+
+## Admin Size Management
+Size administration follows the standard architecture flow:
+
+- **Routes**:
+  - `GET/POST /api/sizes` — list (paginated) and create
+  - `GET/PUT/DELETE /api/sizes/[id]` — size CRUD
+- **Service**: `src/services/size.service.ts` handles size operations with sort ordering.
+- **Store**: `src/stores/size.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
+- **Validation**: `src/lib/validations/size.ts` defines `createSizeSchema` (label, sortOrder, measurements).
+- **UI**:
+  - `/admin/sizes` — DataTable with size labels
+  - `SizeDrawer` — bottom drawer for create/edit with form fields: label, sort order, measurements (JSON textarea)
+
+### Measurements JSON Pattern
+The `SizeDrawer` measurements field accepts arbitrary dimension key-value pairs:
+- `measurements` is a flexible JSON object (`Record<string, string>`)
+- Form includes a `Textarea` with `setValueAs` parser to convert JSON string to object on submit
+- Includes placeholder example and validation feedback for invalid JSON
+
 ## Order Domain
 - **OrderStatus enum**: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Managed via `ORDER_STATUSES` in `src/types/domain.ts`.
 - **Soft delete**: Orders use `deletedAt` timestamp for soft deletes. Queries filter `deletedAt: null` by default in `OrderService`.

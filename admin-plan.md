@@ -84,11 +84,11 @@ src/app/layout.tsx  (root — wraps entire site)
 ---
 
 ## Phase 4 — Categories
-- [ ] Branch: `feat/admin-categories`
-- [ ] `src/app/admin/categories/page.tsx` — table: name, slug, discount %, active toggle, sort-order controls
-- [ ] Create / edit drawer(open : bottom)(open : bottom) (thumbnail URL, about, discount %, sort order)
-- [ ] Lint & TSC
-- [ ] PR → merge
+- [x] Branch: `feat/admin-categories`
+- [x] `src/app/admin/categories/page.tsx` — table: name, slug, discount %, active toggle, sort-order controls
+- [x] Create / edit drawer(open : bottom)(open : bottom) (thumbnail URL, about, discount %, sort order)
+- [x] Lint & TSC
+- [x] PR → merge
 
 ---
 
