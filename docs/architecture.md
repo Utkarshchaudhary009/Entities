@@ -174,6 +174,7 @@ Discount administration follows the standard architecture flow:
 - **Store**: `src/stores/discount.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
 - **Validation**: `src/lib/validations/discount.ts` defines `createDiscountSchema` with fields:
   - `code`: required, auto-uppercased
+  - `description`: optional, short note about the discount
   - `discountType`: enum (`PERCENTAGE`, `FIXED`, `BOGO`)
   - `value`: discount amount (percentage or fixed)
   - `minOrderValue`: minimum order threshold
