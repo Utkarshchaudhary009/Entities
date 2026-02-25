@@ -180,8 +180,8 @@ export default function ProductDetailsPage({
                                   src={variant.images[0]}
                                   alt={`${product.name} ${variant.size} ${variant.color}`}
                                   fill
-                                  className="object-cover"
                                   sizes="40px"
+                                  className="object-cover"
                                 />
                               ) : (
                                 <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
@@ -353,8 +353,8 @@ export default function ProductDetailsPage({
                 src={product.thumbnailUrl}
                 alt={product.name}
                 fill
-                className="object-cover"
                 sizes="(max-width: 768px) 100vw, 33vw"
+                className="object-cover"
               />
             ) : (
               <div className="flex size-full items-center justify-center text-muted-foreground">

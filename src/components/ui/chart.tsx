@@ -1,7 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import * as React from "react";
-import * as RechartsPrimitive from "recharts";
+import type * as RechartsPrimitive from "recharts";
 
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,12 @@ function useChart() {
   return context;
 }
 
+const ResponsiveContainer = dynamic<
+  React.ComponentProps<typeof RechartsPrimitive.ResponsiveContainer>
+>(() => import("recharts").then((mod) => mod.ResponsiveContainer), {
+  ssr: false,
+});
+
 function ChartContainer({
   id,
   className,
@@ -61,9 +68,7 @@ function ChartContainer({
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
-          {children}
-        </RechartsPrimitive.ResponsiveContainer>
+        <ResponsiveContainer>{children}</ResponsiveContainer>
       </div>
     </ChartContext.Provider>
   );
@@ -98,7 +103,9 @@ ${colorConfig
   return <style>{css}</style>;
 };
 
-const ChartTooltip = RechartsPrimitive.Tooltip;
+const ChartTooltip = dynamic<
+  React.ComponentProps<typeof RechartsPrimitive.Tooltip>
+>(() => import("recharts").then((mod) => mod.Tooltip as any), { ssr: false });
 
 function ChartTooltipContent({
   active,
@@ -114,7 +121,7 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+}: React.ComponentProps<typeof ChartTooltip> &
   React.ComponentProps<"div"> & {
     hideLabel?: boolean;
     hideIndicator?: boolean;
@@ -246,7 +253,9 @@ function ChartTooltipContent({
   );
 }
 
-const ChartLegend = RechartsPrimitive.Legend;
+const ChartLegend = dynamic<
+  React.ComponentProps<typeof RechartsPrimitive.Legend>
+>(() => import("recharts").then((mod) => mod.Legend as any), { ssr: false });
 
 function ChartLegendContent({
   className,
@@ -255,7 +264,7 @@ function ChartLegendContent({
   verticalAlign = "bottom",
   nameKey,
 }: React.ComponentProps<"div"> &
-  Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+  React.ComponentProps<typeof ChartLegend> & {
     hideIcon?: boolean;
     nameKey?: string;
   }) {

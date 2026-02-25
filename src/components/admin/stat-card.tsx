@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-export interface StatCardProps {
+interface StatCardProps {
   /** Short descriptive label */
   title: string;
   /** Primary metric value (string so caller formats currency etc.) */

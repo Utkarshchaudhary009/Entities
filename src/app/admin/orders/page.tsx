@@ -4,7 +4,7 @@ import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import type { DataTableColumn } from "@/components/admin/data-table";
 import { DataTable } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -23,7 +23,7 @@ import { useOrderStore } from "@/stores/order.store";
 import type { ApiOrder } from "@/types/api";
 import { ORDER_STATUSES } from "@/types/domain";
 
-export default function OrdersPage() {
+function OrdersContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -188,5 +188,13 @@ export default function OrdersPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<div>Loading orders...</div>}>
+      <OrdersContent />
+    </Suspense>
   );
 }

@@ -41,21 +41,22 @@ export default function AdminProductsPage() {
   const { items: categories, fetchAll: fetchCategories } = useCategoryStore();
 
   const [search, setSearch] = useState("");
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
-  const [selectedProduct, setSelectedProduct] = useState<ApiProduct | null>(
-    null,
-  );
+  const [drawerState, setDrawerState] = useState<{
+    isOpen: boolean;
+    mode: "create" | "edit";
+    product: ApiProduct | null;
+  }>({
+    isOpen: false,
+    mode: "create",
+    product: null,
+  });
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProducts({
-      page: 1,
-      limit: 20,
-      categoryId: categoryFilter || undefined,
-    });
+    fetchProducts({ page: 1, limit: 20 });
     fetchCategories();
-  }, [fetchProducts, fetchCategories, categoryFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePageChange = (page: number) => {
     fetchProducts({
@@ -76,16 +77,22 @@ export default function AdminProductsPage() {
     });
   };
 
+  const handleCategoryFilter = (categoryId: string | null) => {
+    setCategoryFilter(categoryId);
+    fetchProducts({
+      page: 1,
+      limit: meta.limit,
+      search,
+      categoryId: categoryId || undefined,
+    });
+  };
+
   const handleCreate = () => {
-    setSelectedProduct(null);
-    setDrawerMode("create");
-    setDrawerOpen(true);
+    setDrawerState({ isOpen: true, mode: "create", product: null });
   };
 
   const handleEdit = (product: ApiProduct) => {
-    setSelectedProduct(product);
-    setDrawerMode("edit");
-    setDrawerOpen(true);
+    setDrawerState({ isOpen: true, mode: "edit", product });
   };
 
   const handleDelete = async (id: string) => {
@@ -117,8 +124,8 @@ export default function AdminProductsPage() {
               src={row.thumbnailUrl}
               alt={row.name}
               fill
-              className="object-cover"
               sizes="40px"
+              className="object-cover"
             />
           ) : (
             <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
@@ -225,7 +232,7 @@ export default function AdminProductsPage() {
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem
                 checked={categoryFilter === null}
-                onCheckedChange={() => setCategoryFilter(null)}
+                onCheckedChange={() => handleCategoryFilter(null)}
               >
                 All Categories
               </DropdownMenuCheckboxItem>
@@ -233,7 +240,7 @@ export default function AdminProductsPage() {
                 <DropdownMenuCheckboxItem
                   key={category.id}
                   checked={categoryFilter === category.id}
-                  onCheckedChange={() => setCategoryFilter(category.id)}
+                  onCheckedChange={() => handleCategoryFilter(category.id)}
                 >
                   {category.name}
                 </DropdownMenuCheckboxItem>
@@ -259,10 +266,12 @@ export default function AdminProductsPage() {
       />
 
       <ProductDrawer
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        mode={drawerMode}
-        product={selectedProduct}
+        open={drawerState.isOpen}
+        onOpenChange={(open) =>
+          setDrawerState((prev) => ({ ...prev, isOpen: open }))
+        }
+        mode={drawerState.mode}
+        product={drawerState.product}
       />
     </div>
   );
