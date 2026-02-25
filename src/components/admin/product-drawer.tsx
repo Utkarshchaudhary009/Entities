@@ -201,8 +201,8 @@ export function ProductDrawer({
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
-      <DrawerContent className="h-full max-w-md">
+    <Drawer open={open} onOpenChange={onOpenChange} direction="bottom">
+      <DrawerContent className="h-full max-w-md mx-auto">
         <DrawerHeader>
           <DrawerTitle>
             {mode === "create" ? "Create Product" : "Edit Product"}

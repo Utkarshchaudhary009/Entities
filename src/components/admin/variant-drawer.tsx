@@ -161,7 +161,7 @@ export function VariantDrawer({
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={onOpenChange} direction="bottom">
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>

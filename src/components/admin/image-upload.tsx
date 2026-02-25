@@ -3,12 +3,12 @@
 import {
   Add01Icon,
   Cancel01Icon,
-  Image02Icon,
   Link01Icon,
+  Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const [urlInput, setUrlInput] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canAddMore = value.length < maxImages;
 
@@ -76,10 +77,50 @@ export function ImageUpload({
     setIsDragging(false);
   }, []);
 
+  const processFiles = useCallback(
+    (files: FileList | null) => {
+      if (!files || files.length === 0 || !canAddMore) return;
+
+      const newUrls: string[] = [];
+      let processedCount = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith("image/")) continue;
+
+        // Limit to remaining slots
+        if (value.length + newUrls.length >= maxImages) break;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (typeof e.target?.result === "string") {
+            newUrls.push(e.target.result);
+          }
+          processedCount++;
+
+          // When all valid files are processed, update state
+          if (
+            processedCount === files.length ||
+            value.length + newUrls.length >= maxImages
+          ) {
+            onChange([...value, ...newUrls]);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    [canAddMore, maxImages, value, onChange],
+  );
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
+
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        processFiles(e.dataTransfer.files);
+        return;
+      }
 
       const droppedText = e.dataTransfer.getData("text/plain");
       if (!droppedText || !canAddMore) return;
@@ -93,15 +134,22 @@ export function ImageUpload({
         // Invalid URL
       }
     },
-    [canAddMore, value, onChange],
+    [canAddMore, value, onChange, processFiles],
   );
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    processFiles(e.target.files);
+    // Reset input so same file can be selected again if removed
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   return (
     <div className={cn("space-y-4", className)}>
-      <section
+      {/* biome-ignore lint/a11y/useSemanticElements: Complex dropzone structure */}
+      <div
         aria-label="Drop zone for image URLs"
         className={cn(
-          "relative rounded-lg border-2 border-dashed p-6 transition-all duration-200",
+          "relative rounded-lg border-2 border-dashed p-6 transition-all duration-200 cursor-pointer",
           isDragging
             ? "border-primary bg-primary/5 scale-[1.01]"
             : "border-muted-foreground/25 hover:border-muted-foreground/50",
@@ -110,7 +158,24 @@ export function ImageUpload({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            fileInputRef.current?.click();
+          }
+        }}
+        tabIndex={0}
+        role="button"
       >
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          multiple
+          onChange={handleFileSelect}
+          disabled={disabled}
+        />
         <div className="flex flex-col items-center gap-3 text-center">
           <div
             className={cn(
@@ -119,32 +184,39 @@ export function ImageUpload({
             )}
           >
             <HugeiconsIcon
-              icon={isDragging ? Link01Icon : Image02Icon}
+              icon={isDragging ? Link01Icon : Upload01Icon}
               className="size-6 text-muted-foreground"
             />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium">
-              {isDragging ? "Drop image URL here" : "Drag & drop image URL"}
+              {isDragging
+                ? "Drop images here"
+                : "Click to upload or drag & drop"}
             </p>
             <p className="text-xs text-muted-foreground">
-              or paste URL below ({value.length}/{maxImages} images)
+              Supports: PNG, JPG, GIF (max {maxImages} images)
             </p>
           </div>
         </div>
-      </section>
+      </div>
 
       {canAddMore && (
-        <div className="flex gap-2">
-          <Input
-            type="url"
-            placeholder="Paste image URL..."
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={disabled}
-            className="flex-1"
-          />
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              <HugeiconsIcon icon={Link01Icon} className="size-4" />
+            </div>
+            <Input
+              type="url"
+              placeholder="Or paste image URL..."
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={disabled}
+              className="pl-9"
+            />
+          </div>
           <Button
             type="button"
             variant="outline"
