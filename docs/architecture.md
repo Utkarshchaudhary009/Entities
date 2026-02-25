@@ -106,6 +106,26 @@ Product administration follows the standard architecture flow:
 ### Variant Summary Type
 `VariantSummary` type (`src/types/api.ts`) provides lightweight variant display fields: `id`, `size`, `color`, `colorHex`, `images[]`, `stock`, `sku`, `isActive`. Used in product detail responses to avoid full `ProductVariant` payload.
 
+## Admin Category Management
+Category administration follows the standard architecture flow:
+
+- **Routes**: 
+  - `GET/POST /api/categories` — list (paginated, searchable) and create
+  - `GET/PUT/DELETE /api/categories/[id]` — category CRUD
+- **Service**: `src/services/category.service.ts` handles category operations with search support and sort ordering.
+- **Store**: `src/stores/category.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
+- **Validation**: `src/lib/validations/category.ts` defines `createCategorySchema` (name, slug, thumbnailUrl, about, discountPercent, sortOrder, isActive).
+- **UI**: 
+  - `/admin/categories` — DataTable with columns for thumbnail, name, slug, discount %, active toggle, sort order
+  - `CategoryDrawer` — bottom drawer for create/edit with react-hook-form + Zod resolver
+
+### Form Handling Pattern
+The `CategoryDrawer` component demonstrates the project's form pattern:
+- `react-hook-form` with `@hookform/resolvers` for Zod schema integration
+- `useForm` with `zodResolver(createCategorySchema)` for validation
+- Auto-generated slug from name field using `watch` and `setValue`
+- Store-driven submission with loading states and toast feedback
+
 ## Order Domain
 - **OrderStatus enum**: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Managed via `ORDER_STATUSES` in `src/types/domain.ts`.
 - **Soft delete**: Orders use `deletedAt` timestamp for soft deletes. Queries filter `deletedAt: null` by default in `OrderService`.
