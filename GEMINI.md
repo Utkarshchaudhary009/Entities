@@ -16,6 +16,7 @@
 ## Coding Practices
 - Add meaning error log full help in debugging. Copywritted error for user
 - consistent API responses
+- Avoid using `any`;Always use proper type.
 - use @hugeicons/core-free-icons and @hugeicons/react instead of lucide-react.
 - It must and strictly USE SOLID principles, No duplicate logic
 - Follow Next.js App Router conventions; use `proxy.ts` instead of deprecated `middleware.ts`.
