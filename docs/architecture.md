@@ -83,6 +83,37 @@ The brand domain models support multi-brand commerce with founder profiles:
 
 Relationships: `Founder -> Brand (1:1) -> BrandPhilosophy (1:1)`, `Brand -> BrandDocument[]`, `Brand -> SocialLink[]`, `Founder -> SocialLink[]`.
 
+## Admin Product Management
+Product administration follows the standard architecture flow:
+
+- **Routes**: 
+  - `GET/POST /api/products` — list (paginated, searchable) and create
+  - `GET/PUT/DELETE /api/products/[id]` — product detail with variants
+  - `POST/PUT/DELETE /api/product-variants/[id]` — variant CRUD
+- **Service**: `src/services/product.service.ts` handles product operations; `src/services/product-variant.service.ts` manages variants with stock tracking.
+- **Store**: `src/stores/product.store.ts` manages:
+  - Product list (`products`, `meta`, `isLoading`)
+  - Product detail with variants (`product`, `variants`)
+  - Optimistic CRUD with rollback on failure
+  - Request deduping via `createRequestDeduper`
+  - SWR-style cache hydration (displays cached data while fetching fresh)
+- **UI**: 
+  - `/admin/products` — DataTable with search, category filter, active toggle
+  - `/admin/products/[productId]` — detail view with variant table
+  - `ProductDrawer` — create/edit product form with ImageUpload for thumbnail
+  - `VariantDrawer` — create/edit variant with size/color selectors and multi-image upload
+
+### ImageUpload Component
+URL-based image management component (`src/components/admin/image-upload.tsx`):
+- Drag-and-drop zone for image URL
+- Manual URL paste input with Enter to add
+- Grid preview with hover-to-remove
+- Configurable max images (default 10)
+- Validates URL format before adding
+
+### Variant Summary Type
+`VariantSummary` type (`src/types/api.ts`) provides lightweight variant display fields: `id`, `size`, `color`, `colorHex`, `images[]`, `stock`, `sku`, `isActive`. Used in product detail responses to avoid full `ProductVariant` payload.
+
 ## Order Domain
 - **OrderStatus enum**: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Managed via `ORDER_STATUSES` in `src/types/domain.ts`.
 - **Soft delete**: Orders use `deletedAt` timestamp for soft deletes. Queries filter `deletedAt: null` by default in `OrderService`.
