@@ -164,6 +164,33 @@ The `SizeDrawer` measurements field accepts arbitrary dimension key-value pairs:
 - Form includes a `Textarea` with `setValueAs` parser to convert JSON string to object on submit
 - Includes placeholder example and validation feedback for invalid JSON
 
+## Admin Discount Management
+Discount administration follows the standard architecture flow:
+
+- **Routes**: 
+  - `GET/POST /api/discounts` — list (paginated, searchable) and create
+  - `GET/PUT/DELETE /api/discounts/[id]` — discount CRUD
+- **Service**: `src/services/discount.service.ts` handles discount operations.
+- **Store**: `src/stores/discount.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
+- **Validation**: `src/lib/validations/discount.ts` defines `createDiscountSchema` with fields:
+  - `code`: required, auto-uppercased
+  - `discountType`: enum (`PERCENTAGE`, `FIXED`, `BOGO`)
+  - `value`: discount amount (percentage or fixed)
+  - `minOrderValue`: minimum order threshold
+  - `maxDiscount`: cap for percentage discounts
+  - `usageLimit`: total redemptions allowed
+  - `startsAt`, `expiresAt`: validity period
+  - `isActive`: toggle for enabling/disabling
+- **UI**: 
+  - `/admin/discounts` — DataTable with columns for code, type badge, value, usage count, expiry, active toggle
+  - `DiscountDrawer` — bottom drawer for create/edit with delete option in edit mode
+
+### Discount Types
+`DiscountType` enum (`src/types/domain.ts`):
+- `PERCENTAGE`: percentage off (value = %)
+- `FIXED`: fixed amount off (value = ₹)
+- `BOGO`: buy one get one
+
 ## Order Domain
 - **OrderStatus enum**: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Managed via `ORDER_STATUSES` in `src/types/domain.ts`.
 - **Soft delete**: Orders use `deletedAt` timestamp for soft deletes. Queries filter `deletedAt: null` by default in `OrderService`.
