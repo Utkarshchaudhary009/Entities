@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  Eye01Icon,
+  EyeIcon,
   FloppyDiskIcon,
   Loading03Icon,
   PencilEdit01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,7 +81,7 @@ export default function AdminBrandDocumentsPage() {
   const isDirtyRef = useRef(false);
   useEffect(() => {
     isDirtyRef.current = Object.values(docStates).some((s) => s.isDirty);
-  }, [docStates, isDirtyRef]);
+  }, [docStates]);
 
   // ── Load brand + documents on mount ──────────────────────────────────────
   useEffect(() => {
@@ -271,7 +271,7 @@ export default function AdminBrandDocumentsPage() {
             className="gap-2"
             onClick={() => setIsPreview(true)}
           >
-            <HugeiconsIcon icon={Eye01Icon} className="size-4" />
+            <HugeiconsIcon icon={EyeIcon} className="size-4" />
             <span className="hidden sm:inline">Preview</span>
           </Button>
         </div>
@@ -328,9 +328,10 @@ export default function AdminBrandDocumentsPage() {
                 isDirty: true,
               })
             }
-            placeholder={`Write your ${DOCUMENT_TYPES.find((d) => d.type === activeTab)?.label ??
+            placeholder={`Write your ${
+              DOCUMENT_TYPES.find((d) => d.type === activeTab)?.label ??
               "document"
-              } here in Markdown…`}
+            } here in Markdown…`}
             className="min-h-[55vh] w-full resize-none font-mono text-sm leading-relaxed"
             spellCheck={false}
           />
@@ -364,7 +365,7 @@ function renderMarkdown(md: string): string {
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/^- (.+)$/gm, "<li>$1</li>")
-    .replace(/(<li>.*<\/li>)/s, "<ul>$1</ul>")
+    .replace(/(<li>[\s\S]*<\/li>)/, "<ul>$1</ul>")
     .replace(
       /\[(.+?)\]\((.+?)\)/g,
       '<a href="$2" target="_blank" rel="noreferrer">$1</a>',
