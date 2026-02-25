@@ -143,7 +143,11 @@ URL-based image management component (`src/components/admin/image-upload.tsx`):
 - **useDebounce**: Debounces a value with configurable delay (default 500ms). Used for search input debouncing in admin tables.
 
 ## Auth and Access Control
-- `src/app/admin/proxy.ts` applies Clerk middleware and protects non-public routes with admin-specific role checks.
+- `src/proxy.ts` applies Clerk middleware with route-based access control:
+  - Public routes: `/`, `/sign-in(.*)`, `/sign-up(.*)`
+  - Admin routes: `/admin(.*)` requires `role === "admin"` from session claims
+  - All other routes require authentication via `auth.protect()`
+  - Handles OPTIONS requests for CORS preflight
 - Route handlers still enforce operation-level authorization with guard helpers.
 - Role extraction is centralized in `src/lib/auth/guards.ts`.
 - **Available guards**:
