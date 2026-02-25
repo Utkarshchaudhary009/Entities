@@ -19,12 +19,8 @@
     "g": "ollama launch claude --model glm-5:cloud"
   },
   "lint-staged": {
-    "*.{js,ts,jsx,tsx}": [
-      "bun prettier --write"
-    ],
-    "*.{json,css,md}": [
-      "bun prettier --write"
-    ]
+    "*.{js,ts,jsx,tsx}": ["bun prettier --write"],
+    "*.{json,css,md}": ["bun prettier --write"]
   },
   "dependencies": {
     "@clerk/nextjs": "^6.37.4",
@@ -75,12 +71,6 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "ignoreScripts": [
-    "sharp",
-    "unrs-resolver"
-  ],
-  "trustedDependencies": [
-    "sharp",
-    "unrs-resolver"
-  ]
+  "ignoreScripts": ["sharp", "unrs-resolver"],
+  "trustedDependencies": ["sharp", "unrs-resolver"]
 }
