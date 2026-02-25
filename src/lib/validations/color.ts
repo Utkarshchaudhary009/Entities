@@ -5,7 +5,7 @@ export const createColorSchema = z.object({
   hex: z
     .string()
     .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid HEX color"),
-  sortOrder: z.coerce.number().int().default(0),
+  sortOrder: z.number().int().optional(),
 });
 
 export const updateColorSchema = createColorSchema.partial();
