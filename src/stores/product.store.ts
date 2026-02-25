@@ -19,7 +19,11 @@ import {
   fetchJson,
   unwrapApiPayload,
 } from "@/stores/http";
-import type { ApiProduct, PaginatedResponse } from "@/types/api";
+import type {
+  ApiProduct,
+  PaginatedResponse,
+  VariantSummary,
+} from "@/types/api";
 
 type Meta = PaginatedResponse<unknown>["meta"];
 type ProductQueryParams = Partial<z.input<typeof productQuerySchema>>;
@@ -29,10 +33,6 @@ type CreateVariantInput = z.infer<typeof createVariantSchema>;
 type UpdateVariantInput = z.infer<typeof updateVariantSchema>;
 
 type CategorySummary = Pick<Category, "id" | "name" | "slug">;
-type VariantSummary = Pick<
-  ProductVariant,
-  "id" | "size" | "color" | "colorHex" | "images" | "stock" | "sku"
->;
 type ProductDetails = ApiProduct & {
   category: CategorySummary | null;
   variants: VariantSummary[];

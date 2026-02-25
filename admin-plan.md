@@ -15,7 +15,7 @@ src/app/layout.tsx  (root — wraps entire site)
         │     └── "Admin" button           (only visible when Clerk role === "admin")
         └── {children}
               ├── Public pages   → no sidebar, hamburger hidden automatically
-              └── (admin) layout → activates sidebar context → hamburger appears
+              └── admin layout → activates sidebar context → hamburger appears
                     ├── <AdminSidebar />   ← slide-in panel (admin nav links)
                     └── {admin page content}
 ```
@@ -33,8 +33,8 @@ src/app/layout.tsx  (root — wraps entire site)
 - [ ] Update `src/app/layout.tsx` — wrap with `<SidebarProvider>`, add `<Topbar />`
 
 ### Admin-only
-- [ ] `src/app/(admin)/layout.tsx` — Clerk `role="admin"` guard; calls `setSidebarEnabled(true)` on mount; renders `<AdminSidebar />` next to `{children}`
-- [ ] `src/app/(admin)/page.tsx` — redirect to `/admin/dashboard`
+- [ ] `src/app/admin/layout.tsx` — Clerk `role="admin"` guard; calls `setSidebarEnabled(true)` on mount; renders `<AdminSidebar />` next to `{children}`
+- [ ] `src/app/admin/page.tsx` — redirect to `/admin/dashboard`
 - [ ] `src/components/admin/sidebar.tsx` — admin nav links, active state; reads `{ isOpen }` from `useSidebar()`
 - [ ] `src/components/admin/data-table.tsx` — generic paginated table (columns, search, skeleton)
 - [ ] `src/components/admin/stat-card.tsx` — KPI card (icon, title, value, delta badge)
@@ -47,7 +47,7 @@ src/app/layout.tsx  (root — wraps entire site)
 
 ## Phase 1 — Dashboard Overview
 - [ ] Branch: `feat/admin-dashboard`
-- [ ] `src/app/(admin)/dashboard/page.tsx`
+- [ ] `src/app/admin/dashboard/page.tsx`
   - KPI cards: total orders, revenue, pending orders, low-stock SKUs, active discounts
   - Recent orders mini-table (last 10)
   - Order status breakdown bar/donut
@@ -58,26 +58,34 @@ src/app/layout.tsx  (root — wraps entire site)
 
 ## Phase 2 — Orders
 - [ ] Branch: `feat/admin-orders`
-- [ ] `src/app/(admin)/orders/page.tsx` — filterable + paginated table; filter by `OrderStatus`, date range, search by order# / customer
-- [ ] `src/app/(admin)/orders/[orderId]/page.tsx` — order detail: items, address block, status editor, admin notes textarea
+- [ ] `src/app/admin/orders/page.tsx` — filterable + paginated table; filter by `OrderStatus`, date range, search by order# / customer
+- [ ] `src/app/admin/orders/[orderId]/page.tsx` — order detail: items, address block, status editor, admin notes textarea
 - [ ] Lint & TSC
 - [ ] PR → merge
 
 ---
 
 ## Phase 3 — Products & Variants
-- [ ] Branch: `feat/admin-products`
-- [ ] `src/app/(admin)/products/page.tsx` — table: thumbnail, name, category chip, price, active toggle
-- [ ] `src/app/(admin)/products/new/page.tsx` — product creation form
-- [ ] `src/app/(admin)/products/[productId]/page.tsx` — product edit form + variants sub-section (add / edit / delete variant inline)
-- [ ] Lint & TSC
-- [ ] PR → merge
+- [x] Branch: `feat/admin-products`
+- [x] `src/app/admin/products/page.tsx` — table: thumbnail, name, category chip, price, active toggle
+- [x] use Drawer component — product creation form and varitey creation.
+- [x] create a component for img upload and live preview. It must be independent with proper UX and UX. add micro intractions.
+- [x] `src/app/admin/products/[productId]/page.tsx` — product details display and edit dwawer +  ProductVariant -> button to add and edit and delete || display variants.
+- [x] task already done ( 
+          Vaul drawer with controlled open/close state                                
+        • Form fields for size (dropdown using label), color (dropdown with hex preview), colorHex (auto-filled),images (ImageUpload), stock, SKU, isActive
+        • Zod validation before submit 
+        • Store-driven CRUD via useProductStore, useSizeStore, useColorStore
+        • Toast notifications for success/error         
+        • Edit mode pre-populates form with existing variant data )
+- [x] Lint & TSC
+- [x] PR → merge
 
 ---
 
 ## Phase 4 — Categories
 - [ ] Branch: `feat/admin-categories`
-- [ ] `src/app/(admin)/categories/page.tsx` — table: name, slug, discount %, active toggle, sort-order controls
+- [ ] `src/app/admin/categories/page.tsx` — table: name, slug, discount %, active toggle, sort-order controls
 - [ ] Create / edit drawer (thumbnail URL, about, discount %, sort order)
 - [ ] Lint & TSC
 - [ ] PR → merge
@@ -86,7 +94,7 @@ src/app/layout.tsx  (root — wraps entire site)
 
 ## Phase 5 — Discounts
 - [ ] Branch: `feat/admin-discounts`
-- [ ] `src/app/(admin)/discounts/page.tsx` — table: code, type (%, FIXED, BOGO), value, usage count / limit, active, expiry
+- [ ] `src/app/admin/discounts/page.tsx` — table: code, type (%, FIXED, BOGO), value, usage count / limit, active, expiry
 - [ ] Create / edit drawer (all `Discount` fields, date pickers for `startsAt` / `expiresAt`)
 - [ ] Lint & TSC
 - [ ] PR → merge
@@ -95,8 +103,8 @@ src/app/layout.tsx  (root — wraps entire site)
 
 ## Phase 6 — Sizes & Colors
 - [ ] Branch: `feat/admin-catalog-meta`
-- [ ] `src/app/(admin)/sizes/page.tsx` — CRUD table: label, sort order, measurements JSON editor
-- [ ] `src/app/(admin)/colors/page.tsx` — CRUD table: name, hex swatch picker, sort order
+- [ ] `src/app/admin/sizes/page.tsx` — CRUD table: label, sort order, measurements JSON editor
+- [ ] `src/app/admin/colors/page.tsx` — CRUD table: name, hex swatch picker, sort order
 - [ ] Lint & TSC
 - [ ] PR → merge
 
@@ -104,11 +112,11 @@ src/app/layout.tsx  (root — wraps entire site)
 
 ## Phase 7 — Brand & Founder
 - [ ] Branch: `feat/admin-brand`
-- [ ] `src/app/(admin)/brand/page.tsx`
+- [ ] `src/app/admin/brand/page.tsx`
   - Brand profile form (name, logo URL, tagline, brand story, support email/phone, active)
   - Philosophy section (mission, vision, values, story, hero image)
   - Social links list editor
-- [ ] `src/app/(admin)/founder/page.tsx`
+- [ ] `src/app/admin/founder/page.tsx`
   - Founder form (name, age, story, education, quote, thumbnail)
   - Social links list editor
 - [ ] Lint & TSC
@@ -118,7 +126,7 @@ src/app/layout.tsx  (root — wraps entire site)
 
 ## Phase 8 — Brand Documents (Policies)
 - [ ] Branch: `feat/admin-brand-documents`
-- [ ] `src/app/(admin)/brand-documents/page.tsx`
+- [ ] `src/app/admin/brand-documents/page.tsx`
   - Tab per `DocumentType`: RETURN_POLICY, SHIPPING_POLICY, REFUND_POLICY, PRIVACY_POLICY, TERMS_AND_CONDITIONS
   - Markdown / textarea editor + version display + active toggle
 - [ ] Lint & TSC

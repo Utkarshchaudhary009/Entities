@@ -128,3 +128,14 @@ export interface AdminDashboardOverview {
   recentOrders: AdminDashboardRecentOrderItem[];
   statusBreakdown: AdminDashboardStatusBreakdownItem[];
 }
+
+export type VariantSummary = {
+  id: string;
+  size: string;
+  color: string;
+  colorHex: string | null;
+  images: string[];
+  stock: number;
+  sku: string | null;
+  isActive: boolean;
+};
