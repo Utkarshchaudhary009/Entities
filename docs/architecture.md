@@ -104,12 +104,14 @@ Product administration follows the standard architecture flow:
   - `VariantDrawer` — create/edit variant with size/color selectors and multi-image upload
 
 ### ImageUpload Component
-URL-based image management component (`src/components/admin/image-upload.tsx`):
-- Drag-and-drop zone for image URL
+Image management component (`src/components/admin/image-upload.tsx`) supporting both file uploads and URLs:
+- Click-to-upload or drag-and-drop files (converted to base64 data URLs)
+- Drag-and-drop support for image URLs (text/plain)
 - Manual URL paste input with Enter to add
 - Grid preview with hover-to-remove
 - Configurable max images (default 10)
-- Validates URL format before adding
+- Validates URL format and filters non-image files
+- Full accessibility with keyboard navigation
 
 ### Variant Summary Type
 `VariantSummary` type (`src/types/api.ts`) provides lightweight variant display fields: `id`, `size`, `color`, `colorHex`, `images[]`, `stock`, `sku`, `isActive`. Used in product detail responses to avoid full `ProductVariant` payload.
