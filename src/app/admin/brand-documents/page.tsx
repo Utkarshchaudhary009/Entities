@@ -328,10 +328,9 @@ export default function AdminBrandDocumentsPage() {
                 isDirty: true,
               })
             }
-            placeholder={`Write your ${
-              DOCUMENT_TYPES.find((d) => d.type === activeTab)?.label ??
+            placeholder={`Write your ${DOCUMENT_TYPES.find((d) => d.type === activeTab)?.label ??
               "document"
-            } here in Markdown…`}
+              } here in Markdown…`}
             className="min-h-[55vh] w-full resize-none font-mono text-sm leading-relaxed"
             spellCheck={false}
           />

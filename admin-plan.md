@@ -93,34 +93,34 @@ src/app/layout.tsx  (root — wraps entire site)
 ---
 
 ## Phase 5 — Discounts
-- [ ] Branch: `feat/admin-discounts`
-- [ ] `src/app/admin/discounts/page.tsx` — table: code, type (%, FIXED, BOGO), value, usage count / limit, active, expiry
-- [ ] Create / edit drawer(open : bottom) (all `Discount` fields, date pickers for `startsAt` / `expiresAt`)
-- [ ] Lint & TSC
-- [ ] PR → merge
+- [x] Branch: `feat/admin-discounts`
+- [x] `src/app/admin/discounts/page.tsx` — table: code, type (%, FIXED, BOGO), value, usage count / limit, active, expiry
+- [x] Create / edit drawer(open : bottom) (all `Discount` fields, date pickers for `startsAt` / `expiresAt`)
+- [x] Lint & TSC
+- [x] PR → merge
 
 ---
 
 ## Phase 6 — Sizes & Colors
-- [ ] Branch: `feat/admin-catalog-meta`
-- [ ] `src/app/admin/sizes/page.tsx` — CRUD table: label, sort order, measurements JSON editor
-- [ ] `src/app/admin/colors/page.tsx` — CRUD table: name, hex swatch picker, sort order
-- [ ] Lint & TSC
-- [ ] PR → merge
+- [x] Branch: `feat/admin-catalog-meta`
+- [x] `src/app/admin/sizes/page.tsx` — CRUD table: label, sort order, measurements JSON editor
+- [x] `src/app/admin/colors/page.tsx` — CRUD table: name, hex swatch picker, sort order
+- [x] Lint & TSC
+- [x] PR → merge
 
 ---
 
 ## Phase 7 — Brand & Founder
-- [ ] Branch: `feat/admin-brand`
-- [ ] `src/app/admin/brand/page.tsx`
+- [x] Branch: `feat/admin-brand`
+- [x] `src/app/admin/brand/page.tsx`
   - Brand profile form (name, logo URL, tagline, brand story, support email/phone, active)
   - Philosophy section (mission, vision, values, story, hero image)
   - Social links list editor
-- [ ] `src/app/admin/founder/page.tsx`
+- [x] `src/app/admin/founder/page.tsx`
   - Founder form (name, age, story, education, quote, thumbnail)
   - Social links list editor
-- [ ] Lint & TSC
-- [ ] PR → merge
+- [x] Lint & TSC
+- [x] PR → merge
 
 ---
 
