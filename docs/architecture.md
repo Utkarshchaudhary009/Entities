@@ -167,7 +167,7 @@ The `SizeDrawer` measurements field accepts arbitrary dimension key-value pairs:
 ## Admin Discount Management
 Discount administration follows the standard architecture flow:
 
-- **Routes**: 
+- **Routes**:
   - `GET/POST /api/discounts` — list (paginated, searchable) and create
   - `GET/PUT/DELETE /api/discounts/[id]` — discount CRUD
 - **Service**: `src/services/discount.service.ts` handles discount operations.
@@ -182,7 +182,7 @@ Discount administration follows the standard architecture flow:
   - `usageLimit`: total redemptions allowed
   - `startsAt`, `expiresAt`: validity period
   - `isActive`: toggle for enabling/disabling
-- **UI**: 
+- **UI**:
   - `/admin/discounts` — DataTable with columns for code, type badge, value, usage count, expiry, active toggle
   - `DiscountDrawer` — bottom drawer for create/edit with delete option in edit mode
 
@@ -191,6 +191,57 @@ Discount administration follows the standard architecture flow:
 - `PERCENTAGE`: percentage off (value = %)
 - `FIXED`: fixed amount off (value = ₹)
 - `BOGO`: buy one get one
+
+## Admin Brand Management
+Brand administration manages the main brand profile and its social presence:
+
+- **Route**: `src/app/admin/brand/page.tsx` (client component)
+- **State**: `src/stores/brand.store.ts` provides `brand`, `socialLinks`, `isLoading`, `fetchBrandDetails`, `updateBrand`
+- **Validation**: `src/lib/validations/brand.ts` defines `createBrandSchema` with fields:
+  - `name`: required
+  - `logoUrl`: optional URL
+  - `tagline`: optional
+  - `brandStory`: optional text
+  - `supportEmail`: optional email
+  - `supportPhone`: optional tel
+  - `isActive`: boolean toggle
+  - `founderId`: foreign key to Founder
+- **UI Pattern**:
+  - Form uses `react-hook-form` with `zodResolver`
+  - Two-column layout: primary form on left, contextual sidebar on right
+  - Social links managed via `SocialLinksEditor` sub-component with `entityType="brand"`
+  - Optimistic updates via store actions; toast feedback on success/failure
+
+## Admin Founder Management
+Founder profile administration manages the founder's public biography and social links:
+
+- **Route**: `src/app/admin/founder/page.tsx` (client component)
+- **State**: `src/stores/brand.store.ts` provides `founder`, `isLoading`, `fetchBrandDetails`
+- **Additional Data**: Founder social links fetched separately from `/api/social-links?founderId=` since brand store does not populate them.
+- **Validation**: `src/lib/validations/founder.ts` defines `createFounderSchema` with fields:
+  - `name`: required
+  - `age`: optional number
+  - `story`: optional text (founder narrative)
+  - `education`: optional free text
+  - `quote`: optional personal quote
+  - `thumbnailUrl`: optional profile image URL
+- **UI Pattern**:
+  - Form uses `react-hook-form` with `zodResolver`
+  - Two-column layout: founder details form on left, social links editor below it
+  - Sidebar provides contextual help text for About page placement
+  - Social links via `SocialLinksEditor` with `entityType="founder"`
+  - Independent API call for founder social links; state managed locally
+
+## Social Links Editor Component
+The `SocialLinksEditor` (`src/components/admin/social-links-editor.tsx`) is a reusable client component for managing social links attached to either a Brand or Founder.
+
+- **Props**: `entityId` (string), `entityType` (`"brand" | "founder"`), `initialLinks` (`SocialLink[]`), optional `onLinksChange` callback
+- **API Integration**:
+  - POST `/api/social-links` with `{ platform, url, brandId|founderId }`
+  - DELETE `/api/social-links/[id]`
+- **State**: Local `links`, `platform`, `url`, `isAdding`, `deletingId`
+- **UX**: Immediate micro-interactions; button disabled during add/delete; toast notifications
+- **Pattern**: Demonstrates store-mediated optimistic updates in parent pages while keeping component self-contained for link input/list.
 
 ## Order Domain
 - **OrderStatus enum**: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Managed via `ORDER_STATUSES` in `src/types/domain.ts`.
