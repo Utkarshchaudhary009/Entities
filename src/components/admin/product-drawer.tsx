@@ -151,9 +151,9 @@ export function ProductDrawer({
       name: form.name,
       slug: form.slug,
       description: form.description || undefined,
-      price: Number.parseInt(form.price, 10) || 0,
+      price: Number(form.price),
       compareAtPrice: form.compareAtPrice
-        ? Number.parseInt(form.compareAtPrice, 10)
+        ? Number(form.compareAtPrice)
         : undefined,
       categoryId: form.categoryId || undefined,
       thumbnailUrl: form.thumbnailUrl || undefined,

@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatCurrency } from "@/lib/utils";
 import { useCategoryStore } from "@/stores/category.store";
 import { useProductStore } from "@/stores/product.store";
 import type { VariantSummary } from "@/types/api";
@@ -70,9 +71,15 @@ export default function ProductDetailsPage({
   };
 
   const handleDeleteVariant = async (variantId: string) => {
-    if (confirm("Are you sure you want to delete this variant?")) {
+    if (!confirm("Are you sure you want to delete this variant?")) return;
+
+    try {
       await deleteVariant(variantId);
       toast.success("Variant deleted");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete variant",
+      );
     }
   };
 
@@ -268,20 +275,14 @@ export default function ProductDetailsPage({
               <div className="flex items-baseline justify-between">
                 <span className="text-sm">Price</span>
                 <span className="text-xl font-bold">
-                  {new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  }).format(product.price / 100)}
+                  {formatCurrency(product.price / 100)}
                 </span>
               </div>
               {product.compareAtPrice && (
                 <div className="flex items-baseline justify-between text-muted-foreground">
                   <span className="text-sm">Compare At</span>
                   <span className="text-sm line-through">
-                    {new Intl.NumberFormat("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                    }).format(product.compareAtPrice / 100)}
+                    {formatCurrency(product.compareAtPrice / 100)}
                   </span>
                 </div>
               )}

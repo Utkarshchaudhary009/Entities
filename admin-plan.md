@@ -68,9 +68,9 @@ src/app/layout.tsx  (root — wraps entire site)
 ## Phase 3 — Products & Variants
 - [x] Branch: `feat/admin-products`
 - [x] `src/app/admin/products/page.tsx` — table: thumbnail, name, category chip, price, active toggle
-- [x] use Drawer component — product creation form and varitey creation.
-- [x] create a component for img upload and live preview. It must be independent with proper UX and UX. add micro intractions.
-- [x] `src/app/admin/products/[productId]/page.tsx` — product details display and edit dwawer +  ProductVariant -> button to add and edit and delete || display variants.
+- [x] use Drawer component — product creation form and variety creation.
+- [x] create a component for img upload and live preview. It must be independent with proper UX and UI. add micro interactions.
+- [x] `src/app/admin/products/[productId]/page.tsx` — product details display and edit drawer +  ProductVariant -> button to add and edit and delete || display variants.
 - [x] task already done ( 
           Vaul drawer with controlled open/close state                                
         • Form fields for size (dropdown using label), color (dropdown with hex preview), colorHex (auto-filled),images (ImageUpload), stock, SKU, isActive

@@ -9,7 +9,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DataTable } from "@/components/admin/data-table";
 import { ProductDrawer } from "@/components/admin/product-drawer";
@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
+import { formatCurrency } from "@/lib/utils";
 import { useCategoryStore } from "@/stores/category.store";
 import { useProductStore } from "@/stores/product.store";
 import type { ApiProduct } from "@/types/api";
@@ -48,17 +49,31 @@ export default function AdminProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProducts({ page: 1, limit: 20 });
+    fetchProducts({
+      page: 1,
+      limit: 20,
+      categoryId: categoryFilter || undefined,
+    });
     fetchCategories();
-  }, [fetchProducts, fetchCategories]);
+  }, [fetchProducts, fetchCategories, categoryFilter]);
 
   const handlePageChange = (page: number) => {
-    fetchProducts({ page, limit: meta.limit, search });
+    fetchProducts({
+      page,
+      limit: meta.limit,
+      search,
+      categoryId: categoryFilter || undefined,
+    });
   };
 
   const handleSearch = (query: string) => {
     setSearch(query);
-    fetchProducts({ page: 1, limit: meta.limit, search: query });
+    fetchProducts({
+      page: 1,
+      limit: meta.limit,
+      search: query,
+      categoryId: categoryFilter || undefined,
+    });
   };
 
   const handleCreate = () => {
@@ -90,11 +105,6 @@ export default function AdminProductsPage() {
       toast.error("Failed to update status");
     }
   };
-
-  const filteredProducts = useMemo(() => {
-    if (!categoryFilter) return products;
-    return products.filter((p) => p.categoryId === categoryFilter);
-  }, [products, categoryFilter]);
 
   const columns = [
     {
@@ -148,17 +158,11 @@ export default function AdminProductsPage() {
     {
       key: "price",
       label: "Price",
-      render: (value: unknown) => {
-        const price = Number(value) / 100;
-        return (
-          <span className="font-medium">
-            {new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "USD",
-            }).format(price)}
-          </span>
-        );
-      },
+      render: (value: unknown) => (
+        <span className="font-medium">
+          {formatCurrency(Number(value) / 100)}
+        </span>
+      ),
     },
     {
       key: "isActive",
@@ -245,7 +249,7 @@ export default function AdminProductsPage() {
 
       <DataTable
         columns={columns}
-        data={filteredProducts}
+        data={products}
         isLoading={isLoading}
         meta={meta}
         onPageChange={handlePageChange}
