@@ -70,7 +70,7 @@ The admin dashboard provides KPI summary and order insights via the standard arc
   - Recent orders (last 6)
   - Status breakdown (groupBy)
 - **Store**: `src/stores/admin-dashboard.store.ts` manages `overview`, `isLoading`, `error` states
-- **UI**: `src/app/(admin)/admin/dashboard/page.tsx` renders stat cards, recent orders, and status breakdown
+- **UI**: `src/app/admin/dashboard/page.tsx` renders stat cards, recent orders, and status breakdown
 
 ## Brand Domain Architecture
 The brand domain models support multi-brand commerce with founder profiles:
@@ -111,7 +111,7 @@ Relationships: `Founder -> Brand (1:1) -> BrandPhilosophy (1:1)`, `Brand -> Bran
 - **useDebounce**: Debounces a value with configurable delay (default 500ms). Used for search input debouncing in admin tables.
 
 ## Auth and Access Control
-- `src/proxy.ts` applies Clerk middleware and protects non-public routes.
+- `src/app/admin/proxy.ts` applies Clerk middleware and protects non-public routes with admin-specific role checks.
 - Route handlers still enforce operation-level authorization with guard helpers.
 - Role extraction is centralized in `src/lib/auth/guards.ts`.
 - **Available guards**:
