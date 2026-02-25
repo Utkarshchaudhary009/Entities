@@ -20,7 +20,7 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   const { sessionClaims } = await auth();
-  const userRole = sessionClaims?.metadata.role;
+  const userRole = sessionClaims?.metadata.role || "user";
 
   if (userRole !== "admin") {
     const redirectUrl = request.nextUrl.clone();
