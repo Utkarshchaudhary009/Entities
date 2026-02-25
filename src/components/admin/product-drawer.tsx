@@ -5,6 +5,10 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/admin/image-upload";
+import { ProductAttributes } from "@/components/admin/product/product-attributes";
+// Sub-components
+import { ProductBasicInfo } from "@/components/admin/product/product-basic-info";
+import { ProductPricing } from "@/components/admin/product/product-pricing";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -21,11 +25,6 @@ import { createProductSchema } from "@/lib/validations/product";
 import { useCategoryStore } from "@/stores/category.store";
 import { useProductStore } from "@/stores/product.store";
 import type { ApiProduct } from "@/types/api";
-
-// Sub-components
-import { ProductBasicInfo } from "@/components/admin/product/product-basic-info";
-import { ProductPricing } from "@/components/admin/product/product-pricing";
-import { ProductAttributes } from "@/components/admin/product/product-attributes";
 
 interface ProductDrawerProps {
   open: boolean;
@@ -220,7 +219,7 @@ export function ProductDrawer({
               slug={form.slug}
               description={form.description}
               errors={errors}
-              onChange={handleChange as any}
+              onChange={handleChange}
             />
 
             <ProductPricing
@@ -229,7 +228,7 @@ export function ProductDrawer({
               categoryId={form.categoryId}
               categories={categories}
               errors={errors}
-              onChange={handleChange as any}
+              onChange={handleChange}
             />
 
             <div className="space-y-1.5">

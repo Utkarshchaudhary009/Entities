@@ -20,7 +20,7 @@ describe("Store: Upload", () => {
 
   it("should reject invalid file types", () => {
     // Suppress expected console.error from file validation
-    const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
+    const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
     const store = useUploadStore.getState();
     const file = new File(["test content"], "dangerous.exe", {
       type: "application/x-msdownload",

@@ -78,7 +78,10 @@ describe("Database CRUD Tests", () => {
     });
 
     test("Delete Size", async () => {
-      const { error } = await supabase.from("sizes").delete().eq("id", testSizeId);
+      const { error } = await supabase
+        .from("sizes")
+        .delete()
+        .eq("id", testSizeId);
       expect(error).toBeNull();
       const { data } = await supabase
         .from("sizes")
@@ -93,7 +96,12 @@ describe("Database CRUD Tests", () => {
     test("Create Color", async () => {
       const { data, error } = await supabase
         .from("colors")
-        .insert({ id: testColorId, name: "Test Black", hex: "#000000", sort_order: 1 })
+        .insert({
+          id: testColorId,
+          name: "Test Black",
+          hex: "#000000",
+          sort_order: 1,
+        })
         .select()
         .single();
       expect(error).toBeNull();
@@ -111,7 +119,10 @@ describe("Database CRUD Tests", () => {
     });
 
     test("Delete Color", async () => {
-      const { error } = await supabase.from("colors").delete().eq("id", testColorId);
+      const { error } = await supabase
+        .from("colors")
+        .delete()
+        .eq("id", testColorId);
       expect(error).toBeNull();
     });
   });
@@ -286,7 +297,10 @@ describe("Database CRUD Tests", () => {
     });
 
     test("Delete Cart (cascades to cart items)", async () => {
-      const { error } = await supabase.from("carts").delete().eq("id", testCartId);
+      const { error } = await supabase
+        .from("carts")
+        .delete()
+        .eq("id", testCartId);
       expect(error).toBeNull();
       const { data } = await supabase
         .from("cart_items")
@@ -367,7 +381,10 @@ describe("Database CRUD Tests", () => {
     });
 
     test("Delete Order (cascades)", async () => {
-      const { error } = await supabase.from("orders").delete().eq("id", testOrderId);
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", testOrderId);
       expect(error).toBeNull();
       const { data } = await supabase
         .from("order_items")
@@ -418,7 +435,10 @@ describe("Database CRUD Tests", () => {
     });
 
     test("Delete Discount", async () => {
-      const { error } = await supabase.from("discounts").delete().eq("id", testDiscountId);
+      const { error } = await supabase
+        .from("discounts")
+        .delete()
+        .eq("id", testDiscountId);
       expect(error).toBeNull();
     });
   });
