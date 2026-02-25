@@ -232,6 +232,22 @@ Founder profile administration manages the founder's public biography and social
   - Social links via `SocialLinksEditor` with `entityType="founder"`
   - Independent API call for founder social links; state managed locally
 
+## Admin Brand Documents Management
+Brand documents administration provides a UI for managing policy documents (Return Policy, Shipping Policy, Refund Policy, Privacy Policy, Terms & Conditions) with Markdown editing and live preview.
+
+- **Route**: `src/app/admin/brand-documents/page.tsx` (client component)
+- **State**: Document state managed locally per document type; brand ID obtained from `useBrandStore`.
+- **API Integration**:
+  - `GET /api/brand-documents?brandId=<id>` — fetches documents for the brand
+  - `POST /api/brand-documents` — creates a new document
+  - `PUT /api/brand-documents/[id]` — updates content and active status
+- **UI Pattern**:
+  - Tabbed interface (mobile: select dropdown) for document types
+  - Active/inactive toggle with immediate visual feedback
+  - Write/Preview modes with lightweight Markdown renderer
+  - Dirty state tracking and unsaved changes warning on tab switch
+  - Toast notifications for save success/failure
+
 ## Social Links Editor Component
 The `SocialLinksEditor` (`src/components/admin/social-links-editor.tsx`) is a reusable client component for managing social links attached to either a Brand or Founder.
 
