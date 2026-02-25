@@ -51,7 +51,7 @@ export function CategoryDrawer({
     reset,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
@@ -94,17 +94,17 @@ export function CategoryDrawer({
     }
   }, [open, existingCategory, reset]);
 
-  // Auto-generate slug from name if empty
+  // Auto-generate slug from name if empty and not manually edited
   const watchedName = watch("name");
   useEffect(() => {
-    if (!isEditing && watchedName) {
+    if (!isEditing && watchedName && !dirtyFields.slug) {
       const generatedSlug = watchedName
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "");
       setValue("slug", generatedSlug, { shouldValidate: true });
     }
-  }, [watchedName, isEditing, setValue]);
+  }, [watchedName, isEditing, setValue, dirtyFields.slug]);
 
   const onSubmit = async (data: CategoryFormValues) => {
     const values = createCategorySchema.parse(data);
