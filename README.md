@@ -22,6 +22,7 @@ Required flow:
 - Bun
 - Prisma + PostgreSQL
 - Clerk auth
+- Supabase Storage (file uploads)
 - Inngest events/functions
 - Zustand state management
 - Biome lint/format

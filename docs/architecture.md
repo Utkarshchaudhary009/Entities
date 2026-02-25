@@ -103,16 +103,6 @@ Product administration follows the standard architecture flow:
   - `ProductDrawer` — create/edit product form with ImageUpload for thumbnail
   - `VariantDrawer` — create/edit variant with size/color selectors and multi-image upload
 
-### ImageUpload Component
-Image management component (`src/components/admin/image-upload.tsx`) supporting both file uploads and URLs:
-- Click-to-upload or drag-and-drop files (converted to base64 data URLs)
-- Drag-and-drop support for image URLs (text/plain)
-- Manual URL paste input with Enter to add
-- Grid preview with hover-to-remove
-- Configurable max images (default 10)
-- Validates URL format and filters non-image files
-- Full accessibility with keyboard navigation
-
 ### Variant Summary Type
 `VariantSummary` type (`src/types/api.ts`) provides lightweight variant display fields: `id`, `size`, `color`, `colorHex`, `images[]`, `stock`, `sku`, `isActive`. Used in product detail responses to avoid full `ProductVariant` payload.
 
@@ -164,6 +154,36 @@ Image management component (`src/components/admin/image-upload.tsx`) supporting 
   - `createdDataResponse(payload)` for created resources
   - `cachedPaginatedResponse({ data, meta })` for paginated lists
 - Current implementation includes mixed paginated wrappers on some routes; see `docs/review-report.md` for details.
+
+## File Upload Architecture
+
+The upload system uses Supabase Storage with async Inngest processing for non-blocking uploads:
+
+### Flow
+`UI (ImageUpload) -> Upload Store -> API (/api/upload) -> Inngest Event -> Supabase Storage`
+
+### Components
+- **Route**: `POST /api/upload` — admin-protected, returns 202 Accepted immediately
+- **Validation** (`src/lib/validations/upload.ts`): 
+  - Max file size: 10MB
+  - Allowed types: `image/jpeg`, `image/png`, `image/webp`, `image/gif`, `application/pdf`
+- **Store** (`src/stores/upload.store.ts`): Manages upload state with `UploadEntry` tracking (pending, uploading, done, error), preview URLs via blob, and projected public URLs
+- **Inngest Functions** (`src/inngest/functions/upload.functions.ts`):
+  - `handleFileUpload`: Receives base64 file buffer, ensures bucket exists, uploads to Supabase
+  - `handleFileDelete`: Removes files from storage by URL path extraction
+- **Supabase Admin** (`src/lib/supabase/admin.ts`): Server-only client with bypass RLS privileges using `SUPABASE_SERVICE_ROLE_KEY`
+
+### Inngest Events
+- `storage/file.upload.v1`: `{ bucket, filename, fileBuffer (base64), contentType, actorId, idempotencyKey }`
+- `storage/file.delete.v1`: `{ bucket, urls[], actorId, idempotencyKey }`
+
+### ImageUpload Component
+`src/components/admin/image-upload.tsx` provides file and URL image management:
+- Drag-and-drop or click-to-upload files
+- URL paste input for external images
+- Background upload with status overlay (uploading spinner, done checkmark, error alert)
+- Blob preview URLs during upload, swapped to public URLs on completion
+- Configurable `maxImages` (default 10) and `bucket` prop
 
 ## Error Handling
 - Domain and persistence errors mapped through `src/lib/errors.ts`.
