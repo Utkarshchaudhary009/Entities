@@ -52,10 +52,10 @@ export default function AdminProductsPage() {
   });
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Only run once on mount
   useEffect(() => {
     fetchProducts({ page: 1, limit: 20 });
     fetchCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePageChange = (page: number) => {

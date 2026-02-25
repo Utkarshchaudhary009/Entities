@@ -3,7 +3,6 @@
 import { BluetoothIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
-import * as React from "react";
 import { Example, ExampleWrapper } from "@/components/example";
 import {
   AlertDialog,

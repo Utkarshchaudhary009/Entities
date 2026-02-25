@@ -37,9 +37,13 @@ function useChart() {
 
 const ResponsiveContainer = dynamic<
   React.ComponentProps<typeof RechartsPrimitive.ResponsiveContainer>
->(() => import("recharts").then((mod) => mod.ResponsiveContainer), {
-  ssr: false,
-});
+>(
+  // biome-ignore lint/suspicious/noExplicitAny: Fix dynamic import type mismatch
+  () => import("recharts").then((mod) => mod.ResponsiveContainer as any),
+  {
+    ssr: false,
+  },
+);
 
 function ChartContainer({
   id,
@@ -105,7 +109,11 @@ ${colorConfig
 
 const ChartTooltip = dynamic<
   React.ComponentProps<typeof RechartsPrimitive.Tooltip>
->(() => import("recharts").then((mod) => mod.Tooltip as any), { ssr: false });
+>(
+  // biome-ignore lint/suspicious/noExplicitAny: Fix dynamic import type mismatch
+  () => import("recharts").then((mod) => mod.Tooltip as any),
+  { ssr: false },
+);
 
 function ChartTooltipContent({
   active,
@@ -255,7 +263,11 @@ function ChartTooltipContent({
 
 const ChartLegend = dynamic<
   React.ComponentProps<typeof RechartsPrimitive.Legend>
->(() => import("recharts").then((mod) => mod.Legend as any), { ssr: false });
+>(
+  // biome-ignore lint/suspicious/noExplicitAny: Fix dynamic import type mismatch
+  () => import("recharts").then((mod) => mod.Legend as any),
+  { ssr: false },
+);
 
 function ChartLegendContent({
   className,
