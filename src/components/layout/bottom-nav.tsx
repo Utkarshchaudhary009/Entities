@@ -1,6 +1,5 @@
 "use client";
 
-import { UserButton, useUser } from "@clerk/nextjs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { usePathname } from "next/navigation";
 import { useCartCount } from "@/stores/cart.store";
@@ -10,7 +9,6 @@ import { NavLink } from "./nav-link";
 export function BottomNav() {
   const pathname = usePathname();
   const cartCount = useCartCount();
-  const { isSignedIn } = useUser();
 
   // Hide on admin routes
   if (pathname?.startsWith("/admin")) {
@@ -29,15 +27,9 @@ export function BottomNav() {
               className="flex-1"
             >
               <div className="flex flex-col items-center gap-1 mt-1">
-                {isSignedIn ? (
-                  <div className="pointer-events-none">
-                    <UserButton />
-                  </div>
-                ) : (
-                  <span className="relative">
-                    <HugeiconsIcon icon={item.icon} className="size-5" />
-                  </span>
-                )}
+                <span className="relative">
+                  <HugeiconsIcon icon={item.icon} className="size-5" />
+                </span>
                 <span className="text-[10px]">{item.label}</span>
               </div>
             </NavLink>

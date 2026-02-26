@@ -30,12 +30,7 @@ export default function CouponsPage() {
   return (
     <div className="flex flex-col h-full bg-card min-h-[500px]">
       <div className="flex items-center p-4 border-b">
-        <Button
-          variant="ghost"
-          size="icon"
-          asChild
-          className="hidden md:flex -ml-2 mr-2"
-        >
+        <Button variant="ghost" size="icon" asChild className="-ml-2 mr-2">
           <Link href="/profile">
             <HugeiconsIcon icon={ArrowLeft01Icon} className="size-5" />
           </Link>

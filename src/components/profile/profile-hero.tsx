@@ -1,10 +1,11 @@
 "use client";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@clerk/nextjs";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProfileHero() {
-  const { user, isLoaded } = useUser();
+  const { session, isLoaded } = useSession();
+  const user = session?.user;
 
   if (!isLoaded) {
     return (
