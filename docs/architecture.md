@@ -348,6 +348,7 @@ Functions (`src/inngest/functions/user-profile.ts`) perform audit logging and si
 
 ## UI Components
 - **shadcn/ui**: Install via `bunx --bun shadcn@latest add <name>`. Components in `components/ui/`.
+- **ThemeProvider**: Client component wrapper around `next-themes` `ThemeProvider` (`src/components/theme-provider.tsx`), configured with `attribute="class"`, `defaultTheme="system"`, `enableSystem`, and `disableTransitionOnChange`. Used at the root layout for global theme management.
 - **Drawer**: `vaul`-based drawer component (`src/components/ui/drawer.tsx`) supports bottom/left/right/top directions with animated overlay.
 - **Icon Library**: Uses `@hugeicons/core-free-icons` and `@hugeicons/react` for all iconography. Do not use `lucide-react`.
 - **Chart**: Recharts-based chart wrapper (`src/components/ui/chart.tsx`) with theme-aware CSS variable injection. Exports `ChartContainer`, `ChartTooltip`, `ChartTooltipContent`, `ChartLegend`, `ChartLegendContent`, `ChartStyle`. Uses dynamic imports for SSR safety.
