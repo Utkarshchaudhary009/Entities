@@ -378,6 +378,23 @@ Functions (`src/inngest/functions/user-profile.ts`) perform audit logging and si
   - `requireOwnership(resourceOwnerId)`: Validates user owns the resource; admins bypass ownership check.
   - `requireRole(allowedRole)`: Validates user has specific role.
 
+### Session Claims Structure
+
+Custom JWT claims configured in Clerk provide role and user profile data directly from the auth token:
+
+```typescript
+interface CustomJwtSessionClaims {
+  metadata: {
+    role?: "user" | "admin";
+  };
+  fullName: string;
+  imageUrl: string;
+  primaryEmailAddress: EmailAddress;
+}
+```
+
+Access these via `sessionClaims` from `useAuth()` (client) or `auth()` (server). This avoids extra database calls for common user data. The `ProfileHero` component demonstrates client-side consumption using `session?.user` for the full profile, while `Topbar` demonstrates server-side role checks using `sessionClaims?.metadata.role`.
+
 ## API Response Contract Notes
 - Primary success patterns:
   - `successDataResponse(payload)` for non-paginated resources
