@@ -270,8 +270,85 @@ The `SocialLinksEditor` (`src/components/admin/social-links-editor.tsx`) is a re
   - API (`/api/orders/[id]`): GET (auth required; admins see all, users see their own), PUT (admin only; triggers Inngest event on status change), DELETE (admin only; soft delete).
 - **Intent Prefetching**: Order list rows trigger `fetchOne` on hover to hydrate detail page cache before navigation.
 
+## User Profile Domain
+The user profile system provides self-service account management for authenticated users, including addresses and notification preferences.
+
+### Models (Prisma)
+- **UserAddress** (`prisma/schema.prisma`): Stores shipping/billing addresses with `label` (Home/Work/Other), `name`, `phone`, full `address`, `city`, `state`, `pincode`, and `isDefault` flag. One-to-many per `clerkId`.
+- **UserPreference** (`prisma/schema.prisma`): Stores notification settings (`notifyPush`, `notifyEmail`, `notifySms`, `notifyInApp`). One-to-one per `clerkId`.
+
+### Service Layer
+- **UserAddressService** (`src/services/user-address.service.ts`):
+  - `getAddresses(clerkId)`, `getAddress(id, clerkId)`, `createAddress(...)`, `updateAddress(id, clerkId, data)`, `deleteAddress(id, clerkId)`, `setDefaultAddress(id, clerkId)`
+  - Handles default address logic automatically: first address becomes default, setting a new default clears others, deletion promotes remaining default.
+- **UserPreferenceService** (`src/services/user-preference.service.ts`):
+  - `getPreferences(clerkId)`: Auto-creates default preferences if none exist.
+  - `updatePreferences(clerkId, data)`: Upserts with selective boolean fields.
+
+### API Layer
+Routes under `/api/user/*` with Clerk authentication guard:
+
+- **Addresses** (`src/app/api/user/addresses/route.ts`):
+  - `GET /api/user/addresses` — returns list for authenticated user
+  - `POST /api/user/addresses` — creates new address; emits `user/address.created.v1` event
+- **Address Detail** (`src/app/api/user/addresses/[id]/route.ts`):
+  - `PATCH /api/user/addresses/[id]` — updates address; emits `user/address.updated.v1`
+  - `DELETE /api/user/addresses/[id]` — deletes address; emits `user/address.deleted.v1`
+- **Set Default** (`src/app/api/user/addresses/[id]/default/route.ts`):
+  - `PATCH /api/user/addresses/[id]/default` — marks address as default; part of address update flow
+- **Preferences** (`src/app/api/user/preferences/route.ts`):
+  - `GET /api/user/preferences` — returns current preferences
+  - `PATCH /api/user/preferences` — updates fields; emits `user/preferences.updated.v1`
+
+All routes validate input with `src/lib/validations/user-profile.ts` schemas (`addressSchema`, `updateAddressSchema`, `preferencesSchema`).
+
+### Store Layer
+- **useUserAddressStore** (`src/stores/user-address.store.ts`):
+  - State: `addresses[]`, `isLoading`, `isAdding`, `updatingId`, `deletingId`, `settingDefaultId`
+  - Actions: `fetchAddresses()`, `addAddress(data)`, `updateAddress(id, data)`, `deleteAddress(id)`, `setDefault(id)`
+  - Implements optimistic updates with automatic rollback on failure and toast feedback.
+- **useUserPreferenceStore** (`src/stores/user-preference.store.ts`):
+  - State: `preferences` (single record), `isLoading`, `savingField`
+  - Actions: `fetchPreferences()`, `updatePreference(field, value)`
+  - Optimistic updates per-field with granular saving indicator.
+
+### UI Components & Pages
+Profile section under `(shop)` group (customer-facing):
+
+- **Profile Layout** (`src/app/(shop)/profile/layout.tsx`): Wraps profile pages with consistent card container and mobile navigation header.
+- **Profile Home** (`src/app/(shop)/profile/page.tsx`): Dashboard with dark mode toggle, menu links to subpages, and logout button.
+- **Subpages**:
+  - `orders`: Order history (reads from existing order domain)
+  - `coupons`: Available discounts
+  - `addresses`: Address list with add/edit/delete/set-default using `AddressCard` and `AddressForm`
+  - `notifications`: Preference toggles using `NotificationToggle` component
+  - `legal`: Brand policy documents (read-only)
+  - `support`: Help & contact information
+- **Components** (`src/components/profile/`):
+  - `ProfileHero`: User avatar and welcome message
+  - `ProfileMenuItem`: Navigation item with icon and label
+  - `AddressCard`: Displays address with edit/delete/default controls
+  - `AddressForm`: Modal form for creating/editing addresses using `addressSchema`
+  - `NotificationToggle`: Switch component for preference toggles
+
+### Inngest Events
+- `user/address.created.v1` — emitted after address creation
+- `user/address.updated.v1` — emitted after address update
+- `user/address.deleted.v1` — emitted after address deletion
+- `user/preferences.updated.v1` — emitted after preference change
+
+Functions (`src/inngest/functions/user-profile.ts`) perform audit logging and side effects (e.g., welcome emails, external service sync).
+
+### UX Patterns
+- **Optimistic UI**: Stores update immediately with placeholder IDs (crypto.randomUUID) for new addresses; revert on failure with toast.
+- **Default Address Guarantee**: System ensures at least one default exists; promotions on deletion.
+- **Granular Loading**: Buttons disable during add/update/delete/set-default operations; no global spinners.
+- **Auto-creation**: Preferences record created on first fetch if missing.
+- **Micro-interactions**: Instant toggle feedback, active scale effects, smooth transitions via `tw-animate-css`.
+
 ## UI Components
 - **shadcn/ui**: Install via `bunx --bun shadcn@latest add <name>`. Components in `components/ui/`.
+- **ThemeProvider**: Client component wrapper around `next-themes` `ThemeProvider` (`src/components/theme-provider.tsx`), configured with `attribute="class"`, `defaultTheme="system"`, `enableSystem`, and `disableTransitionOnChange`. Used at the root layout for global theme management.
 - **Drawer**: `vaul`-based drawer component (`src/components/ui/drawer.tsx`) supports bottom/left/right/top directions with animated overlay.
 - **Icon Library**: Uses `@hugeicons/core-free-icons` and `@hugeicons/react` for all iconography. Do not use `lucide-react`.
 - **Chart**: Recharts-based chart wrapper (`src/components/ui/chart.tsx`) with theme-aware CSS variable injection. Exports `ChartContainer`, `ChartTooltip`, `ChartTooltipContent`, `ChartLegend`, `ChartLegendContent`, `ChartStyle`. Uses dynamic imports for SSR safety.
@@ -300,6 +377,23 @@ The `SocialLinksEditor` (`src/components/admin/social-links-editor.tsx`) is a re
   - `requireAdmin()`: Requires `role === "admin"`, returns 403 otherwise.
   - `requireOwnership(resourceOwnerId)`: Validates user owns the resource; admins bypass ownership check.
   - `requireRole(allowedRole)`: Validates user has specific role.
+
+### Session Claims Structure
+
+Custom JWT claims configured in Clerk provide role and user profile data directly from the auth token:
+
+```typescript
+interface CustomJwtSessionClaims {
+  metadata: {
+    role?: "user" | "admin";
+  };
+  fullName: string;
+  imageUrl: string;
+  primaryEmailAddress: EmailAddress;
+}
+```
+
+Access these via `sessionClaims` from `useAuth()` (client) or `auth()` (server). This avoids extra database calls for common user data. The `ProfileHero` component demonstrates client-side consumption using `session?.user` for the full profile, while `Topbar` demonstrates server-side role checks using `sessionClaims?.metadata.role`.
 
 ## API Response Contract Notes
 - Primary success patterns:

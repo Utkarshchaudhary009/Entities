@@ -135,6 +135,52 @@ type EntityEvents = {
       idempotencyKey: string;
     };
   };
+  "user/address.created.v1": {
+    data: {
+      id: string;
+      clerkId: string;
+      label: string;
+      name: string;
+      city: string;
+      isDefault: boolean;
+      idempotencyKey: string;
+    };
+  };
+  "user/address.updated.v1": {
+    data: {
+      id: string;
+      clerkId: string;
+      changes: Record<string, unknown>;
+      idempotencyKey: string;
+    };
+  };
+  "user/address.deleted.v1": {
+    data: {
+      id: string;
+      clerkId: string;
+      idempotencyKey: string;
+    };
+  };
+  "user/address.default-changed.v1": {
+    data: {
+      id: string;
+      clerkId: string;
+      previousDefaultId?: string;
+      idempotencyKey: string;
+    };
+  };
+  "user/preferences.updated.v1": {
+    data: {
+      clerkId: string;
+      changes: {
+        notifyPush?: boolean;
+        notifyEmail?: boolean;
+        notifySms?: boolean;
+        notifyInApp?: boolean;
+      };
+      idempotencyKey: string;
+    };
+  };
 };
 
 export const inngest = new Inngest({

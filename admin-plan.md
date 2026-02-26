@@ -125,12 +125,12 @@ src/app/layout.tsx  (root — wraps entire site)
 ---
 
 ## Phase 8 — Brand Documents (Policies)
-- [ ] Branch: `feat/admin-brand-documents`
-- [ ] `src/app/admin/brand-documents/page.tsx`
+- [x] Branch: `feat/admin-brand-documents`
+- [x] `src/app/admin/brand-documents/page.tsx`
   - Tab per `DocumentType`: RETURN_POLICY, SHIPPING_POLICY, REFUND_POLICY, PRIVACY_POLICY, TERMS_AND_CONDITIONS
   - Markdown / textarea editor + version display + active toggle
-- [ ] Lint & TSC
-- [ ] PR → merge
+- [x] Lint & TSC
+- [x] PR → merge
 
 ---
 
