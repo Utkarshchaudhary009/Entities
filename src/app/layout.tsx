@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, GoogleOneTap } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -30,6 +30,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <GoogleOneTap />
             {/* Topbar reads sidebar state from useSidebarStore directly — no provider needed at root */}
             <Topbar />
             {/* pt-16 offsets the fixed 64px topbar. pb-16 offsets the bottom nav on mobile */}
