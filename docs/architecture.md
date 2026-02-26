@@ -5,6 +5,26 @@ The codebase follows this flow:
 
 `Postgres (Prisma) -> Service Layer -> Next.js Route Handlers -> Zustand Store -> UI Components`
 
+## Next.js Configuration
+
+The Next.js configuration (`next.config.ts`) sets important security and performance options:
+
+- **Security Headers**: Applied globally via `headers()`:
+  - `X-DNS-Prefetch-Control: on`
+  - `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `X-XSS-Protection: 1; mode=block`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- API routes additionally receive `Cache-Control: private, no-store`.
+- **Turbopack Cache**: File system caching enabled for both development (`turbopackFileSystemCacheForDev`) and build (`turbopackFileSystemCacheForBuild`) to improve performance.
+- **Remote Image Patterns**: Allows images from:
+  - `images.unsplash.com`
+  - `**.supabase.co` (wildcard subdomains)
+  - `ffpfapdnnoasqvehcdff.supabase.co` (specific bucket)
+  - `img.clerk.com`
+
 ## Layer Responsibilities
 
 ### 1. Database and Models
@@ -40,6 +60,15 @@ The codebase follows this flow:
 ### 5. UI Layer (`src/components`, `src/app`)
 - Renders store state and triggers store actions.
 - Should remain side-effect-light and network-agnostic.
+
+#### Root Layout (`src/app/layout.tsx`)
+The root layout establishes the global UI framework:
+- Uses `<ClerkProvider>` for authentication context.
+- `<html>` includes `suppressHydrationWarning` to avoid theme class hydration mismatches.
+- `<ThemeProvider>` configured with `attribute="class"`, `defaultTheme="system"`, `enableSystem`, and `disableTransitionOnChange`.
+- Integrates `<GoogleOneTap />` for seamless sign-in.
+- Layout structure: fixed `<Topbar>` (64px), `<BottomNav>` for mobile, with content offset via `pt-16` and `pb-16` (mobile) / `pb-0` (desktop).
+- `<Toaster>` from `sonner` displays notifications at `top-right` with rich colors.
 
 ## Admin Layout Architecture
 The admin section uses a server/client component split:
