@@ -314,3 +314,34 @@ model BrandDocument {
   @@index([brandId])
   @@map("brand_documents")
 }
+
+model UserAddress {
+  id        String   @id @default(uuid())
+  clerkId   String   @map("clerk_id")
+  label     String   @default("Home") // Home, Work, Other
+  name      String
+  phone     String
+  address   String
+  city      String
+  state     String
+  pincode   String
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([clerkId])
+  @@map("user_addresses")
+}
+
+model UserPreference {
+  id           String   @id @default(uuid())
+  clerkId      String   @unique @map("clerk_id")
+  notifyPush   Boolean  @default(true) @map("notify_push")
+  notifyEmail  Boolean  @default(true) @map("notify_email")
+  notifySms    Boolean  @default(false) @map("notify_sms")
+  notifyInApp  Boolean  @default(true) @map("notify_in_app")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("user_preferences")
+}
