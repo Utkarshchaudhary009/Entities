@@ -1,5 +1,5 @@
 "use client";
-import { useSession } from "@clerk/nextjs";
+import { useSession,useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 

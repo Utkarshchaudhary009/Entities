@@ -17,7 +17,7 @@ import { NavLink } from "./nav-link";
 export function Topbar() {
   const { isOpen, enabled, toggle } = useSidebar();
   const { sessionClaims } = useAuth();
-  const isAdmin = sessionClaims?.metadata.role === "admin";
+  const isAdmin = (sessionClaims?.metadata.role) === "admin";
   const cartCount = useCartCount();
 
   return (
@@ -31,7 +31,7 @@ export function Topbar() {
               size="icon"
               aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
               onClick={toggle}
-              className="transition-transform duration-150 active:scale-95 md:hidden"
+              className="transition-transform duration-150 active:scale-95"
             >
               {isOpen ? (
                 <HugeiconsIcon icon={Cancel01Icon} className="size-5" />
@@ -54,7 +54,7 @@ export function Topbar() {
           aria-label="Main navigation"
         >
           {NAV_ITEMS.map((item) => {
-            if (item.href === "/profile") return null; // We use UserAvatar for profile in topbar
+
             return (
               <NavLink
                 key={item.href}
@@ -83,7 +83,7 @@ export function Topbar() {
               variant="outline"
               size="sm"
               asChild
-              className="hidden md:flex gap-1.5 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary transition-all duration-200"
+              className=" gap-1.5 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary transition-all duration-200"
             >
               <Link href="/admin/dashboard">
                 <HugeiconsIcon icon={Shield01Icon} className="size-4" />
@@ -92,9 +92,6 @@ export function Topbar() {
             </Button>
           )}
 
-          <div className="hidden md:block">
-            <UserButton afterSignOutUrl="/" />
-          </div>
         </div>
       </div>
     </header>

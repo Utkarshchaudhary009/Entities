@@ -1,14 +1,10 @@
 "use client";
 
-import {
-  ArrowLeft01Icon,
-  Copy01Icon,
-  Ticket01Icon,
-} from "@hugeicons/core-free-icons";
+import { Copy01Icon, Ticket01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Link from "next/link";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { BackButton } from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDiscountStore } from "@/stores/discount.store";
@@ -30,11 +26,7 @@ export default function CouponsPage() {
   return (
     <div className="flex flex-col h-full bg-card min-h-[500px]">
       <div className="flex items-center p-4 border-b">
-        <Button variant="ghost" size="icon" asChild className="-ml-2 mr-2">
-          <Link href="/profile">
-            <HugeiconsIcon icon={ArrowLeft01Icon} className="size-5" />
-          </Link>
-        </Button>
+        <BackButton fallbackHref="/profile" />
         <h2 className="text-lg font-semibold">My Coupons</h2>
       </div>
 

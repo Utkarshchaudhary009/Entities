@@ -2,7 +2,6 @@
 
 import { useClerk } from "@clerk/nextjs";
 import {
-  ArrowLeft01Icon,
   CustomerSupportIcon,
   DocumentCodeIcon,
   Location01Icon,
@@ -14,10 +13,10 @@ import {
   Ticket01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Link from "next/link";
 import { useTheme } from "next-themes";
 import { ProfileHero } from "@/components/profile/profile-hero";
 import { ProfileMenuItem } from "@/components/profile/profile-menu-item";
+import { BackButton } from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
@@ -27,12 +26,8 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="md:hidden flex items-center p-4 border-b bg-background sticky top-16 z-40">
-        <Button variant="ghost" size="icon" asChild className="-ml-2 mr-2">
-          <Link href="/">
-            <HugeiconsIcon icon={ArrowLeft01Icon} className="size-5" />
-          </Link>
-        </Button>
+      <div className="md:hidden flex items-center p-4 border-b bg-background">
+        <BackButton fallbackHref="/" />
         <h1 className="text-lg font-semibold">Profile</h1>
       </div>
 

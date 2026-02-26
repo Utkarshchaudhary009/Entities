@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowLeft01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AddressCard } from "@/components/profile/address-card";
 import { AddressForm } from "@/components/profile/address-form";
+import { BackButton } from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,11 +63,7 @@ export default function AddressesPage() {
     <div className="flex flex-col h-full bg-card min-h-[500px]">
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild className="-ml-2 mr-2">
-            <Link href="/profile">
-              <HugeiconsIcon icon={ArrowLeft01Icon} className="size-5" />
-            </Link>
-          </Button>
+          <BackButton fallbackHref="/profile" />
           <h2 className="text-lg font-semibold">Saved Addresses</h2>
         </div>
         <Button size="sm" onClick={handleOpenAdd} className="gap-2">

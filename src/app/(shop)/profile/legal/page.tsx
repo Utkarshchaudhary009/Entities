@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 
 const POLICIES = [
   { title: "Terms and Conditions", href: "/policies/terms" },
@@ -16,11 +16,7 @@ export default function LegalPage() {
   return (
     <div className="flex flex-col h-full bg-card min-h-[500px]">
       <div className="flex items-center p-4 border-b">
-        <Button variant="ghost" size="icon" asChild className="-ml-2 mr-2">
-          <Link href="/profile">
-            <HugeiconsIcon icon={ArrowLeft01Icon} className="size-5" />
-          </Link>
-        </Button>
+        <BackButton fallbackHref="/profile" />
         <h2 className="text-lg font-semibold">Legal & Policies</h2>
       </div>
 
