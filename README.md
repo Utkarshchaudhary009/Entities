@@ -1,6 +1,6 @@
 # Entities
 
-Entities is a Next.js App Router backend/frontend project for commerce and brand management domains (products, variants, cart, orders, discounts, and brand content), built with Bun, Prisma, Clerk, Inngest, and Zustand.
+Entities is a Next.js App Router backend/frontend project for commerce and brand management domains (products, variants, cart, orders, discounts, brand content, and user profiles), built with Bun, Prisma, Clerk, Inngest, and Zustand.
 
 ## Core Architecture
 
