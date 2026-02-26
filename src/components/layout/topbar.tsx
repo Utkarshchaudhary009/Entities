@@ -1,13 +1,15 @@
 "use client";
 
-import { UserButton, useAuth } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import {
   Cancel01Icon,
   Menu01Icon,
   Shield01Icon,
+  UserIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/contexts/sidebar-context";
 import { useCartCount } from "@/stores/cart.store";
@@ -17,8 +19,11 @@ import { NavLink } from "./nav-link";
 export function Topbar() {
   const { isOpen, enabled, toggle } = useSidebar();
   const { sessionClaims } = useAuth();
-  const isAdmin = (sessionClaims?.metadata.role) === "admin";
+  const pathname = usePathname();
+  const isAdmin = sessionClaims?.metadata.role === "admin";
   const cartCount = useCartCount();
+
+  const isAdminRoute = pathname?.startsWith("/admin");
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-border bg-background/80 backdrop-blur-md">
@@ -54,7 +59,6 @@ export function Topbar() {
           aria-label="Main navigation"
         >
           {NAV_ITEMS.map((item) => {
-
             return (
               <NavLink
                 key={item.href}
@@ -77,21 +81,34 @@ export function Topbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          {isAdmin && (
-            <Button
-              id="topbar-admin-link"
-              variant="outline"
-              size="sm"
-              asChild
-              className=" gap-1.5 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary transition-all duration-200"
-            >
-              <Link href="/admin/dashboard">
-                <HugeiconsIcon icon={Shield01Icon} className="size-4" />
-                Admin
-              </Link>
-            </Button>
-          )}
-
+          {isAdmin &&
+            (isAdminRoute ? (
+              <Button
+                id="topbar-user-link"
+                variant="outline"
+                size="sm"
+                asChild
+                className=" gap-1.5 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary transition-all duration-200"
+              >
+                <Link href="/">
+                  <HugeiconsIcon icon={UserIcon} className="size-4" />
+                  Home
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                id="topbar-admin-link"
+                variant="outline"
+                size="sm"
+                asChild
+                className=" gap-1.5 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary transition-all duration-200"
+              >
+                <Link href="/admin/dashboard">
+                  <HugeiconsIcon icon={Shield01Icon} className="size-4" />
+                  Admin
+                </Link>
+              </Button>
+            ))}
         </div>
       </div>
     </header>

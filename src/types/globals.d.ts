@@ -1,6 +1,5 @@
 // src/types/globals.d.ts
-import { EmailAddress } from "@clerk/nextjs"
-export { };
+import { EmailAddress } from "@clerk/nextjs";
 
 declare global {
   interface CustomJwtSessionClaims {
