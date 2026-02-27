@@ -140,10 +140,15 @@ Relationships: `Founder -> Brand (1:1) -> BrandPhilosophy (1:1)`, `Brand -> Bran
 ## Admin Product Management
 Product administration follows the standard architecture flow:
 
-- **Routes**: 
-  - `GET/POST /api/products` — list (paginated, searchable) and create
-  - `GET/PUT/DELETE /api/products/[id]` — product detail with variants
-  - `POST/PUT/DELETE /api/product-variants/[id]` — variant CRUD
+- **Routes**:
+  - `GET /api/products` — list products (admin required, paginated, searchable)
+  - `POST /api/products` — create product (admin required)
+  - `GET /api/products/[id]` — fetch product with variants (public)
+  - `PUT /api/products/[id]` — update product (admin required)
+  - `DELETE /api/products/[id]` — delete product (admin required); removes product thumbnail and all variant images from storage via Inngest events
+  - `GET /api/product-variants/[id]` — fetch variant details (public)
+  - `PUT /api/product-variants/[id]` — update variant (admin required)
+  - `DELETE /api/product-variants/[id]` — delete variant; removes variant images from storage (admin required)
 - **Service**: `src/services/product.service.ts` handles product operations; `src/services/product-variant.service.ts` manages variants with stock tracking.
 - **Store**: `src/stores/product.store.ts` manages:
   - Product list (`products`, `meta`, `isLoading`)
@@ -163,9 +168,12 @@ Product administration follows the standard architecture flow:
 ## Admin Category Management
 Category administration follows the standard architecture flow:
 
-- **Routes**: 
-  - `GET/POST /api/categories` — list (paginated, searchable) and create
-  - `GET/PUT/DELETE /api/categories/[id]` — category CRUD
+- **Routes**:
+  - `GET /api/categories` — list (public, paginated, searchable)
+  - `POST /api/categories` — create category (admin required)
+  - `GET /api/categories/[id]` — fetch category (public)
+  - `PUT /api/categories/[id]` — update category (admin required)
+  - `DELETE /api/categories/[id]` — delete category (admin required)
 - **Service**: `src/services/category.service.ts` handles category operations with search support and sort ordering.
 - **Store**: `src/stores/category.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
 - **Validation**: `src/lib/validations/category.ts` defines `createCategorySchema` (name, slug, thumbnailUrl, about, discountPercent, sortOrder, isActive).
@@ -184,8 +192,11 @@ The `CategoryDrawer` component demonstrates the project's form pattern:
 Color administration follows the standard architecture flow:
 
 - **Routes**:
-  - `GET/POST /api/colors` — list (paginated) and create
-  - `GET/PUT/DELETE /api/colors/[id]` — color CRUD
+  - `GET /api/colors` — list (public, paginated)
+  - `POST /api/colors` — create color (admin required)
+  - `GET /api/colors/[id]` — fetch color (public)
+  - `PUT /api/colors/[id]` — update color (admin required)
+  - `DELETE /api/colors/[id]` — delete color (admin required)
 - **Service**: `src/services/color.service.ts` handles color operations with sort ordering.
 - **Store**: `src/stores/color.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
 - **Validation**: `src/lib/validations/color.ts` defines `createColorSchema` (name, hex, sortOrder).
@@ -203,8 +214,11 @@ The `ColorDrawer` implements a dual-input hex picker:
 Size administration follows the standard architecture flow:
 
 - **Routes**:
-  - `GET/POST /api/sizes` — list (paginated) and create
-  - `GET/PUT/DELETE /api/sizes/[id]` — size CRUD
+  - `GET /api/sizes` — list (admin required, paginated)
+  - `POST /api/sizes` — create size (admin required)
+  - `GET /api/sizes/[id]` — fetch size (public)
+  - `PUT /api/sizes/[id]` — update size (admin required)
+  - `DELETE /api/sizes/[id]` — delete size (admin required)
 - **Service**: `src/services/size.service.ts` handles size operations with sort ordering.
 - **Store**: `src/stores/size.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
 - **Validation**: `src/lib/validations/size.ts` defines `createSizeSchema` (label, sortOrder, measurements).
@@ -222,8 +236,11 @@ The `SizeDrawer` measurements field accepts arbitrary dimension key-value pairs:
 Discount administration follows the standard architecture flow:
 
 - **Routes**:
-  - `GET/POST /api/discounts` — list (paginated, searchable) and create
-  - `GET/PUT/DELETE /api/discounts/[id]` — discount CRUD
+  - `GET /api/discounts` — list (admin required, paginated, searchable)
+  - `POST /api/discounts` — create discount (admin required)
+  - `GET /api/discounts/[id]` — fetch discount (public)
+  - `PUT /api/discounts/[id]` — update discount (admin required)
+  - `DELETE /api/discounts/[id]` — delete discount (admin required)
 - **Service**: `src/services/discount.service.ts` handles discount operations.
 - **Store**: `src/stores/discount.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
 - **Validation**: `src/lib/validations/discount.ts` defines `createDiscountSchema` with fields:
@@ -256,11 +273,11 @@ Brand administration manages the main brand profile and its social presence thro
   - Request deduping via `createRequestDeduper` prevents duplicate fetches
   - Optimistic updates for create/update/delete with automatic rollback on failure
 - **API Routes**:
-  - `GET /api/brands/[id]` — fetches brand with founder, documents, social links, philosophy
-  - `POST /api/brands` — creates brand; emits `brand.created.v1`
-  - `PUT /api/brands/[id]` — updates brand; emits `brand.updated.v1`
-  - `DELETE /api/brands/[id]` — soft delete; emits `brand.deleted.v1`
-  - `GET /api/brands` — list (admin only, paginated/searchable)
+  - `GET /api/brands/[id]` — fetches brand with founder, documents, social links, philosophy (public)
+  - `POST /api/brands` — creates brand; emits `brand.created.v1` (admin required)
+  - `PUT /api/brands/[id]` — updates brand; emits `brand.updated.v1` (admin required)
+  - `DELETE /api/brands/[id]` — soft delete; emits `brand.deleted.v1` (admin required)
+  - `GET /api/brands` — list (public, paginated/searchable)
 - **Validation**: `src/lib/validations/brand.ts` defines `createBrandSchema` and `updateBrandSchema` with fields:
   - `name`, `logoUrl`, `tagline`, `brandStory`, `supportEmail`, `supportPhone`, `isActive`, `founderId`
 - **UI Pattern**:
@@ -324,7 +341,12 @@ The `SocialLinksEditor` (`src/components/admin/social-links-editor.tsx`) is a re
 - **Admin Order Management**:
   - List view (`/admin/orders`): Paginated table with search (order #, customer, email) and status filter. URL-synced query params.
   - Detail view (`/admin/orders/[orderId]`): Customer info, shipping address, order items, and admin management card for status updates and internal notes.
-  - API (`/api/orders/[id]`): GET (auth required; admins see all, users see their own), PUT (admin only; triggers Inngest event on status change), DELETE (admin only; soft delete).
+  - **API Endpoints**:
+    - `GET /api/orders` — fetch orders (auth required; admins see all, users see own orders); supports pagination (page, limit), status filter, and search.
+    - `POST /api/orders` — create order from cart (auth required); emits `entity/order.created.v1`; includes stock validation and cart compensation.
+    - `GET /api/orders/[id]` — fetch order details (auth required; admins see all, users see own)
+    - `PUT /api/orders/[id]` — update order status or admin notes (admin required); emits `entity/order.status-changed.v1` on status change
+    - `DELETE /api/orders/[id]` — soft delete order (admin required)
 - **Intent Prefetching**: Order list rows trigger `fetchOne` on hover to hydrate detail page cache before navigation.
 
 ## User Profile Domain
