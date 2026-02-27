@@ -35,7 +35,8 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
       set({ isLoading: true });
       const addresses = await fetchApi<UserAddress[]>("/api/user/addresses");
       set({ addresses });
-    } catch {
+    } catch (err) {
+      console.error(`[UserAddressStore] fetchAddresses() FAILED. Error:`, err);
       toast.error("Failed to load addresses");
     } finally {
       set({ isLoading: false });
@@ -74,8 +75,9 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
         isAdding: false,
       }));
       return real;
-    } catch {
+    } catch (err) {
       set({ addresses: prev, isAdding: false });
+      console.error(`[UserAddressStore] addAddress() FAILED. Reverting optimistic UI. Addresses size back to ${prev.length}. Error:`, err);
       toast.error("Failed to add address");
     }
   },
@@ -104,8 +106,9 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
         addresses: s.addresses.map((a) => (a.id === id ? updated : a)),
         updatingId: null,
       }));
-    } catch {
+    } catch (err) {
       set({ addresses: prev, updatingId: null });
+      console.error(`[UserAddressStore] updateAddress() FAILED. Reverting update on ID: ${id}. Error:`, err);
       toast.error("Failed to update address");
     }
   },
@@ -121,8 +124,9 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
       // Refresh to get potentially new default
       await get().fetchAddresses();
       set({ deletingId: null });
-    } catch {
+    } catch (err) {
       set({ addresses: prev, deletingId: null });
+      console.error(`[UserAddressStore] deleteAddress() FAILED. Reverted optimistic deletion for ID: ${id}. Addresses size back to ${prev.length}. Error:`, err);
       toast.error("Failed to delete address");
     }
   },
@@ -139,8 +143,9 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
         method: "PATCH",
       });
       set({ settingDefaultId: null });
-    } catch {
+    } catch (err) {
       set({ addresses: prev, settingDefaultId: null });
+      console.error(`[UserAddressStore] setDefault() FAILED. Reverting default change for ID: ${id}. Error:`, err);
       toast.error("Failed to set default address");
     }
   },

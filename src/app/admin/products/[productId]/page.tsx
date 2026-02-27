@@ -14,6 +14,16 @@ import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ProductDrawer } from "@/components/admin/product-drawer";
 import { VariantDrawer } from "@/components/admin/variant-drawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +58,7 @@ export default function ProductDetailsPage({
   const [selectedVariant, setSelectedVariant] = useState<VariantSummary | null>(
     null,
   );
+  const [variantToDelete, setVariantToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProduct(productId);
@@ -70,16 +81,22 @@ export default function ProductDetailsPage({
     setVariantDrawerOpen(true);
   };
 
-  const handleDeleteVariant = async (variantId: string) => {
-    if (!confirm("Are you sure you want to delete this variant?")) return;
+  const handleDeleteVariant = (variantId: string) => {
+    setVariantToDelete(variantId);
+  };
+
+  const confirmDeleteVariant = async () => {
+    if (!variantToDelete) return;
 
     try {
-      await deleteVariant(variantId);
+      await deleteVariant(variantToDelete);
       toast.success("Variant deleted");
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to delete variant",
       );
+    } finally {
+      setVariantToDelete(null);
     }
   };
 
@@ -379,6 +396,30 @@ export default function ProductDetailsPage({
         productId={product.id}
         variant={selectedVariant}
       />
+
+      <AlertDialog
+        open={!!variantToDelete}
+        onOpenChange={(open) => !open && setVariantToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              variant from the database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDeleteVariant}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -87,6 +87,7 @@ export const useProductStore = create<ProductStoreState>()(
         setError: (error) => set({ error }),
 
         fetchProducts: async (params) => {
+          console.log(`[ProductStore] fetchProducts() initiated. Current items:`, get().products.length, { params });
           const query = buildSearchParams(
             (params ?? {}) as unknown as Parameters<
               typeof buildSearchParams
@@ -99,6 +100,7 @@ export const useProductStore = create<ProductStoreState>()(
                 query ? `/api/products?${query}` : "/api/products",
               );
               const payload = coercePaginatedResponse<ApiProduct>(json);
+              console.log(`[ProductStore] fetchProducts() Success. Loaded items:`, payload.data.length);
               set({
                 products: payload.data,
                 meta: payload.meta,
@@ -110,11 +112,13 @@ export const useProductStore = create<ProductStoreState>()(
                 error: err instanceof Error ? err.message : "Request failed",
                 isLoading: false,
               });
+              console.error(`[ProductStore] fetchProducts() FAILED. Error:`, err);
             }
           });
         },
 
         fetchProduct: async (id) => {
+          console.log(`[ProductStore] fetchProduct() initiated`, { id });
           // Check cache (SWR)
           const cached = get().products.find((p) => p.id === id);
           if (cached)
@@ -139,10 +143,12 @@ export const useProductStore = create<ProductStoreState>()(
               error: err instanceof Error ? err.message : "Request failed",
               isLoading: false,
             });
+            console.error(`[ProductStore] fetchProduct() FAILED. Error:`, err);
           }
         },
 
         createProduct: async (data) => {
+          console.log(`[ProductStore] createProduct() initiated. Current items:`, get().products.length, { data });
           const tempId = crypto.randomUUID();
           const optimistic = { ...data, id: tempId } as ApiProduct;
           set((state) => ({
@@ -156,6 +162,7 @@ export const useProductStore = create<ProductStoreState>()(
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(data),
             });
+            console.log(`[ProductStore] createProduct() Success. New Item:`, created);
             set((state) => ({
               products: state.products.map((p) =>
                 p.id === tempId ? created : p,
@@ -167,10 +174,12 @@ export const useProductStore = create<ProductStoreState>()(
               products: state.products.filter((p) => p.id !== tempId),
               error: err instanceof Error ? err.message : "Request failed",
             }));
+            console.error(`[ProductStore] createProduct() FAILED. Reverted optimistic UI. Products count back to:`, get().products.length, `Error:`, err);
           }
         },
 
         updateProduct: async (id, data) => {
+          console.log(`[ProductStore] updateProduct() initiated on ID: ${id}. Current items:`, get().products.length, { data });
           const prev = get().product;
           if (prev)
             set({
@@ -184,26 +193,30 @@ export const useProductStore = create<ProductStoreState>()(
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(data),
             });
+            console.log(`[ProductStore] updateProduct() Success. Updated Item:`, updated);
             set((state) => ({
               product: state.product
                 ? ({ ...state.product, ...updated } as ProductDetails)
                 : ({
-                    ...updated,
-                    category: null,
-                    variants: [],
-                  } as ProductDetails),
+                  ...updated,
+                  category: null,
+                  variants: [],
+                } as ProductDetails),
               error: null,
             }));
           } catch (err: unknown) {
-            if (prev)
+            if (prev) {
               set({
                 product: prev,
                 error: err instanceof Error ? err.message : "Request failed",
               });
+              console.error(`[ProductStore] updateProduct() FAILED. Reverting optimistic update on ID: ${id}. Error:`, err);
+            }
           }
         },
 
         deleteProduct: async (id) => {
+          console.log(`[ProductStore] deleteProduct() initiated on ID: ${id}. Items count before:`, get().products.length);
           const prevProducts = get().products;
           set({
             products: prevProducts.filter((p) => p.id !== id),
@@ -214,15 +227,18 @@ export const useProductStore = create<ProductStoreState>()(
             await fetchJson<unknown>(`/api/products/${id}`, {
               method: "DELETE",
             });
+            console.log(`[ProductStore] deleteProduct() Success for ID: ${id}. Items count now:`, get().products.length - 1);
           } catch (err: unknown) {
             set({
               products: prevProducts,
               error: err instanceof Error ? err.message : "Request failed",
             });
+            console.error(`[ProductStore] deleteProduct() FAILED. Reverted optimistic deletion for ID: ${id}. Products count back to:`, prevProducts.length, `Error:`, err);
           }
         },
 
         createVariant: async (data) => {
+          console.log(`[ProductStore] createVariant() initiated`, { data });
           const tempId = crypto.randomUUID();
           const optimistic = { ...data, id: tempId } as ProductVariant;
           set((state) => ({
@@ -250,10 +266,12 @@ export const useProductStore = create<ProductStoreState>()(
               variants: state.variants.filter((v) => v.id !== tempId),
               error: err instanceof Error ? err.message : "Request failed",
             }));
+            console.error(`[ProductStore] createVariant() FAILED. Reverted optimistic UI. Variants count back to:`, get().variants.length, `Error:`, err);
           }
         },
 
         updateVariant: async (id, data) => {
+          console.log(`[ProductStore] updateVariant() initiated`, { id, data });
           const prevVariants = get().variants;
           const prevVariant = prevVariants.find((v) => v.id === id);
 
@@ -283,10 +301,12 @@ export const useProductStore = create<ProductStoreState>()(
               variants: prevVariants,
               error: err instanceof Error ? err.message : "Request failed",
             });
+            console.error(`[ProductStore] updateVariant() FAILED. Reverting optimistic update on ID: ${id}. Error:`, err);
           }
         },
 
         deleteVariant: async (id) => {
+          console.log(`[ProductStore] deleteVariant() initiated`, { id });
           const prevVariants = get().variants;
           set({
             variants: prevVariants.filter((v) => v.id !== id),
@@ -302,6 +322,7 @@ export const useProductStore = create<ProductStoreState>()(
               variants: prevVariants,
               error: err instanceof Error ? err.message : "Request failed",
             });
+            console.error(`[ProductStore] deleteVariant() FAILED. Reverted optimistic deletion for ID: ${id}. Variants count back to:`, prevVariants.length, `Error:`, err);
           }
         },
       };
