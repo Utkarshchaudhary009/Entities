@@ -82,8 +82,8 @@ export function createEntityStore<
       partial:
         | Partial<EntityStoreState<TItem, TCreate, TUpdate> & TExtend>
         | ((
-          state: EntityStoreState<TItem, TCreate, TUpdate> & TExtend,
-        ) => Partial<EntityStoreState<TItem, TCreate, TUpdate> & TExtend>),
+            state: EntityStoreState<TItem, TCreate, TUpdate> & TExtend,
+          ) => Partial<EntityStoreState<TItem, TCreate, TUpdate> & TExtend>),
     ) => void,
     get: () => EntityStoreState<TItem, TCreate, TUpdate> & TExtend,
   ) => TExtend,
@@ -111,7 +111,11 @@ export function createEntityStore<
           setLoading: (isLoading) => setBase({ isLoading }),
 
           fetchAll: async (params = {}) => {
-            console.log(`[StoreFactory] ${storeName} fetchAll() initiated. Current Items:`, get().items.length, { endpoint, params });
+            console.log(
+              `[StoreFactory] ${storeName} fetchAll() initiated. Current Items:`,
+              get().items.length,
+              { endpoint, params },
+            );
             return dedupe(
               `GET:${endpoint}?${buildSearchParamsFromParams(params).toString()}`,
               async () => {
@@ -122,7 +126,10 @@ export function createEntityStore<
                     query ? `${endpoint}?${query}` : endpoint,
                   );
                   const payload = coercePaginatedResponse<TItem>(json);
-                  console.log(`[StoreFactory] ${storeName} fetchAll() Success. Loaded Items:`, payload.data.length);
+                  console.log(
+                    `[StoreFactory] ${storeName} fetchAll() Success. Loaded Items:`,
+                    payload.data.length,
+                  );
                   setBase({
                     items: payload.data,
                     meta: payload.meta,
@@ -134,14 +141,21 @@ export function createEntityStore<
                       err instanceof Error ? err.message : "Request failed",
                     isLoading: false,
                   });
-                  console.error(`[StoreFactory] ${storeName} fetchAll() FAILED. Error:`, err);
+                  console.error(
+                    `[StoreFactory] ${storeName} fetchAll() FAILED. Error:`,
+                    err,
+                  );
                 }
               },
             );
           },
 
           fetchOne: async (id) => {
-            console.log(`[StoreFactory] ${storeName} fetchOne() initiated`, { endpoint, id, currentlySelected: get().selectedItem?.id });
+            console.log(`[StoreFactory] ${storeName} fetchOne() initiated`, {
+              endpoint,
+              id,
+              currentlySelected: get().selectedItem?.id,
+            });
             setBase({ isLoading: true, error: null });
             const cached = get().items.find((i) => i.id === id);
             if (cached) {
@@ -151,7 +165,10 @@ export function createEntityStore<
 
             try {
               const item = await fetchApi<TItem>(`${endpoint}/${id}`);
-              console.log(`[StoreFactory] ${storeName} fetchOne() Success. Loaded Item:`, item);
+              console.log(
+                `[StoreFactory] ${storeName} fetchOne() Success. Loaded Item:`,
+                item,
+              );
               setBase({ selectedItem: item, isLoading: false });
               return item;
             } catch (err: unknown) {
@@ -159,12 +176,18 @@ export function createEntityStore<
                 error: err instanceof Error ? err.message : "Request failed",
                 isLoading: false,
               });
-              console.error(`[StoreFactory] ${storeName} fetchOne() FAILED. Error:`, err);
+              console.error(
+                `[StoreFactory] ${storeName} fetchOne() FAILED. Error:`,
+                err,
+              );
             }
           },
 
           create: async (data) => {
-            console.log(`[StoreFactory] ${storeName} create() initiated`, { endpoint, data });
+            console.log(`[StoreFactory] ${storeName} create() initiated`, {
+              endpoint,
+              data,
+            });
             const tempId = crypto.randomUUID();
             const optimisticItem = { ...(data as object), id: tempId } as TItem;
             const prevItems = get().items;
@@ -189,12 +212,21 @@ export function createEntityStore<
                 items: prevItems,
                 error: err instanceof Error ? err.message : "Request failed",
               });
-              console.error(`[StoreFactory] ${storeName} create() FAILED. Reverting optimistic UI. Items count back to:`, prevItems.length, `Error:`, err);
+              console.error(
+                `[StoreFactory] ${storeName} create() FAILED. Reverting optimistic UI. Items count back to:`,
+                prevItems.length,
+                `Error:`,
+                err,
+              );
             }
           },
 
           update: async (id, data) => {
-            console.log(`[StoreFactory] ${storeName} update() initiated on ID: ${id}. Current Items count:`, get().items.length, { data });
+            console.log(
+              `[StoreFactory] ${storeName} update() initiated on ID: ${id}. Current Items count:`,
+              get().items.length,
+              { data },
+            );
             const prevItems = get().items;
             const prevItem = prevItems.find((i) => i.id === id);
             if (!prevItem) return;
@@ -227,7 +259,10 @@ export function createEntityStore<
                 error: null,
               }));
 
-              console.log(`[StoreFactory] ${storeName} update() Success. Updated Item:`, updatedItem);
+              console.log(
+                `[StoreFactory] ${storeName} update() Success. Updated Item:`,
+                updatedItem,
+              );
 
               return updatedItem;
             } catch (err: unknown) {
@@ -236,12 +271,18 @@ export function createEntityStore<
                 selectedItem: prevItem,
                 error: err instanceof Error ? err.message : "Request failed",
               });
-              console.error(`[StoreFactory] ${storeName} update() FAILED. Reverting optimistic update on ID: ${id}. Error:`, err);
+              console.error(
+                `[StoreFactory] ${storeName} update() FAILED. Reverting optimistic update on ID: ${id}. Error:`,
+                err,
+              );
             }
           },
 
           delete: async (id) => {
-            console.log(`[StoreFactory] ${storeName} delete() initiated on ID: ${id}. Items count before:`, get().items.length);
+            console.log(
+              `[StoreFactory] ${storeName} delete() initiated on ID: ${id}. Items count before:`,
+              get().items.length,
+            );
             const prevItems = get().items;
             const prevItem = prevItems.find((i) => i.id === id);
             const prevSelectedItem = get().selectedItem;
@@ -257,7 +298,10 @@ export function createEntityStore<
               await fetchJson<unknown>(`${endpoint}/${id}`, {
                 method: "DELETE",
               });
-              console.log(`[StoreFactory] ${storeName} delete() Success for ID: ${id}. Items count now:`, get().items.length - 1);
+              console.log(
+                `[StoreFactory] ${storeName} delete() Success for ID: ${id}. Items count now:`,
+                get().items.length - 1,
+              );
               return true;
             } catch (err: unknown) {
               setBase({
@@ -268,7 +312,12 @@ export function createEntityStore<
                     : prevSelectedItem,
                 error: err instanceof Error ? err.message : "Request failed",
               });
-              console.error(`[StoreFactory] ${storeName} delete() FAILED. Reverted optimistic deletion for ID: ${id}. Items count back to:`, prevItems.length, `Error:`, err);
+              console.error(
+                `[StoreFactory] ${storeName} delete() FAILED. Reverted optimistic deletion for ID: ${id}. Items count back to:`,
+                prevItems.length,
+                `Error:`,
+                err,
+              );
               return false;
             }
           },
@@ -303,7 +352,11 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
           setLoading: (isLoading) => set({ isLoading }),
 
           fetchAll: async (endpoint, params = {}) => {
-            console.log(`[GenericStore] ${storeName} fetchAll() initiated. Current items:`, get().items.length, { endpoint, params });
+            console.log(
+              `[GenericStore] ${storeName} fetchAll() initiated. Current items:`,
+              get().items.length,
+              { endpoint, params },
+            );
             return dedupe(
               `GET:${endpoint}?${buildSearchParamsFromParams(params).toString()}`,
               async () => {
@@ -314,7 +367,10 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                     query ? `${endpoint}?${query}` : endpoint,
                   );
                   const payload = coercePaginatedResponse<T>(json);
-                  console.log(`[GenericStore] ${storeName} fetchAll() Success. Loaded items:`, payload.data.length);
+                  console.log(
+                    `[GenericStore] ${storeName} fetchAll() Success. Loaded items:`,
+                    payload.data.length,
+                  );
                   set({
                     items: payload.data,
                     meta: payload.meta,
@@ -326,14 +382,20 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                       err instanceof Error ? err.message : "Request failed",
                     isLoading: false,
                   });
-                  console.error(`[GenericStore] ${storeName} fetchAll() FAILED. Error:`, err);
+                  console.error(
+                    `[GenericStore] ${storeName} fetchAll() FAILED. Error:`,
+                    err,
+                  );
                 }
               },
             );
           },
 
           fetchOne: async (endpoint, id) => {
-            console.log(`[GenericStore] ${storeName} fetchOne() initiated`, { endpoint, id });
+            console.log(`[GenericStore] ${storeName} fetchOne() initiated`, {
+              endpoint,
+              id,
+            });
             set({ isLoading: true, error: null });
             // Check cache first (SWR-ish)
             const cached = get().items.find((i) => i.id === id);
@@ -345,7 +407,10 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
             try {
               const json = await fetchJson<unknown>(`${endpoint}/${id}`);
               const item = unwrapApiPayload(json) as T;
-              console.log(`[GenericStore] ${storeName} fetchOne() Success. Loaded:`, item);
+              console.log(
+                `[GenericStore] ${storeName} fetchOne() Success. Loaded:`,
+                item,
+              );
               set({ selectedItem: item, isLoading: false });
               return item;
             } catch (err: unknown) {
@@ -353,12 +418,18 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                 error: err instanceof Error ? err.message : "Request failed",
                 isLoading: false,
               });
-              console.error(`[GenericStore] ${storeName} fetchOne() FAILED. Error:`, err);
+              console.error(
+                `[GenericStore] ${storeName} fetchOne() FAILED. Error:`,
+                err,
+              );
             }
           },
 
           create: async (endpoint, data) => {
-            console.log(`[GenericStore] ${storeName} create() initiated`, { endpoint, data });
+            console.log(`[GenericStore] ${storeName} create() initiated`, {
+              endpoint,
+              data,
+            });
             // Optimistic UI
             const tempId = crypto.randomUUID();
             const optimisticItem = { ...data, id: tempId } as T;
@@ -379,7 +450,12 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                 error: null,
               }));
 
-              console.log(`[GenericStore] ${storeName} create() Success. New Item:`, newItem, `Items count now:`, get().items.length + 1);
+              console.log(
+                `[GenericStore] ${storeName} create() Success. New Item:`,
+                newItem,
+                `Items count now:`,
+                get().items.length + 1,
+              );
 
               return newItem;
             } catch (err: unknown) {
@@ -388,12 +464,21 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                 items: prevItems,
                 error: err instanceof Error ? err.message : "Request failed",
               });
-              console.error(`[GenericStore] ${storeName} create() FAILED. Reverting optimistic UI. Items count back to:`, prevItems.length, `Error:`, err);
+              console.error(
+                `[GenericStore] ${storeName} create() FAILED. Reverting optimistic UI. Items count back to:`,
+                prevItems.length,
+                `Error:`,
+                err,
+              );
             }
           },
 
           update: async (endpoint, id, data) => {
-            console.log(`[GenericStore] ${storeName} update() initiated`, { endpoint, id, data });
+            console.log(`[GenericStore] ${storeName} update() initiated`, {
+              endpoint,
+              id,
+              data,
+            });
             // Optimistic UI
             const prevItems = get().items;
             const prevItem = prevItems.find((i) => i.id === id);
@@ -426,7 +511,10 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                 error: null,
               }));
 
-              console.log(`[GenericStore] ${storeName} update() Success. Updated Item:`, updatedItem);
+              console.log(
+                `[GenericStore] ${storeName} update() Success. Updated Item:`,
+                updatedItem,
+              );
 
               return updatedItem;
             } catch (err: unknown) {
@@ -436,12 +524,18 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                 selectedItem: prevItem,
                 error: err instanceof Error ? err.message : "Request failed",
               });
-              console.error(`[GenericStore] ${storeName} update() FAILED. Reverting optimistic update on ID: ${id}. Error:`, err);
+              console.error(
+                `[GenericStore] ${storeName} update() FAILED. Reverting optimistic update on ID: ${id}. Error:`,
+                err,
+              );
             }
           },
 
           delete: async (endpoint, id) => {
-            console.log(`[GenericStore] ${storeName} delete() initiated`, { endpoint, id });
+            console.log(`[GenericStore] ${storeName} delete() initiated`, {
+              endpoint,
+              id,
+            });
             // Optimistic UI
             const prevItems = get().items;
             const prevItem = prevItems.find((i) => i.id === id); // Keep for revert
@@ -458,7 +552,9 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
               await fetchJson<unknown>(`${endpoint}/${id}`, {
                 method: "DELETE",
               });
-              console.log(`[GenericStore] ${storeName} delete() Success. Deleted ID: ${id}`);
+              console.log(
+                `[GenericStore] ${storeName} delete() Success. Deleted ID: ${id}`,
+              );
               return true;
             } catch (err: unknown) {
               // Revert
@@ -470,7 +566,12 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                     : prevSelectedItem,
                 error: err instanceof Error ? err.message : "Request failed",
               });
-              console.error(`[GenericStore] ${storeName} delete() FAILED. Reverted optimistic deletion for ID: ${id}. Items count back to:`, prevItems.length, `Error:`, err);
+              console.error(
+                `[GenericStore] ${storeName} delete() FAILED. Reverted optimistic deletion for ID: ${id}. Items count back to:`,
+                prevItems.length,
+                `Error:`,
+                err,
+              );
               return false;
             }
           },

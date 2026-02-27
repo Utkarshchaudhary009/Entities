@@ -77,7 +77,10 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
       return real;
     } catch (err) {
       set({ addresses: prev, isAdding: false });
-      console.error(`[UserAddressStore] addAddress() FAILED. Reverting optimistic UI. Addresses size back to ${prev.length}. Error:`, err);
+      console.error(
+        `[UserAddressStore] addAddress() FAILED. Reverting optimistic UI. Addresses size back to ${prev.length}. Error:`,
+        err,
+      );
       toast.error("Failed to add address");
     }
   },
@@ -108,7 +111,10 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
       }));
     } catch (err) {
       set({ addresses: prev, updatingId: null });
-      console.error(`[UserAddressStore] updateAddress() FAILED. Reverting update on ID: ${id}. Error:`, err);
+      console.error(
+        `[UserAddressStore] updateAddress() FAILED. Reverting update on ID: ${id}. Error:`,
+        err,
+      );
       toast.error("Failed to update address");
     }
   },
@@ -126,7 +132,10 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
       set({ deletingId: null });
     } catch (err) {
       set({ addresses: prev, deletingId: null });
-      console.error(`[UserAddressStore] deleteAddress() FAILED. Reverted optimistic deletion for ID: ${id}. Addresses size back to ${prev.length}. Error:`, err);
+      console.error(
+        `[UserAddressStore] deleteAddress() FAILED. Reverted optimistic deletion for ID: ${id}. Addresses size back to ${prev.length}. Error:`,
+        err,
+      );
       toast.error("Failed to delete address");
     }
   },
@@ -145,7 +154,10 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
       set({ settingDefaultId: null });
     } catch (err) {
       set({ addresses: prev, settingDefaultId: null });
-      console.error(`[UserAddressStore] setDefault() FAILED. Reverting default change for ID: ${id}. Error:`, err);
+      console.error(
+        `[UserAddressStore] setDefault() FAILED. Reverting default change for ID: ${id}. Error:`,
+        err,
+      );
       toast.error("Failed to set default address");
     }
   },

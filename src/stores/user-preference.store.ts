@@ -30,10 +30,16 @@ export const useUserPreferenceStore = create<UserPreferenceState>(
         const preferences = await fetchApi<UserPreference>(
           "/api/user/preferences",
         );
-        console.log(`[UserPreferenceStore] fetchPreferences() Success. Loaded:`, preferences);
+        console.log(
+          `[UserPreferenceStore] fetchPreferences() Success. Loaded:`,
+          preferences,
+        );
         set({ preferences });
       } catch (err) {
-        console.error(`[UserPreferenceStore] fetchPreferences() FAILED. Error:`, err);
+        console.error(
+          `[UserPreferenceStore] fetchPreferences() FAILED. Error:`,
+          err,
+        );
         toast.error("Failed to load preferences");
       } finally {
         set({ isLoading: false });
@@ -41,7 +47,10 @@ export const useUserPreferenceStore = create<UserPreferenceState>(
     },
 
     updatePreference: async (field, value) => {
-      console.log(`[UserPreferenceStore] updatePreference() initiated. Field: ${String(field)}, Value:`, value);
+      console.log(
+        `[UserPreferenceStore] updatePreference() initiated. Field: ${String(field)}, Value:`,
+        value,
+      );
       const prev = get().preferences;
       if (!prev) return;
 
@@ -56,11 +65,16 @@ export const useUserPreferenceStore = create<UserPreferenceState>(
           method: "PATCH",
           body: JSON.stringify({ [field]: value }),
         });
-        console.log(`[UserPreferenceStore] updatePreference() Success. Updated Field: ${String(field)}`);
+        console.log(
+          `[UserPreferenceStore] updatePreference() Success. Updated Field: ${String(field)}`,
+        );
         set({ savingField: null });
       } catch (err) {
         set({ preferences: prev, savingField: null });
-        console.error(`[UserPreferenceStore] updatePreference() FAILED. Reverting optimistic update on field ${String(field)}. Error:`, err);
+        console.error(
+          `[UserPreferenceStore] updatePreference() FAILED. Reverting optimistic update on field ${String(field)}. Error:`,
+          err,
+        );
         toast.error("Failed to update preference");
       }
     },

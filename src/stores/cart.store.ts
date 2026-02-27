@@ -145,14 +145,20 @@ export const useCartStore = create<CartState>((set, get) => {
         }));
       } catch (err) {
         set({ items: previousItems, error: "Failed to add item to cart" });
-        console.error(`[CartStore] addItem() FAILED. Reverting cart size to ${previousItems.length}. Error:`, err);
+        console.error(
+          `[CartStore] addItem() FAILED. Reverting cart size to ${previousItems.length}. Error:`,
+          err,
+        );
       } finally {
         set({ isLoading: false });
       }
     },
 
     updateQuantity: async (variantId, quantity) => {
-      console.log(`[CartStore] updateQuantity() initiated`, { variantId, quantity });
+      console.log(`[CartStore] updateQuantity() initiated`, {
+        variantId,
+        quantity,
+      });
       const { sessionId } = get();
       if (!sessionId) return;
 
@@ -188,7 +194,10 @@ export const useCartStore = create<CartState>((set, get) => {
         });
       } catch (err) {
         set({ items: previousItems, error: "Failed to update quantity" });
-        console.error(`[CartStore] updateQuantity() FAILED. Reverted optimistic quantity update. Error:`, err);
+        console.error(
+          `[CartStore] updateQuantity() FAILED. Reverted optimistic quantity update. Error:`,
+          err,
+        );
       } finally {
         set({ isLoading: false });
       }
@@ -216,7 +225,10 @@ export const useCartStore = create<CartState>((set, get) => {
         });
       } catch (err) {
         set({ items: previousItems, error: "Failed to remove item" });
-        console.error(`[CartStore] removeItem() FAILED. Reverting item removal, cart size back to ${previousItems.length}. Error:`, err);
+        console.error(
+          `[CartStore] removeItem() FAILED. Reverting item removal, cart size back to ${previousItems.length}. Error:`,
+          err,
+        );
       } finally {
         set({ isLoading: false });
       }
@@ -238,7 +250,10 @@ export const useCartStore = create<CartState>((set, get) => {
         });
       } catch (err) {
         set({ items: previousItems, error: "Failed to clear cart" });
-        console.error(`[CartStore] clearCart() FAILED. Restoring ${previousItems.length} items to cart. Error:`, err);
+        console.error(
+          `[CartStore] clearCart() FAILED. Restoring ${previousItems.length} items to cart. Error:`,
+          err,
+        );
       } finally {
         set({ isLoading: false });
       }

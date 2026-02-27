@@ -23,10 +23,17 @@ export const useSidebarStore = create<SidebarStoreState>()(
       enabled: false,
 
       toggle: () =>
-        set((state) => {
-          console.log(`[SidebarStore] toggle() invoked. New state:`, !state.isOpen);
-          return { isOpen: !state.isOpen };
-        }, false, "sidebar/toggle"),
+        set(
+          (state) => {
+            console.log(
+              `[SidebarStore] toggle() invoked. New state:`,
+              !state.isOpen,
+            );
+            return { isOpen: !state.isOpen };
+          },
+          false,
+          "sidebar/toggle",
+        ),
       open: () => {
         console.log(`[SidebarStore] open() invoked`);
         set({ isOpen: true }, false, "sidebar/open");

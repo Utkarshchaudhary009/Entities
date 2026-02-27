@@ -27,10 +27,15 @@ export const useAdminDashboardStore = create<AdminDashboardStoreState>()(
           const overview = await fetchApi<AdminDashboardOverview>(
             "/api/admin/dashboard",
           );
-          console.log(`[AdminDashboardStore] fetchOverview() Success. Loaded metrics.`);
+          console.log(
+            `[AdminDashboardStore] fetchOverview() Success. Loaded metrics.`,
+          );
           set({ overview, isLoading: false, error: null });
         } catch (err) {
-          console.error(`[AdminDashboardStore] fetchOverview() FAILED. Error:`, err);
+          console.error(
+            `[AdminDashboardStore] fetchOverview() FAILED. Error:`,
+            err,
+          );
           set({
             isLoading: false,
             error: "Unable to load admin dashboard overview.",

@@ -42,7 +42,11 @@ export const useUploadStore = create<UploadStoreState>()(
       uploads: new Map(),
 
       stageFiles: (files, bucket) => {
-        console.log(`[UploadStore] stageFiles() initiated. Files count:`, files.length, { bucket });
+        console.log(
+          `[UploadStore] stageFiles() initiated. Files count:`,
+          files.length,
+          { bucket },
+        );
         const publicUrls: string[] = [];
         const newUploads = new Map(get().uploads);
         // let hasErrors = false;
@@ -78,7 +82,9 @@ export const useUploadStore = create<UploadStoreState>()(
         }
 
         if (publicUrls.length > 0) {
-          console.log(`[UploadStore] stageFiles() Success. Staged ${publicUrls.length} files for upload.`);
+          console.log(
+            `[UploadStore] stageFiles() Success. Staged ${publicUrls.length} files for upload.`,
+          );
           set({ uploads: newUploads });
         }
 
@@ -114,7 +120,10 @@ export const useUploadStore = create<UploadStoreState>()(
       },
 
       markError: (id, error) => {
-        console.error(`[UploadStore] markError() FAILED for ID: ${id}. Error:`, error);
+        console.error(
+          `[UploadStore] markError() FAILED for ID: ${id}. Error:`,
+          error,
+        );
         set((state) => {
           const newUploads = new Map(state.uploads);
           const entry = newUploads.get(id);
@@ -139,7 +148,10 @@ export const useUploadStore = create<UploadStoreState>()(
       },
 
       clearByUrls: (urls) => {
-        console.log(`[UploadStore] clearByUrls() invoked. URLs count:`, urls.length);
+        console.log(
+          `[UploadStore] clearByUrls() invoked. URLs count:`,
+          urls.length,
+        );
         set((state) => {
           const newUploads = new Map(state.uploads);
           for (const [id, entry] of Array.from(newUploads.entries())) {
