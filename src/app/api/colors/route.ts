@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { paginationSchema, parseSearchParams } from "@/lib/api/query-schemas";
 import {
   cachedPaginatedResponse,
@@ -32,6 +34,8 @@ export async function POST(request: Request) {
     const json = await request.json();
     const body = createColorSchema.parse(json);
     const color = await colorService.create(body);
+    revalidatePath("/api/colors");
+    revalidatePath("/api/colors");
     return createdDataResponse(color);
   } catch (error) {
     return handleError(error, "Create color");

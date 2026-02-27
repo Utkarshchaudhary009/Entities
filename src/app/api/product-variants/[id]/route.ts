@@ -28,7 +28,7 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
           bucket: "variants",
           urls: imageUrls,
           actorId: guard.auth.userId,
-          idempotencyKey: `storage/delete-variant:${id}:${Date.now()}`,
+          idempotencyKey: `storage/delete-variant:${id}`,
         },
       });
     }

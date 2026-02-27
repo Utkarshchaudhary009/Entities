@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { safeInngestSend } from "@/inngest/safe-send";
 import { brandQuerySchema, parseSearchParams } from "@/lib/api/query-schemas";
 import {
@@ -44,10 +46,12 @@ export async function POST(request: Request) {
         logoUrl: brand.logoUrl ?? undefined,
         isActive: brand.isActive,
         actorId: guard.auth.userId,
-        idempotencyKey: `entity/brand.created.v1:${brand.id}:${Date.now()}`,
+        idempotencyKey: `entity/brand.created.v1:${brand.id}:${brand.createdAt.getTime()}`,
       },
     });
 
+    revalidatePath("/api/brands");
+    revalidatePath("/api/brands");
     return createdDataResponse(brand);
   } catch (error) {
     return handleError(error, "Create brand");

@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const base64Buffer = Buffer.from(arrayBuffer).toString("base64");
 
-    const idempotencyKey = `storage/upload:${metaParsed.data.filename}:${Date.now()}`;
+    const idempotencyKey = `storage/upload:${guard.auth.userId}:${metaParsed.data.filename}:${file.size}`;
 
     // Send async job to upload the actual file
     await safeInngestSend({

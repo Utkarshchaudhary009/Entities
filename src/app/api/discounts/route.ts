@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import type { DiscountType } from "@/generated/prisma/client";
 import { paginationSchema, parseSearchParams } from "@/lib/api/query-schemas";
 import {
@@ -42,6 +44,7 @@ export async function POST(request: Request) {
       startsAt: startsAt ? new Date(startsAt) : null,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
     });
+    revalidatePath("/api/discounts");
     return createdDataResponse(discount);
   } catch (error) {
     return handleError(error, "Create discount");

@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { safeInngestSend } from "@/inngest/safe-send";
 import { parseSearchParams, productQuerySchema } from "@/lib/api/query-schemas";
 import {
@@ -47,10 +49,11 @@ export async function POST(request: Request) {
         categoryId: product.categoryId,
         isActive: product.isActive,
         actorId: guard.auth.userId,
-        idempotencyKey: `entity/product.created.v1:${product.id}:${Date.now()}`,
+        idempotencyKey: `entity/product.created.v1:${product.id}:${product.createdAt.getTime()}`,
       },
     });
 
+    revalidatePath("/api/products");
     return createdDataResponse(product);
   } catch (error) {
     return handleError(error, "Create product");

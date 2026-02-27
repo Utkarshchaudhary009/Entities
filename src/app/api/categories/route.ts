@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { safeInngestSend } from "@/inngest/safe-send";
 import {
   categoryQuerySchema,
@@ -47,10 +49,12 @@ export async function POST(request: Request) {
         about: category.about ?? undefined,
         isActive: category.isActive,
         actorId: guard.auth.userId,
-        idempotencyKey: `entity/category.created.v1:${category.id}:${Date.now()}`,
+        idempotencyKey: `entity/category.created.v1:${category.id}:${category.createdAt.getTime()}`,
       },
     });
 
+    revalidatePath("/api/categories");
+    revalidatePath("/api/categories");
     return createdDataResponse(category);
   } catch (error) {
     return handleError(error, "Create category");

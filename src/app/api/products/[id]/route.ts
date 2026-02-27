@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { safeInngestSend } from "@/inngest/safe-send";
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
@@ -35,10 +37,12 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
         price: product.price,
         isActive: product.isActive,
         actorId: guard.auth.userId,
-        idempotencyKey: `entity/product.updated.v1:${product.id}:${Date.now()}`,
+        idempotencyKey: `entity/product.updated.v1:${product.id}:${product.updatedAt.getTime()}`,
       },
     });
 
+    revalidatePath("/api/products");
+    revalidatePath(`/api/products/${id}`);
     return successDataResponse(product);
   } catch (error) {
     return handleError(error, "Update product");
@@ -73,7 +77,7 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
       data: {
         id,
         actorId: guard.auth.userId,
-        idempotencyKey: `entity/product.deleted.v1:${id}:${Date.now()}`,
+        idempotencyKey: `entity/product.deleted.v1:${id}`,
       },
     });
 
@@ -85,11 +89,13 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
           bucket: "products",
           urls: imageUrls,
           actorId: guard.auth.userId,
-          idempotencyKey: `storage/delete:${id}:${Date.now()}`,
+          idempotencyKey: `storage/delete:${id}`,
         },
       });
     }
 
+    revalidatePath("/api/products");
+    revalidatePath(`/api/products/${id}`);
     return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete product");

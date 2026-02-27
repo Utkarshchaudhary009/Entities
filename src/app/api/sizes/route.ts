@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { paginationSchema, parseSearchParams } from "@/lib/api/query-schemas";
 import {
   cachedPaginatedResponse,
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     const body = createSizeSchema.parse(json);
     const size = await sizeService.create(body);
+    revalidatePath("/api/sizes");
     return createdDataResponse(size);
   } catch (error) {
     return handleError(error, "Create size");
