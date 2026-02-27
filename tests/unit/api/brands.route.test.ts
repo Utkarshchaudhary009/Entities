@@ -11,6 +11,11 @@ import {
 mock.restore();
 
 // --- MOCK SETUP ---
+mock.module("next/cache", () => ({
+  revalidatePath: mock(),
+  revalidateTag: mock(),
+}));
+
 mock.module("@/lib/auth/guards", () => ({
   requireAuth: mock(),
   requireAdmin: mock(),
@@ -70,6 +75,8 @@ describe("API: Brands", () => {
       (brandService.create as any).mockResolvedValue({
         id: "b1",
         name: "Nike",
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+        updatedAt: new Date("2024-01-01T00:00:00Z"),
       });
 
       // ACT

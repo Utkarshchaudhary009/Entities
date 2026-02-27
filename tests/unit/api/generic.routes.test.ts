@@ -20,6 +20,11 @@ mock.module("@/inngest/safe-send", () => ({
   safeInngestSend: mock(),
 }));
 
+mock.module("next/cache", () => ({
+  revalidatePath: mock(),
+  revalidateTag: mock(),
+}));
+
 // Mock services
 mock.module("@/services/category.service", () => ({
   categoryService: { findAll: mock(), create: mock() },
@@ -47,21 +52,36 @@ const ROUTES = [
     route: CategoryRoute,
     service: categoryService,
     endpoint: "categories",
-    validBody: { name: "C1", slug: "c1" },
+    validBody: {
+      name: "C1",
+      slug: "c1",
+      isActive: true,
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-01T00:00:00Z"),
+    },
   },
   {
     name: "Colors",
     route: ColorRoute,
     service: colorService,
     endpoint: "colors",
-    validBody: { name: "Red", hex: "#FF0000" },
+    validBody: {
+      name: "Red",
+      hex: "#FF0000",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-01T00:00:00Z"),
+    },
   },
   {
     name: "Sizes",
     route: SizeRoute,
     service: sizeService,
     endpoint: "sizes",
-    validBody: { label: "XL" },
+    validBody: {
+      label: "XL",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-01T00:00:00Z"),
+    },
   },
 ];
 
@@ -99,10 +119,19 @@ describe("API: Generic Routes", () => {
         });
         (service.create as any).mockResolvedValue({ id: "1", ...validBody });
 
+        // Map back to DB structure for mock return
+        const dbEntity = { ...validBody };
+        if (dbEntity.hex) {
+          dbEntity.hexCode = dbEntity.hex;
+          delete dbEntity.hex;
+        }
+
         const request = new Request(`http://localhost/api/${endpoint}`, {
           method: "POST",
           body: JSON.stringify(validBody),
         });
+        (service.create as any).mockResolvedValue({ id: "1", ...dbEntity });
+
         const response = await route.POST(request);
         expect(response.status).toBe(201);
       });
