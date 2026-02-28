@@ -23,11 +23,29 @@ export const useSidebarStore = create<SidebarStoreState>()(
       enabled: false,
 
       toggle: () =>
-        set((state) => ({ isOpen: !state.isOpen }), false, "sidebar/toggle"),
-      open: () => set({ isOpen: true }, false, "sidebar/open"),
-      close: () => set({ isOpen: false }, false, "sidebar/close"),
-      setEnabled: (enabled) =>
-        set({ enabled, isOpen: false }, false, "sidebar/setEnabled"),
+        set(
+          (state) => {
+            console.log(
+              `[SidebarStore] toggle() invoked. New state:`,
+              !state.isOpen,
+            );
+            return { isOpen: !state.isOpen };
+          },
+          false,
+          "sidebar/toggle",
+        ),
+      open: () => {
+        console.log(`[SidebarStore] open() invoked`);
+        set({ isOpen: true }, false, "sidebar/open");
+      },
+      close: () => {
+        console.log(`[SidebarStore] close() invoked`);
+        set({ isOpen: false }, false, "sidebar/close");
+      },
+      setEnabled: (enabled) => {
+        console.log(`[SidebarStore] setEnabled() invoked. Enabled:`, enabled);
+        set({ enabled, isOpen: false }, false, "sidebar/setEnabled");
+      },
     }),
     { name: "sidebar-store", enabled: process.env.NODE_ENV === "development" },
   ),

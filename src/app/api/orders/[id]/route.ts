@@ -49,7 +49,7 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
           previousStatus: currentOrder.status,
           newStatus: order.status,
           actorId: guard.auth.userId,
-          idempotencyKey: `entity/order.status-changed.v1:${order.id}:${Date.now()}`,
+          idempotencyKey: `entity/order.status-changed.v1:${order.id}:${order.updatedAt.getTime()}`,
         },
       });
     }

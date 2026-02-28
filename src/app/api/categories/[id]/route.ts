@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { safeInngestSend } from "@/inngest/safe-send";
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
@@ -35,10 +37,12 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
         about: category.about ?? undefined,
         isActive: category.isActive,
         actorId: guard.auth.userId,
-        idempotencyKey: `entity/category.updated.v1:${category.id}:${Date.now()}`,
+        idempotencyKey: `entity/category.updated.v1:${category.id}:${category.updatedAt.getTime()}`,
       },
     });
 
+    revalidatePath("/api/categories");
+    revalidatePath(`/api/categories/${id}`);
     return successDataResponse(category);
   } catch (error) {
     return handleError(error, "Update category");
@@ -58,10 +62,14 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
       data: {
         id,
         actorId: guard.auth.userId,
-        idempotencyKey: `entity/category.deleted.v1:${id}:${Date.now()}`,
+        idempotencyKey: `entity/category.deleted.v1:${id}`,
       },
     });
 
+    revalidatePath("/api/categories");
+    revalidatePath(`/api/categories/${id}`);
+    revalidatePath("/api/categories");
+    revalidatePath(`/api/categories/${id}`);
     return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete category");

@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import type { DiscountType } from "@/generated/prisma/client";
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
@@ -35,6 +37,8 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
         expiresAt: expiresAt ? new Date(expiresAt) : null,
       }),
     });
+    revalidatePath("/api/discounts");
+    revalidatePath(`/api/discounts/${id}`);
     return successDataResponse(discount);
   } catch (error) {
     return handleError(error, "Update discount");
@@ -48,6 +52,8 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
   try {
     const { id } = idParamSchema.parse(await params);
     await discountService.delete(id);
+    revalidatePath("/api/discounts");
+    revalidatePath(`/api/discounts/${id}`);
     return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete discount");

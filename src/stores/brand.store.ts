@@ -69,10 +69,15 @@ export const useBrandStore = create<BrandStoreState>()(
         setLoading: (isLoading) => set({ isLoading }),
 
         fetchBrandDetails: async (id) => {
+          console.log(`[BrandStore] fetchBrandDetails() initiated`, { id });
           set({ isLoading: true, error: null });
           try {
             await dedupe(`GET:/api/brands/${id}`, async () => {
               const data = await fetchApi<BrandDetails>(`/api/brands/${id}`);
+              console.log(
+                `[BrandStore] fetchBrandDetails() Success. Loaded:`,
+                data.name,
+              );
               set({
                 brand: data,
                 founder: data.founder,
@@ -88,10 +93,19 @@ export const useBrandStore = create<BrandStoreState>()(
               error: err instanceof Error ? err.message : "Request failed",
               isLoading: false,
             });
+            console.error(
+              `[BrandStore] fetchBrandDetails() FAILED. Error:`,
+              err,
+            );
           }
         },
 
         createBrand: async (data) => {
+          console.log(
+            `[BrandStore] createBrand() initiated. Current brands:`,
+            get().brands.length,
+            { data },
+          );
           const tempId = crypto.randomUUID();
           const optimisticBrand = { ...data, id: tempId } as ApiBrand;
           set((state) => ({
@@ -105,6 +119,12 @@ export const useBrandStore = create<BrandStoreState>()(
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(data),
             });
+            console.log(
+              `[BrandStore] createBrand() Success. New brand:`,
+              newBrand,
+              `Brands count now:`,
+              get().brands.length + 1,
+            );
             set((state) => ({
               brands: state.brands.map((b) => (b.id === tempId ? newBrand : b)),
               error: null,
@@ -118,6 +138,11 @@ export const useBrandStore = create<BrandStoreState>()(
         },
 
         updateBrand: async (id, data) => {
+          console.log(
+            `[BrandStore] updateBrand() initiated on ID: ${id}. Current brands:`,
+            get().brands.length,
+            { data },
+          );
           const prevBrand = get().brand;
           const prevBrands = get().brands;
 
@@ -137,6 +162,10 @@ export const useBrandStore = create<BrandStoreState>()(
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(data),
             });
+            console.log(
+              `[BrandStore] updateBrand() Success. Updated brand:`,
+              updated,
+            );
             set((state) => ({
               brand: updated,
               brands: state.brands.map((brand) =>
@@ -154,16 +183,30 @@ export const useBrandStore = create<BrandStoreState>()(
         },
 
         deleteBrand: async (id) => {
+          console.log(
+            `[BrandStore] deleteBrand() initiated on ID: ${id}. Brands count before:`,
+            get().brands.length,
+          );
           const prevBrands = get().brands;
           set({ brands: prevBrands.filter((b) => b.id !== id), error: null });
 
           try {
             await fetchJson<unknown>(`/api/brands/${id}`, { method: "DELETE" });
+            console.log(
+              `[BrandStore] deleteBrand() Success for ID: ${id}. Brands count now:`,
+              get().brands.length - 1,
+            );
           } catch (err: unknown) {
             set({
               brands: prevBrands,
               error: err instanceof Error ? err.message : "Request failed",
             });
+            console.error(
+              `[BrandStore] createBrand() FAILED. Reverted optimistic UI. Brands count back to:`,
+              prevBrands.length,
+              `Error:`,
+              err,
+            );
           }
         },
       };

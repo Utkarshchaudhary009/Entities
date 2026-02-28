@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { safeInngestSend } from "@/inngest/safe-send";
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
@@ -35,10 +37,12 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
         logoUrl: brand.logoUrl ?? undefined,
         isActive: brand.isActive,
         actorId: guard.auth.userId,
-        idempotencyKey: `entity/brand.updated.v1:${brand.id}:${Date.now()}`,
+        idempotencyKey: `entity/brand.updated.v1:${brand.id}:${brand.updatedAt.getTime()}`,
       },
     });
 
+    revalidatePath("/api/brands");
+    revalidatePath(`/api/brands/${id}`);
     return successDataResponse(brand);
   } catch (error) {
     return handleError(error, "Update brand");
@@ -58,10 +62,14 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
       data: {
         id,
         actorId: guard.auth.userId,
-        idempotencyKey: `entity/brand.deleted.v1:${id}:${Date.now()}`,
+        idempotencyKey: `entity/brand.deleted.v1:${id}`,
       },
     });
 
+    revalidatePath("/api/brands");
+    revalidatePath(`/api/brands/${id}`);
+    revalidatePath("/api/brands");
+    revalidatePath(`/api/brands/${id}`);
     return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete brand");

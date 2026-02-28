@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -24,6 +26,8 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
     const json = await request.json();
     const body = updateColorSchema.parse(json);
     const color = await colorService.update(id, body);
+    revalidatePath("/api/colors");
+    revalidatePath(`/api/colors/${id}`);
     return successDataResponse(color);
   } catch (error) {
     return handleError(error, "Update color");
@@ -37,6 +41,10 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
   try {
     const { id } = idParamSchema.parse(await params);
     await colorService.delete(id);
+    revalidatePath("/api/colors");
+    revalidatePath(`/api/colors/${id}`);
+    revalidatePath("/api/colors");
+    revalidatePath(`/api/colors/${id}`);
     return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete color");

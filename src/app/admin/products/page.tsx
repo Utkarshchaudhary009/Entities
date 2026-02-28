@@ -13,6 +13,16 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DataTable } from "@/components/admin/data-table";
 import { ProductDrawer } from "@/components/admin/product-drawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +61,7 @@ export default function AdminProductsPage() {
     product: null,
   });
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Only run once on mount
   useEffect(() => {
@@ -95,10 +106,15 @@ export default function AdminProductsPage() {
     setDrawerState({ isOpen: true, mode: "edit", product });
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      await deleteProduct(id);
+  const handleDelete = (id: string) => {
+    setProductToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (productToDelete) {
+      await deleteProduct(productToDelete);
       toast.success("Product deleted");
+      setProductToDelete(null);
     }
   };
 
@@ -273,6 +289,30 @@ export default function AdminProductsPage() {
         mode={drawerState.mode}
         product={drawerState.product}
       />
+
+      <AlertDialog
+        open={!!productToDelete}
+        onOpenChange={(open) => !open && setProductToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              product and all associated variants from the database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDelete}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

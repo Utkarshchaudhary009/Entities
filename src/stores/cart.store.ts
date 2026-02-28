@@ -92,6 +92,7 @@ export const useCartStore = create<CartState>((set, get) => {
     setItems: (items) => set({ items, error: null }),
 
     addItem: async (item) => {
+      console.log(`[CartStore] addItem() initiated`, { item });
       const { sessionId } = get();
       if (!sessionId) return;
 
@@ -142,14 +143,22 @@ export const useCartStore = create<CartState>((set, get) => {
           ),
           error: null,
         }));
-      } catch {
+      } catch (err) {
         set({ items: previousItems, error: "Failed to add item to cart" });
+        console.error(
+          `[CartStore] addItem() FAILED. Reverting cart size to ${previousItems.length}. Error:`,
+          err,
+        );
       } finally {
         set({ isLoading: false });
       }
     },
 
     updateQuantity: async (variantId, quantity) => {
+      console.log(`[CartStore] updateQuantity() initiated`, {
+        variantId,
+        quantity,
+      });
       const { sessionId } = get();
       if (!sessionId) return;
 
@@ -183,14 +192,19 @@ export const useCartStore = create<CartState>((set, get) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ quantity }),
         });
-      } catch {
+      } catch (err) {
         set({ items: previousItems, error: "Failed to update quantity" });
+        console.error(
+          `[CartStore] updateQuantity() FAILED. Reverted optimistic quantity update. Error:`,
+          err,
+        );
       } finally {
         set({ isLoading: false });
       }
     },
 
     removeItem: async (variantId) => {
+      console.log(`[CartStore] removeItem() initiated`, { variantId });
       const { sessionId } = get();
       if (!sessionId) return;
 
@@ -209,14 +223,19 @@ export const useCartStore = create<CartState>((set, get) => {
         await fetchCartJson<unknown>(sessionId, `/api/cart/${item.id}`, {
           method: "DELETE",
         });
-      } catch {
+      } catch (err) {
         set({ items: previousItems, error: "Failed to remove item" });
+        console.error(
+          `[CartStore] removeItem() FAILED. Reverting item removal, cart size back to ${previousItems.length}. Error:`,
+          err,
+        );
       } finally {
         set({ isLoading: false });
       }
     },
 
     clearCart: async () => {
+      console.log(`[CartStore] clearCart() initiated`);
       const { sessionId } = get();
       if (!sessionId) return;
 
@@ -229,14 +248,19 @@ export const useCartStore = create<CartState>((set, get) => {
         await fetchCartJson<unknown>(sessionId, "/api/cart", {
           method: "DELETE",
         });
-      } catch {
+      } catch (err) {
         set({ items: previousItems, error: "Failed to clear cart" });
+        console.error(
+          `[CartStore] clearCart() FAILED. Restoring ${previousItems.length} items to cart. Error:`,
+          err,
+        );
       } finally {
         set({ isLoading: false });
       }
     },
 
     syncWithServer: async () => {
+      console.log(`[CartStore] syncWithServer() initiated`);
       const { sessionId } = get();
       if (!sessionId) return;
 
@@ -248,8 +272,9 @@ export const useCartStore = create<CartState>((set, get) => {
           );
           set({ items: summary.items ?? [], error: null });
         });
-      } catch {
+      } catch (err) {
         set({ error: "Failed to sync cart" });
+        console.error(`[CartStore] syncWithServer() FAILED. Error:`, err);
       }
     },
 

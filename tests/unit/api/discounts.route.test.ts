@@ -11,6 +11,11 @@ import {
 mock.restore();
 
 // --- MOCK SETUP ---
+mock.module("next/cache", () => ({
+  revalidatePath: mock(),
+  revalidateTag: mock(),
+}));
+
 mock.module("@/lib/auth/guards", () => ({
   requireAuth: mock(),
   requireAdmin: mock(),
@@ -56,7 +61,11 @@ describe("API: Discounts", () => {
     it("should create discount if admin", async () => {
       // ARRANGE
       (requireAdmin as any).mockResolvedValue({ success: true });
-      (discountService.create as any).mockResolvedValue({ id: "d1" });
+      (discountService.create as any).mockResolvedValue({
+        id: "d1",
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+        updatedAt: new Date("2024-01-01T00:00:00Z"),
+      });
 
       // ACT
       const request = new Request("http://localhost/api/discounts", {

@@ -97,7 +97,7 @@ export async function POST(request: Request) {
         total: order.total,
         status: order.status,
         clerkId: order.clerkId ?? undefined,
-        idempotencyKey: `entity/order.created.v1:${order.id}:${Date.now()}`,
+        idempotencyKey: `entity/order.created.v1:${order.id}:${order.createdAt.getTime()}`,
       },
     });
 
