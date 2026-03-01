@@ -49,7 +49,11 @@ describe("ProductStore", () => {
   describe("createVariant", () => {
     it("should optimistically add variant", async () => {
       // ARRANGE
-      const input = { productId: "p1", size: "M", color: "Red" };
+      const input = {
+        productId: "123e4567-e89b-12d3-a456-426614174000",
+        size: "M",
+        color: "Red",
+      };
       const serverResponse = { id: "v1", ...input };
       (fetchApi as any).mockResolvedValue(serverResponse);
 

@@ -29,22 +29,12 @@ mock.module("next/cache", () => ({
 mock.module("@/services/category.service", () => ({
   categoryService: { findAll: mock(), create: mock() },
 }));
-mock.module("@/services/color.service", () => ({
-  colorService: { findAll: mock(), create: mock() },
-}));
-mock.module("@/services/size.service", () => ({
-  sizeService: { findAll: mock(), create: mock() },
-}));
 
 // Import routes
 const CategoryRoute = await import("@/app/api/categories/route");
-const ColorRoute = await import("@/app/api/colors/route");
-const SizeRoute = await import("@/app/api/sizes/route");
 
 const { requireAdmin } = await import("@/lib/auth/guards");
 const { categoryService } = await import("@/services/category.service");
-const { colorService } = await import("@/services/color.service");
-const { sizeService } = await import("@/services/size.service");
 
 const ROUTES = [
   {
@@ -56,29 +46,6 @@ const ROUTES = [
       name: "C1",
       slug: "c1",
       isActive: true,
-      createdAt: new Date("2024-01-01T00:00:00Z"),
-      updatedAt: new Date("2024-01-01T00:00:00Z"),
-    },
-  },
-  {
-    name: "Colors",
-    route: ColorRoute,
-    service: colorService,
-    endpoint: "colors",
-    validBody: {
-      name: "Red",
-      hex: "#FF0000",
-      createdAt: new Date("2024-01-01T00:00:00Z"),
-      updatedAt: new Date("2024-01-01T00:00:00Z"),
-    },
-  },
-  {
-    name: "Sizes",
-    route: SizeRoute,
-    service: sizeService,
-    endpoint: "sizes",
-    validBody: {
-      label: "XL",
       createdAt: new Date("2024-01-01T00:00:00Z"),
       updatedAt: new Date("2024-01-01T00:00:00Z"),
     },

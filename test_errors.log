@@ -1,0 +1,419 @@
+bun test v1.3.6 (d530ed99)
+
+tests\crud.test.ts:
+(pass) Database CRUD Tests > Size CRUD > Create Size [3141.00ms]
+(pass) Database CRUD Tests > Size CRUD > Read Size [781.00ms]
+(pass) Database CRUD Tests > Size CRUD > Update Size [516.00ms]
+(pass) Database CRUD Tests > Size CRUD > Delete Size [1015.00ms]
+(pass) Database CRUD Tests > Color CRUD > Create Color [469.00ms]
+(pass) Database CRUD Tests > Color CRUD > Read Color [453.00ms]
+(pass) Database CRUD Tests > Color CRUD > Delete Color [500.00ms]
+(pass) Database CRUD Tests > Category CRUD > Create Category [469.00ms]
+(pass) Database CRUD Tests > Category CRUD > Read Category [484.00ms]
+(pass) Database CRUD Tests > Category CRUD > Update Category [438.00ms]
+(pass) Database CRUD Tests > Product CRUD > Create Product [531.00ms]
+(pass) Database CRUD Tests > Product CRUD > Read Product with Category [484.00ms]
+(pass) Database CRUD Tests > Product CRUD > Update Product [500.00ms]
+(pass) Database CRUD Tests > ProductVariant CRUD > Create ProductVariant [422.00ms]
+(pass) Database CRUD Tests > ProductVariant CRUD > Read ProductVariant [547.00ms]
+(pass) Database CRUD Tests > ProductVariant CRUD > Update ProductVariant stock [453.00ms]
+(pass) Database CRUD Tests > Cart and CartItem CRUD > Create Cart [687.00ms]
+(pass) Database CRUD Tests > Cart and CartItem CRUD > Create CartItem [454.00ms]
+(pass) Database CRUD Tests > Cart and CartItem CRUD > Read Cart with Items [421.00ms]
+(pass) Database CRUD Tests > Cart and CartItem CRUD > Delete Cart (cascades to cart items) [875.00ms]
+(pass) Database CRUD Tests > Order and OrderItem CRUD > Create Order [500.00ms]
+(pass) Database CRUD Tests > Order and OrderItem CRUD > Create OrderItem [454.00ms]
+(pass) Database CRUD Tests > Order and OrderItem CRUD > Read Order with Items [468.00ms]
+(pass) Database CRUD Tests > Order and OrderItem CRUD > Update Order status [422.00ms]
+(pass) Database CRUD Tests > Order and OrderItem CRUD > Delete Order (cascades) [844.00ms]
+(pass) Database CRUD Tests > Discount CRUD > Create Discount [469.00ms]
+(pass) Database CRUD Tests > Discount CRUD > Read Discount [437.00ms]
+(pass) Database CRUD Tests > Discount CRUD > Update Discount usage_count [406.00ms]
+(pass) Database CRUD Tests > Discount CRUD > Delete Discount [422.00ms]
+(pass) Database CRUD Tests > Cleanup > Delete ProductVariant [422.00ms]
+(pass) Database CRUD Tests > Cleanup > Delete Product [453.00ms]
+(pass) Database CRUD Tests > Cleanup > Delete Category [422.00ms]
+
+tests\error-handling.test.ts:
+(pass) handleError > returns AppError status and payload [15.00ms]
+(pass) orderQuerySchema > accepts lowercase status and normalizes [47.00ms]
+(pass) orderQuerySchema > rejects invalid status [16.00ms]
+
+tests\integration\services\brand.service.test.ts:
+(fail) BrandService Integration > (unnamed) [5016.00ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+
+tests\integration\services\cart.service.test.ts:
+(fail) CartService Integration > should handle cart item upserts [5016.00ms]
+  ^ this test timed out after 5000ms.
+
+tests\integration\services\order.service.test.ts:
+(fail) OrderService Integration > should create an order and decrement stock atomically [5016.00ms]
+  ^ this test timed out after 5000ms.
+(pass) OrderService Integration > should fail validation if stock is insufficient and NOT modify DB [2656.00ms]
+
+tests\integration\services\product.service.test.ts:
+(pass) ProductService Integration > should create product with category relation [1687.00ms]
+(pass) ProductService Integration > should fail on duplicate slug [532.00ms]
+
+tests\unit\api\brands.route.test.ts:
+(pass) API: Brands > GET > should return brands [16.00ms]
+(pass) API: Brands > POST > should create brand if admin [31.00ms]
+
+tests\unit\api\cart.route.test.ts:
+(pass) API: Cart > GET > should return cart summary [15.00ms]
+(pass) API: Cart > POST > should add item to cart
+
+tests\unit\api\discounts.route.test.ts:
+(pass) API: Discounts > GET > should return discounts if admin [15.00ms]
+(pass) API: Discounts > POST > should create discount if admin [32.00ms]
+
+tests\unit\api\generic.routes.test.ts:
+(pass) API: Generic Routes > Categories > GET /api/categories should return items
+(pass) API: Generic Routes > Categories > POST /api/categories should create item if admin [16.00ms]
+(pass) API: Generic Routes > Colors > GET /api/colors should return items [16.00ms]
+(pass) API: Generic Routes > Colors > POST /api/colors should create item if admin
+(pass) API: Generic Routes > Sizes > GET /api/sizes should return items
+(pass) API: Generic Routes > Sizes > POST /api/sizes should create item if admin [15.00ms]
+
+tests\unit\api\orders.route.test.ts:
+(pass) API: Orders [id] > GET > should return order for owner [16.00ms]
+(pass) API: Orders [id] > GET > should return 401 if not authenticated
+(pass) API: Orders [id] > PUT (Status Update) > should update status if admin [16.00ms]
+
+tests\unit\api\products.route.test.ts:
+(pass) API: Products > GET > should return products for normal user (active only) [16.00ms]
+(pass) API: Products > GET > should return products including inactive for admin
+(pass) API: Products > POST > should create product if admin [16.00ms]
+
+tests\unit\api\upload.route.test.ts:
+(pass) API: Upload > should reject unauthorized users
+(pass) API: Upload > should reject files larger than 10MB [406.00ms]
+(pass) API: Upload > should trigger Inngest and return 202 on successful upload request
+
+tests\unit\inngest\upload.functions.test.ts:
+(pass) Inngest: Upload Functions > handleFileUpload > should upload file to bucket [32.00ms]
+(pass) Inngest: Upload Functions > handleFileDelete > should remove files from bucket [15.00ms]
+
+tests\unit\lib\utils.test.ts:
+(pass) Utils > cn (className merger) > should merge standard classes [78.00ms]
+(pass) Utils > cn (className merger) > should handle conditional classes
+(pass) Utils > cn (className merger) > should resolve tailwind conflicts (last wins)
+(pass) Utils > cn (className merger) > should handle arrays and nested arrays
+(pass) Utils > cn (className merger) > should handle undefined and null
+
+tests\unit\lib\validations.test.ts:
+(pass) Validations > Brand Schema > should validate correct brand input
+(pass) Validations > Brand Schema > should fail on invalid email
+(pass) Validations > Order Schema > should validate correct order input
+(pass) Validations > Order Schema > should fail on short address
+(pass) Validations > Discount Schema > should validate correct discount input
+(pass) Validations > Discount Schema > should fail on negative value
+(pass) Validations > Product Schema > should validate correct product input
+(pass) Validations > Product Schema > should fail on negative price
+(pass) Validations > SocialLink Schema > should validate correct input with brandId
+(pass) Validations > SocialLink Schema > should fail when both brandId and founderId are missing
+(pass) Validations > Category Schema > should validate correct category [15.00ms]
+(pass) Validations > Size Schema > should validate correct size
+(pass) Validations > Color Schema > should validate correct color
+(pass) Validations > Founder Schema > should validate correct founder
+(pass) Validations > BrandDocument Schema > should validate correct document [16.00ms]
+(pass) Validations > Cart Schema > should validate correct add-to-cart input
+(pass) Validations > Cart Schema > should fail on invalid quantity
+
+tests\unit\services\brand-document.service.test.ts:
+(pass) BrandDocumentService > findAll > should return paginated documents filtered by type
+(pass) BrandDocumentService > findById > should return document when found
+(pass) BrandDocumentService > findById > should throw NotFoundError when document not found
+(pass) BrandDocumentService > create > should create document successfully
+(pass) BrandDocumentService > update > should update document successfully
+(pass) BrandDocumentService > delete > should delete document successfully
+
+tests\unit\services\brand.service.test.ts:
+(pass) BrandService > findAll > should return paginated brands with search
+(pass) BrandService > findById > should return brand when found
+(pass) BrandService > findById > should throw NotFoundError when brand not found
+(pass) BrandService > create > should create brand successfully
+
+tests\unit\services\cart.service.test.ts:
+(pass) CartService > getCart > should return existing cart [16.00ms]
+(pass) CartService > getCart > should create new cart if not found
+(pass) CartService > addItem > should add item to cart
+
+tests\unit\services\category.service.test.ts:
+(pass) CategoryService > findAll > should return paginated categories [16.00ms]
+(pass) CategoryService > findById > should return category when found
+(pass) CategoryService > findById > should throw NotFoundError when category not found
+(pass) CategoryService > create > should create category successfully
+(pass) CategoryService > update > should update category successfully
+(pass) CategoryService > delete > should delete category successfully
+
+tests\unit\services\color.service.test.ts:
+(pass) ColorService > findAll > should return paginated colors
+(pass) ColorService > findById > should return color when found
+(pass) ColorService > findById > should throw NotFoundError when color not found
+(pass) ColorService > create > should create color successfully
+(pass) ColorService > update > should update color successfully [15.00ms]
+(pass) ColorService > delete > should delete color successfully
+
+tests\unit\services\discount.service.test.ts:
+(pass) DiscountService > findAll > should return paginated discounts
+(pass) DiscountService > findById > should return discount when found
+(pass) DiscountService > findById > should throw NotFoundError when discount not found
+(pass) DiscountService > create > should create discount successfully
+(pass) DiscountService > update > should update discount successfully
+(pass) DiscountService > delete > should delete discount successfully [15.00ms]
+
+tests\unit\services\founder.service.test.ts:
+(pass) FounderService > findAll > should return paginated founders [16.00ms]
+(pass) FounderService > findById > should return founder when found
+(pass) FounderService > findById > should throw NotFoundError when founder not found
+(pass) FounderService > create > should create founder successfully
+(pass) FounderService > update > should update founder successfully
+(pass) FounderService > delete > should delete founder successfully
+
+tests\unit\services\order.service.test.ts:
+(pass) OrderService > create > should create an order successfully when stock is sufficient [16.00ms]
+(pass) OrderService > create > should throw ValidationError when stock is insufficient
+(pass) OrderService > create > should throw NotFoundError when product variant does not exist
+(pass) OrderService > create > should throw ValidationError when items array is empty
+
+tests\unit\services\product-variant.service.test.ts:
+(pass) ProductVariantService > findByProductId > should return variants for a product
+(pass) ProductVariantService > create > should create variant with connect syntax
+
+tests\unit\services\product.service.test.ts:
+(pass) ProductService > findAll > should return paginated products with search
+(pass) ProductService > findById > should return product when found
+(pass) ProductService > findById > should throw NotFoundError when product not found
+(pass) ProductService > findBySlug > should return product when found by slug [16.00ms]
+(pass) ProductService > findBySlug > should throw NotFoundError when product slug not found
+(pass) ProductService > create > should create product successfully
+(pass) ProductService > update > should update product successfully
+(pass) ProductService > delete > should delete product successfully
+
+tests\unit\services\size.service.test.ts:
+(pass) SizeService > findAll > should return paginated sizes
+(pass) SizeService > findById > should return size when found
+(pass) SizeService > findById > should throw NotFoundError when size not found [16.00ms]
+(pass) SizeService > create > should create size successfully
+(pass) SizeService > update > should update size successfully
+(pass) SizeService > delete > should delete size successfully
+
+tests\unit\services\social-link.service.test.ts:
+(pass) SocialLinkService > findAll > should return paginated links [16.00ms]
+(pass) SocialLinkService > findById > should return link when found
+(pass) SocialLinkService > findById > should throw NotFoundError when link not found
+(pass) SocialLinkService > create > should create link successfully
+(pass) SocialLinkService > update > should update link successfully
+(pass) SocialLinkService > delete > should delete link successfully [15.00ms]
+
+tests\unit\stores\brand.store.test.ts:
+[BrandStore] createBrand() initiated. Current brands: 0 {
+  data: {
+    name: "Nike",
+    founderId: "f1",
+  },
+}
+[BrandStore] createBrand() Validation Failed: founderId: Founder ID must be a valid UUID
+32 |       // ACT
+33 |       const promise = useBrandStore.getState().createBrand(input);
+34 | 
+35 |       // ASSERT (Optimistic)
+36 |       const stateOpt = useBrandStore.getState();
+37 |       expect(stateOpt.brands).toHaveLength(1);
+                                   ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 1
+Received length: 0
+
+      at <anonymous> (D:\code\Craft_Project\Entities\tests\unit\stores\brand.store.test.ts:37:31)
+      at <anonymous> (D:\code\Craft_Project\Entities\tests\unit\stores\brand.store.test.ts:26:52)
+(fail) BrandStore > createBrand > should optimistically add brand and sync [16.00ms]
+[BrandStore] createBrand() initiated. Current brands: 0 {
+  data: {
+    name: "Nike",
+    founderId: "f1",
+  },
+}
+[BrandStore] createBrand() Validation Failed: founderId: Founder ID must be a valid UUID
+53 |         .getState()
+54 |         .createBrand({ name: "Nike", founderId: "f1" });
+55 | 
+56 |       // ASSERT
+57 |       expect(useBrandStore.getState().brands).toHaveLength(0);
+58 |       expect(useBrandStore.getState().error).toBe("Fail");
+                                                  ^
+error: expect(received).toBe(expected)
+
+Expected: "Fail"
+Received: "Validation failed: founderId: Founder ID must be a valid UUID"
+
+      at <anonymous> (D:\code\Craft_Project\Entities\tests\unit\stores\brand.store.test.ts:58:46)
+(fail) BrandStore > createBrand > should revert on failure [15.00ms]
+[BrandStore] updateBrand() initiated on ID: 1. Current brands: 1 {
+  data: {
+    name: "Nike Updated",
+  },
+}
+[BrandStore] updateBrand() Success. Updated brand: {
+  id: "1",
+  name: "Nike Updated",
+}
+(pass) BrandStore > updateBrand > should optimistically update [16.00ms]
+[BrandStore] deleteBrand() initiated on ID: 1. Brands count before: 1
+[BrandStore] deleteBrand() Success for ID: 1. Brands count now: -1
+(pass) BrandStore > deleteBrand > should optimistically delete
+
+tests\unit\stores\cart.store.test.ts:
+[CartStore] addItem() initiated {
+  item: {
+    productVariantId: "v1",
+    quantity: 1,
+    productName: "Shoe",
+    productPrice: 100,
+    productImage: "img.jpg",
+    size: "M",
+    color: "Red",
+    stock: 10,
+  },
+}
+[CartStore] addItem() Validation Failed: productVariantId: Variant ID must be a valid UUID
+64 |       // ACT
+65 |       const promise = useCartStore.getState().addItem(itemToAdd);
+66 | 
+67 |       // ASSERT (Optimistic State)
+68 |       const stateOptimistic = useCartStore.getState();
+69 |       expect(stateOptimistic.items).toHaveLength(1);
+                                         ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 1
+Received length: 0
+
+      at <anonymous> (D:\code\Craft_Project\Entities\tests\unit\stores\cart.store.test.ts:69:37)
+      at <anonymous> (D:\code\Craft_Project\Entities\tests\unit\stores\cart.store.test.ts:33:63)
+(fail) CartStore > addItem > should optimistically add item and sync with server [15.00ms]
+[CartStore] addItem() initiated {
+  item: {
+    productVariantId: "v1",
+    quantity: 1,
+    productName: "Shoe",
+    productPrice: 100,
+    productImage: "img.jpg",
+    size: "M",
+    color: "Red",
+    stock: 10,
+  },
+}
+[CartStore] addItem() Validation Failed: productVariantId: Variant ID must be a valid UUID
+ 99 |       await useCartStore.getState().addItem(itemToAdd);
+100 | 
+101 |       // ASSERT
+102 |       const state = useCartStore.getState();
+103 |       expect(state.items).toHaveLength(0); // Reverted
+104 |       expect(state.error).toBe("Failed to add item to cart");
+                                ^
+error: expect(received).toBe(expected)
+
+Expected: "Failed to add item to cart"
+Received: null
+
+      at <anonymous> (D:\code\Craft_Project\Entities\tests\unit\stores\cart.store.test.ts:104:27)
+(fail) CartStore > addItem > should revert state on API failure [16.00ms]
+[CartStore] removeItem() initiated {
+  variantId: "v1",
+}
+(pass) CartStore > removeItem > should optimistically remove item
+[CartStore] updateQuantity() initiated {
+  variantId: "v1",
+  quantity: 2,
+}
+(pass) CartStore > updateQuantity > should optimistically update quantity [15.00ms]
+
+tests\unit\stores\category.store.test.ts:
+[StoreFactory] category-store create() initiated {
+  endpoint: "/api/categories",
+  data: {
+    name: "Tops",
+    slug: "tops",
+  },
+}
+(pass) CategoryStore (Factory) > create > should optimistically create category [16.00ms]
+
+tests\unit\stores\product.store.test.ts:
+[ProductStore] createProduct() initiated. Current items: 0 {
+  data: {
+    name: "Shoe",
+    price: 100,
+    slug: "shoe",
+  },
+}
+[ProductStore] createProduct() Success. New Item: {
+  id: "p1",
+  name: "Shoe",
+  price: 100,
+  slug: "shoe",
+}
+(pass) ProductStore > createProduct > should optimistically add product
+[ProductStore] createVariant() initiated {
+  data: {
+    productId: "p1",
+    size: "M",
+    color: "Red",
+  },
+}
+[ProductStore] createVariant() Validation Failed: productId: Product ID must be a valid UUID
+55 | 
+56 |       // ACT
+57 |       const promise = useProductStore.getState().createVariant(input);
+58 | 
+59 |       // ASSERT (Optimistic)
+60 |       expect(useProductStore.getState().variants).toHaveLength(1);
+                                                       ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 1
+Received length: 0
+
+      at <anonymous> (D:\code\Craft_Project\Entities\tests\unit\stores\product.store.test.ts:60:51)
+      at <anonymous> (D:\code\Craft_Project\Entities\tests\unit\stores\product.store.test.ts:50:45)
+(fail) ProductStore > createVariant > should optimistically add variant
+
+tests\unit\stores\upload.store.test.ts:
+[UploadStore] stageFiles() initiated. Files count: 1 {
+  bucket: "products",
+}
+[UploadStore] stageFiles() Success. Staged 1 files for upload.
+(pass) Store: Upload > should stage valid files and generate public URLs
+[UploadStore] stageFiles() initiated. Files count: 1 {
+  bucket: "products",
+}
+(pass) Store: Upload > should reject invalid file types [16.00ms]
+[UploadStore] stageFiles() initiated. Files count: 1 {
+  bucket: "products",
+}
+[UploadStore] stageFiles() Success. Staged 1 files for upload.
+[UploadStore] markUploading() invoked for ID: c49d0422-45b7-411e-a8b0-b762a5af09a0.png
+[UploadStore] markDone() invoked for ID: c49d0422-45b7-411e-a8b0-b762a5af09a0.png
+[UploadStore] markError() FAILED for ID: c49d0422-45b7-411e-a8b0-b762a5af09a0.png. Error: Failed
+(pass) Store: Upload > should transition status correctly
+
+8 tests failed:
+(fail) BrandService Integration > (unnamed) [5016.00ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+(fail) CartService Integration > should handle cart item upserts [5016.00ms]
+  ^ this test timed out after 5000ms.
+(fail) OrderService Integration > should create an order and decrement stock atomically [5016.00ms]
+  ^ this test timed out after 5000ms.
+(fail) BrandStore > createBrand > should optimistically add brand and sync [16.00ms]
+(fail) BrandStore > createBrand > should revert on failure [15.00ms]
+(fail) CartStore > addItem > should optimistically add item and sync with server [15.00ms]
+(fail) CartStore > addItem > should revert state on API failure [16.00ms]
+(fail) ProductStore > createVariant > should optimistically add variant
+
+ 155 pass
+ 8 fail
+ 265 expect() calls
+Ran 163 tests across 33 files. [68.18s]

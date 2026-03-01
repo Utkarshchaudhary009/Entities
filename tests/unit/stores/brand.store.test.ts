@@ -25,7 +25,10 @@ describe("BrandStore", () => {
   describe("createBrand", () => {
     it("should optimistically add brand and sync", async () => {
       // ARRANGE
-      const input = { name: "Nike", founderId: "f1" };
+      const input = {
+        name: "Nike",
+        founderId: "123e4567-e89b-12d3-a456-426614174000",
+      };
       const serverResponse = { id: "server_id", name: "Nike" };
       (fetchApi as any).mockResolvedValue(serverResponse);
 
@@ -49,9 +52,10 @@ describe("BrandStore", () => {
       (fetchApi as any).mockRejectedValue(new Error("Fail"));
 
       // ACT
-      await useBrandStore
-        .getState()
-        .createBrand({ name: "Nike", founderId: "f1" });
+      await useBrandStore.getState().createBrand({
+        name: "Nike",
+        founderId: "123e4567-e89b-12d3-a456-426614174000",
+      });
 
       // ASSERT
       expect(useBrandStore.getState().brands).toHaveLength(0);

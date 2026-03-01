@@ -33,7 +33,7 @@ describe("CartStore", () => {
     it("should optimistically add item and sync with server", async () => {
       // ARRANGE
       const itemToAdd = {
-        productVariantId: "v1",
+        productVariantId: "123e4567-e89b-12d3-a456-426614174000",
         quantity: 1,
         productName: "Shoe",
         productPrice: 100,
@@ -45,7 +45,7 @@ describe("CartStore", () => {
 
       const serverResponse = {
         id: "server_id_1",
-        productVariantId: "v1",
+        productVariantId: "123e4567-e89b-12d3-a456-426614174000",
         quantity: 1,
         productVariant: {
           size: "M",
@@ -83,7 +83,7 @@ describe("CartStore", () => {
     it("should revert state on API failure", async () => {
       // ARRANGE
       const itemToAdd = {
-        productVariantId: "v1",
+        productVariantId: "123e4567-e89b-12d3-a456-426614174000",
         quantity: 1,
         productName: "Shoe",
         productPrice: 100,
@@ -113,7 +113,7 @@ describe("CartStore", () => {
         items: [
           {
             id: "i1",
-            productVariantId: "v1",
+            productVariantId: "123e4567-e89b-12d3-a456-426614174000",
             quantity: 1,
             productName: "Shoe",
             productPrice: 100,
@@ -129,7 +129,9 @@ describe("CartStore", () => {
       (fetchApi as any).mockResolvedValue({});
 
       // ACT
-      const promise = useCartStore.getState().removeItem("v1");
+      const promise = useCartStore
+        .getState()
+        .removeItem("123e4567-e89b-12d3-a456-426614174000");
 
       // ASSERT (Optimistic)
       const stateOptimistic = useCartStore.getState();
@@ -154,7 +156,7 @@ describe("CartStore", () => {
         items: [
           {
             id: "i1",
-            productVariantId: "v1",
+            productVariantId: "123e4567-e89b-12d3-a456-426614174000",
             quantity: 1,
             productName: "Shoe",
             productPrice: 100,
@@ -170,7 +172,9 @@ describe("CartStore", () => {
       (fetchApi as any).mockResolvedValue({});
 
       // ACT
-      const promise = useCartStore.getState().updateQuantity("v1", 2);
+      const promise = useCartStore
+        .getState()
+        .updateQuantity("123e4567-e89b-12d3-a456-426614174000", 2);
 
       // ASSERT (Optimistic)
       const stateOptimistic = useCartStore.getState();

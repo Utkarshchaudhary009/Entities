@@ -44,8 +44,9 @@ describe("API: Products", () => {
   });
 
   describe("GET", () => {
-    it("should return products", async () => {
+    it("should return products for normal user (active only)", async () => {
       // ARRANGE
+      (requireAdmin as any).mockResolvedValue({ success: false });
       (productService.findAll as any).mockResolvedValue({
         data: [],
         meta: { total: 0 },
@@ -56,6 +57,30 @@ describe("API: Products", () => {
 
       // ASSERT
       expect(response.status).toBe(200);
+      expect(productService.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ includeInactive: false }),
+      );
+    });
+
+    it("should return products including inactive for admin", async () => {
+      // ARRANGE
+      (requireAdmin as any).mockResolvedValue({
+        success: true,
+        auth: { userId: "admin" },
+      });
+      (productService.findAll as any).mockResolvedValue({
+        data: [],
+        meta: { total: 0 },
+      });
+
+      // ACT
+      const response = await GET(new Request("http://localhost/api/products"));
+
+      // ASSERT
+      expect(response.status).toBe(200);
+      expect(productService.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ includeInactive: true }),
+      );
     });
   });
 

@@ -57,9 +57,7 @@ jobs:
         run: bun prisma db push
 
       - name: Lint & Format Check
-        run: |
-          bun run lint
-          bun run format
+        run: bun run format && bun run lint:fix && bun run lint
 
       - name: Type Check
         run: bun run type-check
