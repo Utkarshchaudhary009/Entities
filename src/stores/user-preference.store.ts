@@ -3,6 +3,7 @@
 import { toast } from "sonner";
 import { create } from "zustand";
 import type { UserPreference } from "@/generated/prisma/client";
+import { preferencesSchema } from "@/lib/validations/user-profile";
 import { fetchApi } from "@/stores/http";
 
 interface UserPreferenceState {
@@ -51,6 +52,20 @@ export const useUserPreferenceStore = create<UserPreferenceState>(
         `[UserPreferenceStore] updatePreference() initiated. Field: ${String(field)}, Value:`,
         value,
       );
+
+      const validation = preferencesSchema.safeParse({ [field]: value });
+      if (!validation.success) {
+        const errorMessage = validation.error.issues
+          .map((e) => `${e.path.join(".")}: ${e.message}`)
+          .join(", ");
+        console.warn(
+          `[UserPreferenceStore] updatePreference() Validation Failed:`,
+          errorMessage,
+        );
+        toast.error(`Validation failed: ${errorMessage}`);
+        return;
+      }
+
       const prev = get().preferences;
       if (!prev) return;
 

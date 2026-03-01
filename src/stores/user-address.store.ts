@@ -3,6 +3,10 @@
 import { toast } from "sonner";
 import { create } from "zustand";
 import type { UserAddress } from "@/generated/prisma/client";
+import {
+  addressSchema,
+  updateAddressSchema,
+} from "@/lib/validations/user-profile";
 import { fetchApi } from "@/stores/http";
 
 interface UserAddressState {
@@ -44,6 +48,19 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
   },
 
   addAddress: async (data) => {
+    const validation = addressSchema.safeParse(data);
+    if (!validation.success) {
+      const errorMessage = validation.error.issues
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      console.warn(
+        `[UserAddressStore] addAddress() Validation Failed:`,
+        errorMessage,
+      );
+      toast.error(`Validation failed: ${errorMessage}`);
+      return;
+    }
+
     const tempId = crypto.randomUUID();
     const optimistic: UserAddress = {
       ...data,
@@ -86,6 +103,19 @@ export const useUserAddressStore = create<UserAddressState>((set, get) => ({
   },
 
   updateAddress: async (id, data) => {
+    const validation = updateAddressSchema.safeParse(data);
+    if (!validation.success) {
+      const errorMessage = validation.error.issues
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      console.warn(
+        `[UserAddressStore] updateAddress() Validation Failed:`,
+        errorMessage,
+      );
+      toast.error(`Validation failed: ${errorMessage}`);
+      return;
+    }
+
     const prev = get().addresses;
 
     // Optimistic

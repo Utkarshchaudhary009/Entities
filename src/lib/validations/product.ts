@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VALID_COLORS, VALID_SIZES } from "@/lib/constants/product-options";
 
 export const createProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -12,8 +13,12 @@ export const createProductSchema = z.object({
   fabric: z.string().optional(),
   fit: z.string().optional(),
   careInstruction: z.string().optional(),
-  defaultColor: z.string().optional(),
-  defaultSize: z.string().optional(),
+  defaultColor: z
+    .enum(VALID_COLORS as unknown as [string, ...string[]])
+    .optional(),
+  defaultSize: z
+    .enum(VALID_SIZES as unknown as [string, ...string[]])
+    .optional(),
   isFeatured: z.boolean().default(false),
   isActive: z.boolean().default(true),
 });
@@ -22,9 +27,12 @@ export const updateProductSchema = createProductSchema.partial();
 
 export const createVariantSchema = z.object({
   productId: z.string().uuid("Product ID must be a valid UUID"),
-  size: z.string().min(1, "Size is required"),
-  color: z.string().min(1, "Color is required"),
-  colorHex: z.string().optional(),
+  size: z.enum(VALID_SIZES as unknown as [string, ...string[]], {
+    message: "Size is required",
+  }),
+  color: z.enum(VALID_COLORS as unknown as [string, ...string[]], {
+    message: "Color is required",
+  }),
   images: z.array(z.string().url("Invalid image URL")).default([]),
   stock: z.number().int().min(0).default(0),
   sku: z.string().optional(),

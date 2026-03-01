@@ -16,12 +16,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = parseSearchParams(searchParams, productQuerySchema);
 
+    // If the requester is an admin, include inactive products in the results
+    const adminGuard = await requireAdmin();
+    const isAdmin = adminGuard.success;
+
     const result = await productService.findAll({
       page: query.page,
       limit: query.limit,
       categoryId: query.categoryId,
       search: query.search,
       sort: query.sort,
+      includeInactive: isAdmin,
     });
 
     return cachedPaginatedResponse(result, 60, 30);

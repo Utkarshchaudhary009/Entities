@@ -1,7 +1,7 @@
 "use client";
 
 import type { z } from "zod";
-import type {
+import {
   createOrderSchema,
   updateOrderDetailsSchema,
 } from "@/lib/validations/order";
@@ -21,8 +21,16 @@ export const useOrderStore = createEntityStore<
       data: UpdateOrderDetailsInput,
     ) => Promise<void>;
   }
->("order-store", "/api/orders", (_set, get) => ({
-  updateOrderDetails: async (id, data) => {
-    await get().update(id, data);
+>(
+  "order-store",
+  "/api/orders",
+  {
+    create: createOrderSchema,
+    update: updateOrderDetailsSchema,
   },
-}));
+  (_set, get) => ({
+    updateOrderDetails: async (id, data) => {
+      await get().update(id, data);
+    },
+  }),
+);

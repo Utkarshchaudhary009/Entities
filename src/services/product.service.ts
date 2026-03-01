@@ -10,6 +10,7 @@ export class ProductService {
       categoryId?: string;
       search?: string;
       sort?: string;
+      includeInactive?: boolean;
     } = {},
   ) {
     try {
@@ -19,7 +20,7 @@ export class ProductService {
       const skip = (page - 1) * limit;
 
       const where: Prisma.ProductWhereInput = {
-        isActive: true,
+        ...(params.includeInactive ? {} : { isActive: true }),
         ...(categoryId && { categoryId }),
         ...(search && {
           OR: [
@@ -49,6 +50,7 @@ export class ProductService {
             thumbnailUrl: true,
             categoryId: true,
             isFeatured: true,
+            isActive: true,
             createdAt: true,
             defaultColor: true,
             defaultSize: true,
@@ -95,7 +97,7 @@ export class ProductService {
               id: true,
               size: true,
               color: true,
-              colorHex: true,
+
               images: true,
               stock: true,
               sku: true,
@@ -128,7 +130,7 @@ export class ProductService {
               id: true,
               size: true,
               color: true,
-              colorHex: true,
+
               images: true,
               stock: true,
               sku: true,

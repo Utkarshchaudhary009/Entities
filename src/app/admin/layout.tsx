@@ -15,7 +15,7 @@ export default async function AdminLayout({
 }) {
   const { sessionClaims } = await auth();
 
-  const userRole = sessionClaims?.metadata.role;
+  const userRole = sessionClaims?.metadata?.role;
   if (userRole !== "admin") {
     redirect("/");
   }

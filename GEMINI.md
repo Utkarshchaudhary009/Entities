@@ -48,7 +48,7 @@ Add custom claims instead of calling currentUser():
   "role": "{{user.public_metadata}}"
 }
 Then access in code: const { sessionClaims } = await auth()
-const userRole = sessionClaims?.metadata.role
+const userRole = sessionClaims?.metadata?.role
 
 ## Core UX & Performance (Store-to-UI Layer)
 - **Architecture Flow**: `DB -> Service -> API -> Store -> UI`. The UI **never** talks to the API directly.

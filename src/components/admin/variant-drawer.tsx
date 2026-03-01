@@ -24,11 +24,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import {
+  PRODUCT_COLORS,
+  PRODUCT_SIZES,
+  VALID_COLORS,
+  VALID_SIZES,
+} from "@/lib/constants/product-options";
 import { cn } from "@/lib/utils";
 import { createVariantSchema } from "@/lib/validations/product";
-import { useColorStore } from "@/stores/color.store";
 import { useProductStore } from "@/stores/product.store";
-import { useSizeStore } from "@/stores/size.store";
 import type { VariantSummary } from "@/types/api";
 
 interface VariantDrawerProps {
@@ -42,7 +46,6 @@ interface VariantDrawerProps {
 interface FormState {
   size: string;
   color: string;
-  colorHex: string;
   images: string[];
   stock: number;
   sku: string;
@@ -52,7 +55,6 @@ interface FormState {
 const initialFormState: FormState = {
   size: "",
   color: "",
-  colorHex: "",
   images: [],
   stock: 0,
   sku: "",
@@ -70,31 +72,13 @@ export function VariantDrawer({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const {
-    items: sizes,
-    fetchAll: fetchSizes,
-    isLoading: sizesLoading,
-  } = useSizeStore();
-  const {
-    items: colors,
-    fetchAll: fetchColors,
-    isLoading: colorsLoading,
-  } = useColorStore();
   const { createVariant, updateVariant } = useProductStore();
-
-  useEffect(() => {
-    if (open) {
-      fetchSizes();
-      fetchColors();
-    }
-  }, [open, fetchSizes, fetchColors]);
 
   useEffect(() => {
     if (open && mode === "edit" && variant) {
       setForm({
         size: variant.size,
         color: variant.color,
-        colorHex: variant.colorHex ?? "",
         images: variant.images,
         stock: variant.stock,
         sku: variant.sku ?? "",
@@ -107,15 +91,6 @@ export function VariantDrawer({
     }
   }, [open, mode, variant]);
 
-  const handleColorChange = (colorName: string) => {
-    const selectedColor = colors.find((c) => c.name === colorName);
-    setForm((prev) => ({
-      ...prev,
-      color: colorName,
-      colorHex: selectedColor?.hex ?? "",
-    }));
-  };
-
   const handleSubmit = async () => {
     setErrors({});
 
@@ -123,7 +98,6 @@ export function VariantDrawer({
       productId,
       size: form.size,
       color: form.color,
-      colorHex: form.colorHex || undefined,
       images: form.images,
       stock: form.stock,
       sku: form.sku || undefined,
@@ -182,19 +156,16 @@ export function VariantDrawer({
               onValueChange={(value) =>
                 setForm((prev) => ({ ...prev, size: value }))
               }
-              disabled={sizesLoading}
             >
               <SelectTrigger
                 className={cn("w-full", errors.size && "border-destructive")}
               >
-                <SelectValue
-                  placeholder={sizesLoading ? "Loading..." : "Select size"}
-                />
+                <SelectValue placeholder="Select size" />
               </SelectTrigger>
               <SelectContent>
-                {sizes.map((size) => (
-                  <SelectItem key={size.id} value={size.label}>
-                    {size.label}
+                {VALID_SIZES.map((sizeKey) => (
+                  <SelectItem key={sizeKey} value={sizeKey}>
+                    {PRODUCT_SIZES[sizeKey].label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -208,48 +179,35 @@ export function VariantDrawer({
             <Label htmlFor="color">Color *</Label>
             <Select
               value={form.color}
-              onValueChange={handleColorChange}
-              disabled={colorsLoading}
+              onValueChange={(value) =>
+                setForm((prev) => ({ ...prev, color: value }))
+              }
             >
               <SelectTrigger
                 className={cn("w-full", errors.color && "border-destructive")}
               >
-                <SelectValue
-                  placeholder={colorsLoading ? "Loading..." : "Select color"}
-                />
+                <SelectValue placeholder="Select color" />
               </SelectTrigger>
               <SelectContent>
-                {colors.map((color) => (
-                  <SelectItem key={color.id} value={color.name}>
-                    <span className="flex items-center gap-2">
-                      {color.hex && (
+                {VALID_COLORS.map((colorKey) => {
+                  const colorConfig = PRODUCT_COLORS[colorKey];
+                  return (
+                    <SelectItem key={colorKey} value={colorKey}>
+                      <span className="flex items-center gap-2">
                         <span
-                          className="size-3 rounded-full border"
-                          style={{ backgroundColor: color.hex }}
+                          className="size-3 rounded-full border shadow-sm"
+                          style={{ backgroundColor: colorConfig.hex }}
                         />
-                      )}
-                      {color.name}
-                    </span>
-                  </SelectItem>
-                ))}
+                        {colorKey}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             {errors.color && (
               <p className="text-xs text-destructive">{errors.color}</p>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="colorHex">Color Hex</Label>
-            <Input
-              id="colorHex"
-              type="text"
-              placeholder="#FFFFFF"
-              value={form.colorHex}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, colorHex: e.target.value }))
-              }
-            />
           </div>
 
           <div className="space-y-2">

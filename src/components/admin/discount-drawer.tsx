@@ -135,7 +135,11 @@ export function DiscountDrawer({
     } catch (error) {
       console.error("Discount save failed", error);
       toast.error(
-        isEditing ? "Failed to update discount" : "Failed to create discount",
+        error instanceof Error
+          ? error.message
+          : isEditing
+            ? "Failed to update discount"
+            : "Failed to create discount",
       );
     } finally {
       setIsSubmittingLocal(false);
@@ -151,7 +155,9 @@ export function DiscountDrawer({
       onOpenChange(false);
     } catch (error) {
       console.error("Discount delete failed", error);
-      toast.error("Failed to delete discount");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete discount",
+      );
     } finally {
       setIsDeletingLocal(false);
     }

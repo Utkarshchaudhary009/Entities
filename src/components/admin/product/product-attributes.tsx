@@ -1,6 +1,19 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import {
+  PRODUCT_COLORS,
+  PRODUCT_SIZES,
+  VALID_COLORS,
+  VALID_SIZES,
+} from "@/lib/constants/product-options";
 
 interface ProductAttributesProps {
   material: string;
@@ -85,22 +98,49 @@ export function ProductAttributes({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="defaultColor">Default Color</Label>
-          <Input
-            id="defaultColor"
+          <Select
             value={defaultColor}
-            onChange={(e) => onChange("defaultColor", e.target.value)}
-            placeholder="Black"
-          />
+            onValueChange={(value) => onChange("defaultColor", value)}
+          >
+            <SelectTrigger id="defaultColor">
+              <SelectValue placeholder="Select color" />
+            </SelectTrigger>
+            <SelectContent>
+              {VALID_COLORS.map((colorKey) => {
+                const colorConfig = PRODUCT_COLORS[colorKey];
+                return (
+                  <SelectItem key={colorKey} value={colorKey}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="size-3 rounded-full border shadow-sm"
+                        style={{ backgroundColor: colorConfig.hex }}
+                      />
+                      {colorKey}
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="defaultSize">Default Size</Label>
-          <Input
-            id="defaultSize"
+          <Select
             value={defaultSize}
-            onChange={(e) => onChange("defaultSize", e.target.value)}
-            placeholder="M"
-          />
+            onValueChange={(value) => onChange("defaultSize", value)}
+          >
+            <SelectTrigger id="defaultSize">
+              <SelectValue placeholder="Select size" />
+            </SelectTrigger>
+            <SelectContent>
+              {VALID_SIZES.map((sizeKey) => (
+                <SelectItem key={sizeKey} value={sizeKey}>
+                  {PRODUCT_SIZES[sizeKey].label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

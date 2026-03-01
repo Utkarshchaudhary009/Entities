@@ -9,6 +9,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -54,6 +55,7 @@ type DocState = {
   content: string;
   isActive: boolean;
   isDirty: boolean;
+  error?: string;
 };
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -72,7 +74,13 @@ export default function AdminBrandDocumentsPage() {
       Object.fromEntries(
         DOCUMENT_TYPES.map(({ type }) => [
           type,
-          { doc: null, content: "", isActive: true, isDirty: false },
+          {
+            doc: null,
+            content: "",
+            isActive: true,
+            isDirty: false,
+            error: undefined,
+          },
         ]),
       ) as Record<DocumentType, DocState>,
   );
@@ -108,6 +116,7 @@ export default function AdminBrandDocumentsPage() {
               content: doc.content,
               isActive: doc.isActive,
               isDirty: false,
+              error: undefined,
             };
           }
           return next;
@@ -138,6 +147,19 @@ export default function AdminBrandDocumentsPage() {
     if (!brandId) return;
     const state = docStates[activeTab];
     if (!state.isDirty) return;
+
+    const schema = z.object({
+      content: z.string().min(1, "Document content cannot be empty"),
+    });
+    const validation = schema.safeParse({ content: state.content.trim() });
+
+    if (!validation.success) {
+      const errMsg =
+        validation.error.format().content?._errors[0] || "Validation failed";
+      patchState(activeTab, { error: errMsg });
+      toast.error(errMsg);
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -173,7 +195,9 @@ export default function AdminBrandDocumentsPage() {
       toast.success("Document saved");
     } catch (error) {
       console.error("Save failed", error);
-      toast.error("Failed to save document");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save document",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -310,7 +334,7 @@ export default function AdminBrandDocumentsPage() {
       </div>
 
       {/* Editor / Preview */}
-      <div className="flex-1">
+      <div className="flex-1 space-y-2">
         {isPreview ? (
           <div
             className="prose prose-sm dark:prose-invert min-h-[50vh] max-w-none rounded-xl border border-border bg-muted/30 p-6"
@@ -326,6 +350,7 @@ export default function AdminBrandDocumentsPage() {
               patchState(activeTab, {
                 content: e.target.value,
                 isDirty: true,
+                error: undefined,
               })
             }
             placeholder={`Write your ${
@@ -335,6 +360,11 @@ export default function AdminBrandDocumentsPage() {
             className="min-h-[55vh] w-full resize-none font-mono text-sm leading-relaxed"
             spellCheck={false}
           />
+        )}
+        {!isPreview && current.error && (
+          <p className="text-sm font-medium text-destructive">
+            {current.error}
+          </p>
         )}
       </div>
 

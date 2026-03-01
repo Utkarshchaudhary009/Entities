@@ -121,7 +121,11 @@ export function CategoryDrawer({
     } catch (error) {
       console.error(error);
       toast.error(
-        isEditing ? "Failed to update category" : "Failed to create category",
+        error instanceof Error
+          ? error.message
+          : isEditing
+            ? "Failed to update category"
+            : "Failed to create category",
       );
     } finally {
       setIsSubmittingLocal(false);

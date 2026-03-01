@@ -1,3 +1,4 @@
 [test]
 # Global timeout for tests, mostly for heavy Prisma integration tests that take >5s to clear DB
 defaultTimeout = 15000
+timeout = 15000

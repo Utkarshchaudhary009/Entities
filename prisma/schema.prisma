@@ -7,23 +7,7 @@ datasource db {
   provider = "postgresql"
 }
 
-model Size {
-  id            String   @id @default(uuid())
-  label         String   @unique
-  sortOrder     Int      @default(0) @map("sort_order")
-  measurements  Json?    @map("measurements")
 
-  @@map("sizes")
-}
-
-model Color {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  hex       String
-  sortOrder Int      @default(0) @map("sort_order")
-
-  @@map("colors")
-}
 
 model Category {
   id              String    @id @default(uuid())
@@ -75,7 +59,7 @@ model ProductVariant {
   productId  String    @map("product_id")
   size       String
   color      String
-  colorHex   String?   @map("color_hex")
+
   images     String[]  @default([])
   stock      Int       @default(0)
   sku        String?   @unique

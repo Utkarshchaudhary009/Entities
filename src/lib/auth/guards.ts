@@ -21,7 +21,7 @@ function getRoleFromSessionClaims(sessionClaims: {
     role?: "user" | "admin";
   };
 }) {
-  return sessionClaims?.metadata.role || "user";
+  return sessionClaims?.metadata?.role || "user";
 }
 
 export async function requireAuth(): Promise<GuardResult> {

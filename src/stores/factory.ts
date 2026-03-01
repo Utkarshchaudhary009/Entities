@@ -1,5 +1,6 @@
 "use client";
 
+import type { z } from "zod";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import {
@@ -77,6 +78,10 @@ export function createEntityStore<
 >(
   storeName: string,
   endpoint: string,
+  schemas?: {
+    create?: z.ZodType<TCreate>;
+    update?: z.ZodType<TUpdate>;
+  },
   extend?: (
     set: (
       partial:
@@ -188,6 +193,22 @@ export function createEntityStore<
               endpoint,
               data,
             });
+
+            if (schemas?.create) {
+              const result = schemas.create.safeParse(data);
+              if (!result.success) {
+                const errorMessage = result.error.issues
+                  .map((e) => `${e.path.join(".")}: ${e.message}`)
+                  .join(", ");
+                setBase({ error: `Validation failed: ${errorMessage}` });
+                console.warn(
+                  `[StoreFactory] ${storeName} create() Validation Failed:`,
+                  errorMessage,
+                );
+                return;
+              }
+            }
+
             const tempId = crypto.randomUUID();
             const optimisticItem = { ...(data as object), id: tempId } as TItem;
             const prevItems = get().items;
@@ -218,6 +239,7 @@ export function createEntityStore<
                 `Error:`,
                 err,
               );
+              throw err;
             }
           },
 
@@ -227,6 +249,22 @@ export function createEntityStore<
               get().items.length,
               { data },
             );
+
+            if (schemas?.update) {
+              const result = schemas.update.safeParse(data);
+              if (!result.success) {
+                const errorMessage = result.error.issues
+                  .map((e) => `${e.path.join(".")}: ${e.message}`)
+                  .join(", ");
+                setBase({ error: `Validation failed: ${errorMessage}` });
+                console.warn(
+                  `[StoreFactory] ${storeName} update() Validation Failed:`,
+                  errorMessage,
+                );
+                return;
+              }
+            }
+
             const prevItems = get().items;
             const prevItem = prevItems.find((i) => i.id === id);
             if (!prevItem) return;
@@ -275,6 +313,7 @@ export function createEntityStore<
                 `[StoreFactory] ${storeName} update() FAILED. Reverting optimistic update on ID: ${id}. Error:`,
                 err,
               );
+              throw err;
             }
           },
 
@@ -318,7 +357,7 @@ export function createEntityStore<
                 `Error:`,
                 err,
               );
-              return false;
+              throw err;
             }
           },
         } satisfies EntityStoreState<TItem, TCreate, TUpdate>;
@@ -470,6 +509,7 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                 `Error:`,
                 err,
               );
+              throw err;
             }
           },
 
@@ -528,6 +568,7 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                 `[GenericStore] ${storeName} update() FAILED. Reverting optimistic update on ID: ${id}. Error:`,
                 err,
               );
+              throw err;
             }
           },
 
@@ -572,7 +613,7 @@ export const createGenericStore = <T extends BaseEntity>(storeName: string) =>
                 `Error:`,
                 err,
               );
-              return false;
+              throw err;
             }
           },
         };

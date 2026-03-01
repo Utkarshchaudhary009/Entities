@@ -20,7 +20,7 @@ export function Topbar() {
   const { isOpen, enabled, toggle } = useSidebar();
   const { sessionClaims } = useAuth();
   const pathname = usePathname();
-  const isAdmin = sessionClaims?.metadata.role === "admin";
+  const isAdmin = sessionClaims?.metadata?.role === "admin";
   const cartCount = useCartCount();
 
   const isAdminRoute = pathname?.startsWith("/admin");

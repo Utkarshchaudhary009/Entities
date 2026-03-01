@@ -32,14 +32,48 @@ Required flow:
 Use Bun only.
 
 ```bash
-bun test
-bun test tests/integration
+# Testing
+bun test                      # Run unit tests
+bun test:integration          # Run integration tests
+bun test:e2e                  # Run E2E tests with Playwright
+bun test:e2e:ui               # Open Playwright Test UI
+
+# Operations
 bun logs:deployment
 bun db:generate
 bun db:push
 bun db:migrate
 bun db:seed
 bun db:clean
+```
+
+## E2E Testing
+
+The project uses **Playwright** for end-to-end testing with **Clerk Testing Tokens** to bypass OAuth authentication.
+
+### Environment Variables
+
+For local E2E testing, set these optional variables in `.env`:
+
+```bash
+E2E_TEST_USER_EMAIL=test@example.com   # Test user for authenticated flows
+BASE_URL=http://localhost:3000         # Base URL for tests
+```
+
+Clerk credentials (`CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`) are required for tests that need authentication.
+
+### Configuration
+
+- Playwright config: `playwright.config.ts`
+- Global setup: `tests/e2e/global.setup.ts` (handles Clerk auth state)
+- E2E guidelines for Kilo Code: `tests/e2e/AGENTS.md`
+
+### Running Tests
+
+```bash
+bun test:e2e              # Run E2E tests
+bun test:e2e:ui           # Open Playwright Test UI
+bunx playwright test tests/e2e/profile.spec.ts  # Run specific test file
 ```
 
 ## Development Rules
@@ -63,8 +97,12 @@ bun --bun tsc <filepath>
 
 Project test suites:
 
-- `tests/unit/*`
-- `tests/integration/*`
+- `tests/unit/*` — unit tests with `bun:test`
+- `tests/integration/*` — real DB interaction tests
+- `tests/ui/*` — component tests with Testing Library
+- `tests/e2e/*` — end-to-end tests using Playwright
+
+See [`tests/e2e/AGENTS.md`](tests/e2e/AGENTS.md) for E2E setup and usage.
 
 ## Documentation
 

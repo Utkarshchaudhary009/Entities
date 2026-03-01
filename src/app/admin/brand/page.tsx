@@ -24,8 +24,14 @@ import type { ApiBrand } from "@/types/api";
 type BrandFormValues = z.input<typeof createBrandSchema>;
 
 export default function AdminBrandPage() {
-  const { brand, socialLinks, isLoading, fetchBrandDetails, updateBrand } =
-    useBrandStore();
+  const {
+    brand,
+    socialLinks,
+    isLoading,
+    fetchBrandDetails,
+    updateBrand,
+    createBrand,
+  } = useBrandStore();
   const [initLoading, setInitLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -89,15 +95,28 @@ export default function AdminBrandPage() {
   }, [brand, reset]);
 
   const onSubmit = async (data: BrandFormValues) => {
-    if (!brand?.id) return;
     setIsSaving(true);
     try {
-      await updateBrand(brand.id, data);
-      toast.success("Brand profile updated");
+      if (brand?.id) {
+        await updateBrand(brand.id, data);
+        toast.success("Brand profile updated");
+      } else {
+        await createBrand({ ...data, isActive: data.isActive ?? true });
+        toast.success("Brand profile created");
+        // Reload to fetch the newly created brand so it has an ID and documents etc.
+        const response = await fetchApi<{ data: ApiBrand[] }>(
+          "/api/brands?limit=1",
+        );
+        if (response.data?.length > 0) {
+          await fetchBrandDetails(response.data[0].id);
+        }
+      }
       reset(data); // reset isDirty state
     } catch (error) {
-      console.error("Brand update error", error);
-      toast.error("Failed to update brand profile");
+      console.error("Brand save error", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save brand profile",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -110,21 +129,6 @@ export default function AdminBrandPage() {
           icon={Loading03Icon}
           className="size-8 animate-spin text-muted-foreground"
         />
-      </div>
-    );
-  }
-
-  if (!brand) {
-    return (
-      <div className="flex flex-col items-center justify-center space-y-4 p-12 text-center text-muted-foreground">
-        <p>No brand configuration found.</p>
-        <Button
-          onClick={() =>
-            toast.info("You need database seed for a default brand.")
-          }
-        >
-          Create Brand
-        </Button>
       </div>
     );
   }
@@ -229,7 +233,7 @@ export default function AdminBrandPage() {
               <div className="flex justify-end pt-2">
                 <Button
                   type="submit"
-                  disabled={isSaving || !isDirty}
+                  disabled={isSaving || (!isDirty && !!brand)}
                   className="min-w-[140px] gap-2"
                 >
                   {isSaving ? (
@@ -243,21 +247,27 @@ export default function AdminBrandPage() {
                       className="size-4"
                     />
                   )}
-                  {isSaving ? "Saving..." : "Save Changes"}
+                  {isSaving
+                    ? "Saving..."
+                    : brand
+                      ? "Save Changes"
+                      : "Create Brand"}
                 </Button>
               </div>
             </form>
           </section>
 
           {/* Social Links Sub-section */}
-          <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">Social Links</h2>
-            <SocialLinksEditor
-              entityId={brand.id}
-              entityType="brand"
-              initialLinks={socialLinks}
-            />
-          </section>
+          {brand && (
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <h2 className="mb-4 text-lg font-semibold">Social Links</h2>
+              <SocialLinksEditor
+                entityId={brand.id}
+                entityType="brand"
+                initialLinks={socialLinks}
+              />
+            </section>
+          )}
         </div>
 
         {/* Sidebar details block */}

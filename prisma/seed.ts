@@ -1,4 +1,5 @@
 import type { OrderStatus } from "@/generated/prisma/client";
+import { VALID_COLORS, VALID_SIZES } from "@/lib/constants/product-options";
 import prisma from "@/lib/prisma";
 
 const SEED_TAG = "SEED::ENTITIES";
@@ -8,8 +9,8 @@ const SEED_ORDER_PREFIX = `${SEED_TAG}-ORD-`;
 const SEED_DISCOUNT_PREFIX = `${SEED_TAG}-PROMO-`;
 const SEED_SESSION_PREFIX = `${SEED_TAG}:session:`;
 const SEED_CLERK_PREFIX = `${SEED_TAG}:clerk:`;
-const SEED_SIZE_PREFIX = `${SEED_TAG}-SIZE-`;
-const SEED_COLOR_PREFIX = `${SEED_TAG}-COLOR-`;
+const _SEED_SIZE_PREFIX = `${SEED_TAG}-SIZE-`;
+const _SEED_COLOR_PREFIX = `${SEED_TAG}-COLOR-`;
 const SEED_SKU_PREFIX = `${SEED_TAG}-SKU-`;
 
 function seededEmail(localPart: string) {
@@ -161,12 +162,6 @@ async function cleanSeedData() {
   await prisma.brand.deleteMany({ where: { name: { startsWith: SEED_TAG } } });
   await prisma.founder.deleteMany({ where: { id: { startsWith: SEED_TAG } } });
 
-  await prisma.color.deleteMany({
-    where: { name: { startsWith: SEED_COLOR_PREFIX } },
-  });
-  await prisma.size.deleteMany({
-    where: { label: { startsWith: SEED_SIZE_PREFIX } },
-  });
   await prisma.discount.deleteMany({
     where: { code: { startsWith: SEED_DISCOUNT_PREFIX } },
   });
@@ -255,41 +250,9 @@ async function seedCatalogData() {
     },
   });
 
-  const sizeLabels = ["XS", "S", "M", "L", "XL", "XXL"];
-  const sizes = await Promise.all(
-    sizeLabels.map((label, index) =>
-      prisma.size.create({
-        data: {
-          label: `${SEED_SIZE_PREFIX}${label}`,
-          sortOrder: index + 1,
-          measurements: { chest: 30 + index * 2, waist: 28 + index * 2 },
-        },
-      }),
-    ),
-  );
+  const sizes = VALID_SIZES.map((label) => ({ label }));
 
-  const baseColors = [
-    { name: "Black", hex: "#000000" },
-    { name: "White", hex: "#ffffff" },
-    { name: "Olive", hex: "#808000" },
-    { name: "Navy", hex: "#000080" },
-    { name: "Crimson", hex: "#DC143C" },
-    { name: "Beige", hex: "#F5F5DC" },
-    { name: "Charcoal", hex: "#36454F" },
-    { name: "Teal", hex: "#008080" },
-  ];
-
-  const colors = await Promise.all(
-    baseColors.map((color, index) =>
-      prisma.color.create({
-        data: {
-          name: `${SEED_COLOR_PREFIX}${color.name}`,
-          hex: color.hex,
-          sortOrder: index + 1,
-        },
-      }),
-    ),
-  );
+  const colors = VALID_COLORS.map((name) => ({ name }));
 
   const categoryNames = [
     "Shirts",
@@ -375,7 +338,7 @@ async function seedCatalogData() {
           return {
             size: size.label,
             color: color.name,
-            colorHex: color.hex,
+
             stock: Math.floor(Math.random() * 50) + 10,
             sku: `${SEED_SKU_PREFIX}C${c + 1}P${p}V${variantIndex}`,
             images: [

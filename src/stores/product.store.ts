@@ -5,7 +5,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { Category, ProductVariant } from "@/generated/prisma/client";
 import type { productQuerySchema } from "@/lib/api/query-schemas";
-import type {
+import {
   createProductSchema,
   createVariantSchema,
   updateProductSchema,
@@ -163,6 +163,20 @@ export const useProductStore = create<ProductStoreState>()(
             get().products.length,
             { data },
           );
+
+          const validation = createProductSchema.safeParse(data);
+          if (!validation.success) {
+            const errorMessage = validation.error.issues
+              .map((e) => `${e.path.join(".")}: ${e.message}`)
+              .join(", ");
+            set({ error: `Validation failed: ${errorMessage}` });
+            console.warn(
+              `[ProductStore] createProduct() Validation Failed:`,
+              errorMessage,
+            );
+            return;
+          }
+
           const tempId = crypto.randomUUID();
           const optimistic = { ...data, id: tempId } as ApiProduct;
           set((state) => ({
@@ -206,12 +220,32 @@ export const useProductStore = create<ProductStoreState>()(
             get().products.length,
             { data },
           );
+
+          const validation = updateProductSchema.safeParse(data);
+          if (!validation.success) {
+            const errorMessage = validation.error.issues
+              .map((e) => `${e.path.join(".")}: ${e.message}`)
+              .join(", ");
+            set({ error: `Validation failed: ${errorMessage}` });
+            console.warn(
+              `[ProductStore] updateProduct() Validation Failed:`,
+              errorMessage,
+            );
+            return;
+          }
+
           const prev = get().product;
-          if (prev)
-            set({
-              product: { ...prev, ...data } as ProductDetails,
-              error: null,
-            });
+          const prevProducts = get().products;
+
+          set((state) => ({
+            product: state.product
+              ? ({ ...state.product, ...data } as ProductDetails)
+              : null,
+            products: state.products.map((p) =>
+              p.id === id ? { ...p, ...data } : p,
+            ),
+            error: null,
+          }));
 
           try {
             const updated = await fetchApi<ApiProduct>(`/api/products/${id}`, {
@@ -231,19 +265,19 @@ export const useProductStore = create<ProductStoreState>()(
                     category: null,
                     variants: [],
                   } as ProductDetails),
+              products: state.products.map((p) => (p.id === id ? updated : p)),
               error: null,
             }));
           } catch (err: unknown) {
-            if (prev) {
-              set({
-                product: prev,
-                error: err instanceof Error ? err.message : "Request failed",
-              });
-              console.error(
-                `[ProductStore] updateProduct() FAILED. Reverting optimistic update on ID: ${id}. Error:`,
-                err,
-              );
-            }
+            set({
+              product: prev,
+              products: prevProducts,
+              error: err instanceof Error ? err.message : "Request failed",
+            });
+            console.error(
+              `[ProductStore] updateProduct() FAILED. Reverting optimistic update on ID: ${id}. Error:`,
+              err,
+            );
           }
         },
 
@@ -282,6 +316,20 @@ export const useProductStore = create<ProductStoreState>()(
 
         createVariant: async (data) => {
           console.log(`[ProductStore] createVariant() initiated`, { data });
+
+          const validation = createVariantSchema.safeParse(data);
+          if (!validation.success) {
+            const errorMessage = validation.error.issues
+              .map((e) => `${e.path.join(".")}: ${e.message}`)
+              .join(", ");
+            set({ error: `Validation failed: ${errorMessage}` });
+            console.warn(
+              `[ProductStore] createVariant() Validation Failed:`,
+              errorMessage,
+            );
+            return;
+          }
+
           const tempId = crypto.randomUUID();
           const optimistic = { ...data, id: tempId } as ProductVariant;
           set((state) => ({
@@ -320,6 +368,20 @@ export const useProductStore = create<ProductStoreState>()(
 
         updateVariant: async (id, data) => {
           console.log(`[ProductStore] updateVariant() initiated`, { id, data });
+
+          const validation = updateVariantSchema.safeParse(data);
+          if (!validation.success) {
+            const errorMessage = validation.error.issues
+              .map((e) => `${e.path.join(".")}: ${e.message}`)
+              .join(", ");
+            set({ error: `Validation failed: ${errorMessage}` });
+            console.warn(
+              `[ProductStore] updateVariant() Validation Failed:`,
+              errorMessage,
+            );
+            return;
+          }
+
           const prevVariants = get().variants;
           const prevVariant = prevVariants.find((v) => v.id === id);
 

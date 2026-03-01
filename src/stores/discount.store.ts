@@ -1,7 +1,7 @@
 "use client";
 
 import type { z } from "zod";
-import type {
+import {
   createDiscountSchema,
   updateDiscountSchema,
 } from "@/lib/validations/discount";
@@ -15,4 +15,7 @@ export const useDiscountStore = createEntityStore<
   ApiDiscount,
   CreateDiscountInput,
   UpdateDiscountInput
->("discount-store", "/api/discounts");
+>("discount-store", "/api/discounts", {
+  create: createDiscountSchema,
+  update: updateDiscountSchema,
+});

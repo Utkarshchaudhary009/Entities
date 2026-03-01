@@ -67,10 +67,21 @@ The store factory provides reusable patterns for common CRUD operations:
 **`createEntityStore<TItem, TCreate, TUpdate, TExtend>`**
 Generates a fully-featured store for entity management with optimistic updates and request deduping. Used by most admin entity stores (categories, colors, sizes, discounts, etc.).
 
+The factory accepts an optional `schemas` argument:
+- `schemas.create?: z.ZodType<TCreate>` – validates data on `create()`
+- `schemas.update?: z.ZodType<TUpdate>` – validates data on `update()`
+
+When schemas are provided, validation occurs before optimistic updates. Failed validations set the store's `error` with a formatted message, log a warning, and abort the operation without an API call.
+
 Generated State:
 - `items: TItem[]`, `selectedItem: TItem | null`, `meta: Meta`, `isLoading: boolean`, `error: string | null`
 - Standard setters: `setItems()`, `setMeta()`, `setSelectedItem()`, `setError()`, `setLoading()`
-- CRUD operations: `fetchAll(params?)`, `fetchOne(id)`, `create(data)`, `update(id, data)`, `delete(id)`
+- CRUD operations:
+  - `fetchAll(params?)` – fetches paginated list, updates `items` and `meta`
+  - `fetchOne(id)` – fetches single item, caches in `items`, updates `selectedItem`
+  - `create(data)` – validates (if schema), performs optimistic create with temp ID, rolls back on failure
+  - `update(id, data)` – validates (if schema), performs optimistic patch, rolls back on failure
+  - `delete(id)` – optimistic delete with rollback
 
 Extension Pattern: Pass an `extend` callback to add custom state fields and actions while inheriting all base functionality.
 
@@ -87,6 +98,15 @@ Both factories implement:
 - Consistent error state management
 
 Reference implementation: `src/stores/factory.ts`.
+
+#### Custom Stores
+Some domains require hand-written stores for complex state management that exceeds factory patterns:
+
+- **Brand Store** (`src/stores/brand.store.ts`): Manages brand profile with nested relationships (founder, documents, social links, philosophy). Provides dedicated `fetchBrandDetails(id)` to populate compound state, plus full CRUD with optimistic updates. Uses request deduplication, validation via Zod schemas, and granular loading/error states.
+
+- **Product Store** (`src/stores/product.store.ts`): Handles product catalog with pagination (`products`, `meta`) and detail view (`product`, `variants`). Implements cache hydration (SWR pattern) where `fetchProduct` shows cached data before network request. Supports product and variant CRUD with optimistic updates and rollback. Uses dedicated helper utilities (`buildSearchParams`, `coercePaginatedResponse`, `unwrapApiPayload`) for API payload normalization.
+
+Custom stores follow the same principles as factory-generated stores: optimistic UI, request deduplication, granular state, and consistent error handling.
 
 ### 5. UI Layer (`src/components`, `src/app`)
 - Renders store state and triggers store actions.
@@ -167,7 +187,15 @@ The brand domain models support multi-brand commerce with founder profiles:
 Relationships: `Founder -> Brand (1:1) -> BrandPhilosophy (1:1)`, `Brand -> BrandDocument[]`, `Brand -> SocialLink[]`, `Founder -> SocialLink[]`.
 
 ## Admin Product Management
-Product administration follows the standard architecture flow:
+Product administration follows the standard architecture flow. Products and their variants are managed together, with variant attributes (size, color) defined as predefined constants rather than dynamic entities.
+
+### Product Options (Colors and Sizes)
+Available sizes and colors are defined as constant configurations in `src/lib/constants/product-options.ts`:
+- `PRODUCT_SIZES`: Size definitions with labels and sort order (Free Size, XS, S, M, L, XL, XXL, 3XL)
+- `PRODUCT_COLORS`: Color definitions with hex values and Tailwind CSS classes (30+ predefined colors)
+- `VALID_SIZES` and `VALID_COLORS`: Type-safe arrays for validation and select options
+
+This design eliminates separate color/size management endpoints and UI, simplifying the variant creation workflow.
 
 - **Routes**:
   - `GET /api/products` — list products (admin required, paginated, searchable)
@@ -187,12 +215,20 @@ Product administration follows the standard architecture flow:
   - SWR-style cache hydration (displays cached data while fetching fresh)
 - **UI**: 
   - `/admin/products` — DataTable with search, category filter, active toggle
-  - `/admin/products/[productId]` — detail view with variant table
+  - `/admin/products/[productId]` — detail view with variant table (no separate colors/sizes pages)
   - `ProductDrawer` — create/edit product form with ImageUpload for thumbnail
-  - `VariantDrawer` — create/edit variant with size/color selectors and multi-image upload
+  - `VariantDrawer` — create/edit variant with size/color selectors (populated from `PRODUCT_SIZES` and `PRODUCT_COLORS`) and multi-image upload
 
 ### Variant Summary Type
 `VariantSummary` type (`src/types/api.ts`) provides lightweight variant display fields: `id`, `size`, `color`, `colorHex`, `images[]`, `stock`, `sku`, `isActive`. Used in product detail responses to avoid full `ProductVariant` payload.
+
+### Variant Drawer Pattern
+`VariantDrawer` (`src/components/admin/variant-drawer.tsx`) demonstrates form handling for variant creation/editing:
+- Uses react-hook-form principles with manual state and Zod validation via `createVariantSchema`
+- Size and color dropdowns populated from `VALID_SIZES` and `VALID_COLORS` with color swatch previews
+- ImageUpload component for variant images (stored in `variants` bucket)
+- Stock and SKU management with active toggle
+- Store-driven submission with `createVariant`/`updateVariant` actions and optimistic updates
 
 ## Admin Category Management
 Category administration follows the standard architecture flow:
@@ -216,50 +252,6 @@ The `CategoryDrawer` component demonstrates the project's form pattern:
 - `useForm` with `zodResolver(createCategorySchema)` for validation
 - Auto-generated slug from name field using `watch` and `setValue`
 - Store-driven submission with loading states and toast feedback
-
-## Admin Color Management
-Color administration follows the standard architecture flow:
-
-- **Routes**:
-  - `GET /api/colors` — list (public, paginated)
-  - `POST /api/colors` — create color (admin required)
-  - `GET /api/colors/[id]` — fetch color (public)
-  - `PUT /api/colors/[id]` — update color (admin required)
-  - `DELETE /api/colors/[id]` — delete color (admin required)
-- **Service**: `src/services/color.service.ts` handles color operations with sort ordering.
-- **Store**: `src/stores/color.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
-- **Validation**: `src/lib/validations/color.ts` defines `createColorSchema` (name, hex, sortOrder).
-- **UI**:
-  - `/admin/colors` — DataTable with color swatches
-  - `ColorDrawer` — bottom drawer for create/edit with native color picker synced to hex text input
-
-### Hex Color Picker Pattern
-The `ColorDrawer` implements a dual-input hex picker:
-- Native browser color picker (`<input type="color">`) for visual selection
-- Text input stays synced via `watch` and `setValue` with `shouldValidate: true`
-- Color swatch preview updates in real-time via inline `backgroundColor` style
-
-## Admin Size Management
-Size administration follows the standard architecture flow:
-
-- **Routes**:
-  - `GET /api/sizes` — list (admin required, paginated)
-  - `POST /api/sizes` — create size (admin required)
-  - `GET /api/sizes/[id]` — fetch size (public)
-  - `PUT /api/sizes/[id]` — update size (admin required)
-  - `DELETE /api/sizes/[id]` — delete size (admin required)
-- **Service**: `src/services/size.service.ts` handles size operations with sort ordering.
-- **Store**: `src/stores/size.store.ts` — generated via `createEntityStore` factory for standard CRUD state management.
-- **Validation**: `src/lib/validations/size.ts` defines `createSizeSchema` (label, sortOrder, measurements).
-- **UI**:
-  - `/admin/sizes` — DataTable with size labels
-  - `SizeDrawer` — bottom drawer for create/edit with form fields: label, sort order, measurements (JSON textarea)
-
-### Measurements JSON Pattern
-The `SizeDrawer` measurements field accepts arbitrary dimension key-value pairs:
-- `measurements` is a flexible JSON object (`Record<string, string>`)
-- Form includes a `Textarea` with `setValueAs` parser to convert JSON string to object on submit
-- Includes placeholder example and validation feedback for invalid JSON
 
 ## Admin Discount Management
 Discount administration follows the standard architecture flow:
@@ -305,7 +297,7 @@ Brand administration manages the main brand profile and its social presence thro
   - `GET /api/brands/[id]` — fetches brand with founder, documents, social links, philosophy (public)
   - `POST /api/brands` — creates brand; emits `brand.created.v1` (admin required)
   - `PUT /api/brands/[id]` — updates brand; emits `brand.updated.v1` (admin required)
-  - `DELETE /api/brands/[id]` — soft delete; emits `brand.deleted.v1` (admin required)
+   - `DELETE /api/brands/[id]` — hard delete; emits `brand.deleted.v1` (admin required)
   - `GET /api/brands` — list (public, paginated/searchable)
 - **Validation**: `src/lib/validations/brand.ts` defines `createBrandSchema` and `updateBrandSchema` with fields:
   - `name`, `logoUrl`, `tagline`, `brandStory`, `supportEmail`, `supportPhone`, `isActive`, `founderId`
@@ -501,7 +493,7 @@ interface CustomJwtSessionClaims {
 }
 ```
 
-Access these via `sessionClaims` from `useAuth()` (client) or `auth()` (server). This avoids extra database calls for common user data. The `ProfileHero` component demonstrates client-side consumption using `session?.user` for the full profile, while `Topbar` demonstrates server-side role checks using `sessionClaims?.metadata.role`.
+Access these via `sessionClaims` from `useAuth()` (client) or `auth()` (server). This avoids extra database calls for common user data. The `ProfileHero` component demonstrates client-side consumption using `session?.user` for the full profile, while `Topbar` demonstrates server-side role checks using `sessionClaims?.metadata?.role`.
 
 ## API Response Contract Notes
 - Primary success patterns:

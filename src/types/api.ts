@@ -6,12 +6,10 @@ import { z } from "zod";
 import type {
   Brand,
   Category,
-  Color,
   Discount,
   Order,
   OrderItem,
   Product,
-  Size,
 } from "@/generated/prisma/client";
 
 // Route parameter types
@@ -74,16 +72,6 @@ export type ApiBrand = Omit<Brand, "createdAt" | "updatedAt"> & {
   updatedAt: JsonDateString;
 };
 
-export type ApiColor = Omit<Color, "createdAt" | "updatedAt"> & {
-  createdAt: JsonDateString;
-  updatedAt: JsonDateString;
-};
-
-export type ApiSize = Omit<Size, "createdAt" | "updatedAt"> & {
-  createdAt: JsonDateString;
-  updatedAt: JsonDateString;
-};
-
 export type ApiProduct = Omit<Product, "createdAt" | "updatedAt"> & {
   createdAt: JsonDateString;
   updatedAt: JsonDateString;
@@ -133,7 +121,7 @@ export type VariantSummary = {
   id: string;
   size: string;
   color: string;
-  colorHex: string | null;
+
   images: string[];
   stock: number;
   sku: string | null;

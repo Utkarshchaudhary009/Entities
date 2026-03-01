@@ -1,14 +1,22 @@
 import type { Prisma } from "@/generated/prisma/client";
+import {
+  PRODUCT_SIZES,
+  type ProductSize,
+} from "@/lib/constants/product-options";
 import { handlePrismaError, NotFoundError } from "@/lib/errors";
 import prisma from "@/lib/prisma";
 
 export class ProductVariantService {
   async findByProductId(productId: string) {
     try {
-      return await prisma.productVariant.findMany({
+      const variants = await prisma.productVariant.findMany({
         where: { productId, isActive: true },
-        orderBy: { size: "asc" },
       });
+      return variants.sort(
+        (a, b) =>
+          (PRODUCT_SIZES[a.size as ProductSize]?.sortOrder ?? 99) -
+          (PRODUCT_SIZES[b.size as ProductSize]?.sortOrder ?? 99),
+      );
     } catch (error) {
       return handlePrismaError(error);
     }
@@ -43,7 +51,6 @@ export class ProductVariantService {
     productId: string;
     size: string;
     color: string;
-    colorHex?: string;
     images?: string[];
     stock?: number;
     sku?: string;
@@ -55,7 +62,6 @@ export class ProductVariantService {
           product: { connect: { id: data.productId } },
           size: data.size,
           color: data.color,
-          colorHex: data.colorHex,
           images: data.images || [],
           stock: data.stock || 0,
           sku: data.sku,

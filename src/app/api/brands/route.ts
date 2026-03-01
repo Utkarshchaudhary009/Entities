@@ -8,6 +8,7 @@ import {
   handleError,
 } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import prisma from "@/lib/prisma";
 import { createBrandSchema } from "@/lib/validations/brand";
 import { brandService } from "@/services/brand.service";
 
@@ -35,7 +36,25 @@ export async function POST(request: Request) {
   try {
     const json = await request.json();
     const body = createBrandSchema.parse(json);
-    const brand = await brandService.create(body);
+
+    let founderId = body.founderId;
+    if (!founderId) {
+      const defaultFounder = await prisma.founder.create({
+        data: {
+          name: "Brand Founder",
+        },
+      });
+      founderId = defaultFounder.id;
+    }
+
+    const { founderId: _, ...restBody } = body;
+
+    const brand = await brandService.create({
+      ...restBody,
+      founderId,
+      logoUrl: restBody.logoUrl || null,
+      supportEmail: restBody.supportEmail || null,
+    });
 
     await safeInngestSend({
       name: "entity/brand.created.v1",
@@ -50,7 +69,6 @@ export async function POST(request: Request) {
       },
     });
 
-    revalidatePath("/api/brands");
     revalidatePath("/api/brands");
     return createdDataResponse(brand);
   } catch (error) {

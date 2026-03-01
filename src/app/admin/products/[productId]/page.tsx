@@ -35,6 +35,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  PRODUCT_COLORS,
+  type ProductColor,
+} from "@/lib/constants/product-options";
 import { formatCurrency } from "@/lib/utils";
 import { useCategoryStore } from "@/stores/category.store";
 import { useProductStore } from "@/stores/product.store";
@@ -210,10 +214,16 @@ export default function ProductDetailsPage({
                           <TableCell>{variant.size}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              {variant.colorHex && (
+                              {PRODUCT_COLORS[variant.color as ProductColor]
+                                ?.hex && (
                                 <div
                                   className="size-3 rounded-full border shadow-sm"
-                                  style={{ backgroundColor: variant.colorHex }}
+                                  style={{
+                                    backgroundColor:
+                                      PRODUCT_COLORS[
+                                        variant.color as ProductColor
+                                      ].hex,
+                                  }}
                                 />
                               )}
                               {variant.color}

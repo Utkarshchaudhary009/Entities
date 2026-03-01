@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 /**
  * Cart store with optimistic updates
  */
@@ -9,6 +10,7 @@ import type {
   Product,
   ProductVariant,
 } from "@/generated/prisma/client";
+import { addToCartSchema, updateCartItemSchema } from "@/lib/validations/cart";
 import { createRequestDeduper, fetchApi } from "@/stores/http";
 import type { CartItemWithDetails } from "@/types/domain";
 
@@ -93,6 +95,20 @@ export const useCartStore = create<CartState>((set, get) => {
 
     addItem: async (item) => {
       console.log(`[CartStore] addItem() initiated`, { item });
+
+      const validation = addToCartSchema.safeParse({
+        productVariantId: item.productVariantId,
+        quantity: item.quantity,
+      });
+      if (!validation.success) {
+        const errorMessage = validation.error.issues
+          .map((e) => `${e.path.join(".")}: ${e.message}`)
+          .join(", ");
+        console.warn(`[CartStore] addItem() Validation Failed:`, errorMessage);
+        toast.error(`Validation failed: ${errorMessage}`);
+        return;
+      }
+
       const { sessionId } = get();
       if (!sessionId) return;
 
@@ -159,6 +175,20 @@ export const useCartStore = create<CartState>((set, get) => {
         variantId,
         quantity,
       });
+
+      const validation = updateCartItemSchema.safeParse({ quantity });
+      if (!validation.success) {
+        const errorMessage = validation.error.issues
+          .map((e) => `${e.path.join(".")}: ${e.message}`)
+          .join(", ");
+        console.warn(
+          `[CartStore] updateQuantity() Validation Failed:`,
+          errorMessage,
+        );
+        toast.error(`Validation failed: ${errorMessage}`);
+        return;
+      }
+
       const { sessionId } = get();
       if (!sessionId) return;
 

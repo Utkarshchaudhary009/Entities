@@ -9,10 +9,7 @@ import type {
   Founder,
   SocialLink,
 } from "@/generated/prisma/client";
-import type {
-  createBrandSchema,
-  updateBrandSchema,
-} from "@/lib/validations/brand";
+import { createBrandSchema, updateBrandSchema } from "@/lib/validations/brand";
 import { createRequestDeduper, fetchApi, fetchJson } from "@/stores/http";
 import type { ApiBrand } from "@/types/api";
 
@@ -106,6 +103,20 @@ export const useBrandStore = create<BrandStoreState>()(
             get().brands.length,
             { data },
           );
+
+          const validation = createBrandSchema.safeParse(data);
+          if (!validation.success) {
+            const errorMessage = validation.error.issues
+              .map((e) => `${e.path.join(".")}: ${e.message}`)
+              .join(", ");
+            set({ error: `Validation failed: ${errorMessage}` });
+            console.warn(
+              `[BrandStore] createBrand() Validation Failed:`,
+              errorMessage,
+            );
+            return;
+          }
+
           const tempId = crypto.randomUUID();
           const optimisticBrand = { ...data, id: tempId } as ApiBrand;
           set((state) => ({
@@ -143,18 +154,30 @@ export const useBrandStore = create<BrandStoreState>()(
             get().brands.length,
             { data },
           );
+
+          const validation = updateBrandSchema.safeParse(data);
+          if (!validation.success) {
+            const errorMessage = validation.error.issues
+              .map((e) => `${e.path.join(".")}: ${e.message}`)
+              .join(", ");
+            set({ error: `Validation failed: ${errorMessage}` });
+            console.warn(
+              `[BrandStore] updateBrand() Validation Failed:`,
+              errorMessage,
+            );
+            return;
+          }
+
           const prevBrand = get().brand;
           const prevBrands = get().brands;
 
-          if (prevBrand) {
-            set({
-              brand: { ...prevBrand, ...data } as ApiBrand,
-              brands: prevBrands.map((brand) =>
-                brand.id === id ? ({ ...brand, ...data } as ApiBrand) : brand,
-              ),
-              error: null,
-            });
-          }
+          set({
+            brand: prevBrand ? ({ ...prevBrand, ...data } as ApiBrand) : null,
+            brands: prevBrands.map((brand) =>
+              brand.id === id ? ({ ...brand, ...data } as ApiBrand) : brand,
+            ),
+            error: null,
+          });
 
           try {
             const updated = await fetchApi<ApiBrand>(`/api/brands/${id}`, {

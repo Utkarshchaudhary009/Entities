@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeft01Icon,
   Location01Icon,
@@ -11,7 +12,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import type * as z from "zod";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +28,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { updateOrderDetailsSchema } from "@/lib/validations/order";
 import { useOrderStore } from "@/stores/order.store";
 import type { ApiOrder } from "@/types/api";
 import { ORDER_STATUSES, type OrderStatus } from "@/types/domain";
@@ -175,17 +179,32 @@ function OrderItemsCard({ order }: { order: ApiOrder }) {
 }
 
 function AdminManagementCard({ order }: { order: ApiOrder }) {
-  const [status, setStatus] = useState<OrderStatus>(order.status);
-  const [adminNotes, setAdminNotes] = useState(order.adminNotes || "");
-  const [isUpdating, setIsUpdating] = useState(false);
   const { updateOrderDetails } = useOrderStore();
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleUpdate = async () => {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(updateOrderDetailsSchema),
+    defaultValues: {
+      status: order.status,
+      adminNotes: order.adminNotes || "",
+    },
+  });
+
+  const status = watch("status");
+  const adminNotes = watch("adminNotes");
+
+  const onSubmit = async (data: z.infer<typeof updateOrderDetailsSchema>) => {
     try {
       setIsUpdating(true);
       await updateOrderDetails(order.id, {
-        status,
-        adminNotes: adminNotes.trim(),
+        status: data.status as OrderStatus,
+        adminNotes: data.adminNotes?.trim(),
       });
 
       const error = useOrderStore.getState().error;
@@ -211,64 +230,80 @@ function AdminManagementCard({ order }: { order: ApiOrder }) {
         <CardTitle className="text-lg">Admin Management</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label
-              htmlFor="order-status-select"
-              className="text-sm font-medium"
-            >
-              Order Status
-            </label>
-            <Select
-              value={status}
-              onValueChange={(val: OrderStatus) => setStatus(val)}
-            >
-              <SelectTrigger id="order-status-select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ORDER_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s.charAt(0) + s.slice(1).toLowerCase()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Current status: <StatusBadge status={order.status} />
-            </p>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label
+                htmlFor="order-status-select"
+                className="text-sm font-medium"
+              >
+                Order Status
+              </label>
+              <Select
+                value={status}
+                onValueChange={(val: OrderStatus) =>
+                  setValue("status", val, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+              >
+                <SelectTrigger id="order-status-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ORDER_STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s.charAt(0) + s.slice(1).toLowerCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Current status: <StatusBadge status={order.status} />
+              </p>
+              {errors.status && (
+                <p className="text-xs text-destructive">
+                  {String(errors.status.message)}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="admin-notes-textarea"
+                className="text-sm font-medium"
+              >
+                Admin Notes (Internal)
+              </label>
+              <Textarea
+                id="admin-notes-textarea"
+                placeholder="Add notes about this order..."
+                {...register("adminNotes")}
+                className="min-h-[100px] resize-y"
+              />
+              {errors.adminNotes && (
+                <p className="text-xs text-destructive">
+                  {String(errors.adminNotes.message)}
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor="admin-notes-textarea"
-              className="text-sm font-medium"
+          <div className="flex justify-end mt-6">
+            <Button
+              type="submit"
+              disabled={
+                isUpdating ||
+                (status === order.status &&
+                  (adminNotes || "").trim() === (order.adminNotes || "").trim())
+              }
+              className="w-full md:w-auto transition-transform active:scale-95"
             >
-              Admin Notes (Internal)
-            </label>
-            <Textarea
-              id="admin-notes-textarea"
-              placeholder="Add notes about this order..."
-              value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
-              className="min-h-[100px] resize-y"
-            />
+              {isUpdating ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            onClick={handleUpdate}
-            disabled={
-              isUpdating ||
-              (status === order.status &&
-                adminNotes.trim() === (order.adminNotes || "").trim())
-            }
-            className="w-full md:w-auto transition-transform active:scale-95"
-          >
-            {isUpdating ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
+        </form>
       </CardContent>
     </Card>
   );

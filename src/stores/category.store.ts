@@ -1,7 +1,7 @@
 "use client";
 
 import type { z } from "zod";
-import type {
+import {
   createCategorySchema,
   updateCategorySchema,
 } from "@/lib/validations/category";
@@ -15,4 +15,7 @@ export const useCategoryStore = createEntityStore<
   ApiCategory,
   CreateCategoryInput,
   UpdateCategoryInput
->("category-store", "/api/categories");
+>("category-store", "/api/categories", {
+  create: createCategorySchema,
+  update: updateCategorySchema,
+});

@@ -32,7 +32,20 @@ export function buildQueryString(params?: QueryParams): string {
 function extractErrorMessage(payload: unknown): string | null {
   if (!isRecord(payload)) return null;
   const error = payload.error;
+
   if (typeof error === "string" && error.trim()) return error;
+
+  if (Array.isArray(error)) {
+    const messages = error.map((e) => {
+      if (isRecord(e) && typeof e.message === "string") {
+        const path = Array.isArray(e.path) ? e.path.join(".") : "";
+        return path ? `${path}: ${e.message}` : e.message;
+      }
+      return typeof e === "string" ? e : "Validation Error";
+    });
+    if (messages.length > 0) return messages.join(", ");
+  }
+
   return null;
 }
 
