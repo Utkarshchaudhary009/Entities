@@ -1,18 +1,16 @@
 "use client";
 
-import { ShoppingCart01Icon, StarIcon } from "@hugeicons/core-free-icons";
+import { ShoppingCart01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart.store";
-import { useProductStore } from "@/stores/product.store";
-import type { CatalogProduct } from "@/stores/shop.store";
+import { type CatalogProduct, useShopStore } from "@/stores/shop.store";
 
 interface ProductDrawerProps {
   product: CatalogProduct | null;
@@ -20,309 +18,364 @@ interface ProductDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => setIsDesktop(media.matches);
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  return isDesktop;
+}
+
 export function ProductDrawer({
   product,
   isOpen,
   onOpenChange,
 }: ProductDrawerProps) {
-  const { fetchProduct, product: fullProduct, isLoading } = useProductStore();
-  const { addItem } = useCartStore();
+  const isDesktop = useIsDesktop();
+  const fetchProductDetails = useShopStore(
+    (state) => state.fetchProductDetails,
+  );
+  const fetchVariantMedia = useShopStore((state) => state.fetchVariantMedia);
+  const [selection, setSelection] = useState<{
+    color: string | null;
+    size: string | null;
+  }>({ color: null, size: null });
+  const selectedColor = selection.color;
+  const selectedSize = selection.size;
+  const details = useShopStore((state) =>
+    product ? state.productDetailsById[product.id] : undefined,
+  );
+  const isLoadingDetails = useShopStore((state) =>
+    product ? Boolean(state.loadingProductIds[product.id]) : false,
+  );
+  const variantImages = useShopStore((state) =>
+    product && selectedColor
+      ? state.variantMediaByProductId[product.id]?.[selectedColor]
+      : undefined,
+  );
+  const isLoadingVariantImages = useShopStore((state) =>
+    product && selectedColor
+      ? Boolean(
+          state.loadingVariantMediaByKey[`${product.id}:${selectedColor}`],
+        )
+      : false,
+  );
 
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const { addItem, isLoading: isAddingToCart } = useCartStore();
 
-  // Fetch full details when drawer opens
+  const variants = details?.variants ?? [];
+  const inStockVariants = useMemo(
+    () => variants.filter((variant) => variant.stock > 0),
+    [variants],
+  );
+
   useEffect(() => {
-    if (isOpen && product) {
-      fetchProduct(product.id);
-      setSelectedColor(null); // Reset selection
-      setSelectedSize(null);
-    }
-  }, [isOpen, product, fetchProduct]);
+    if (!isOpen || !product) return;
+    fetchProductDetails(product.id);
+  }, [isOpen, product, fetchProductDetails]);
 
-  // Determine current variant based on selection
-  const variants = fullProduct?.variants || [];
+  useEffect(() => {
+    if (!isOpen || !product || !selectedColor) return;
+    fetchVariantMedia(product.id, selectedColor);
+  }, [isOpen, product, selectedColor, fetchVariantMedia]);
 
-  // Get unique colors and sizes
-  const availableColors = Array.from(new Set(variants.map((v) => v.color)));
+  useEffect(() => {
+    if (!product || !isOpen) return;
+    setSelection({ color: null, size: null });
+  }, [product, isOpen]);
 
-  // Filter sizes based on selected color (or show all if no color selected)
-  const availableSizes = variants
-    .filter((v) => !selectedColor || v.color === selectedColor)
-    .map((v) => v.size);
+  useEffect(() => {
+    if (!isOpen || !product || variants.length === 0) return;
 
-  const uniqueSizes = Array.from(new Set(availableSizes));
-
-  // Helper: Find valid size for a given color (returns first available if current invalid)
-  const findValidSizeForColor = (
-    color: string,
-    currentSize: string | null,
-  ): string | null => {
-    const sizesForColor = variants.filter(
-      (v) => v.color === color && v.stock > 0,
+    const hasValidSelection = inStockVariants.some(
+      (variant) =>
+        variant.color === selectedColor && variant.size === selectedSize,
     );
-    if (sizesForColor.length === 0) return null;
 
-    // Check if current size is valid for this color
-    const currentValid = sizesForColor.find((v) => v.size === currentSize);
-    if (currentValid) return currentSize;
+    if (hasValidSelection) return;
 
-    // Return first available size
-    return sizesForColor[0]?.size ?? null;
-  };
+    const preferredVariant =
+      inStockVariants.find(
+        (variant) =>
+          variant.color === details?.defaultColor &&
+          variant.size === details?.defaultSize,
+      ) ??
+      inStockVariants[0] ??
+      variants[0];
 
-  // Helper: Find valid color for a given size (returns first available if current invalid)
-  const findValidColorForSize = (
-    size: string,
-    currentColor: string | null,
-  ): string | null => {
-    const colorsForSize = variants.filter(
-      (v) => v.size === size && v.stock > 0,
+    setSelection({
+      color: preferredVariant?.color ?? null,
+      size: preferredVariant?.size ?? null,
+    });
+  }, [
+    isOpen,
+    product,
+    variants,
+    inStockVariants,
+    selectedColor,
+    selectedSize,
+    details?.defaultColor,
+    details?.defaultSize,
+  ]);
+
+  const colorOptions = useMemo(
+    () => Array.from(new Set(inStockVariants.map((variant) => variant.color))),
+    [inStockVariants],
+  );
+
+  const sizeOptions = useMemo(() => {
+    const sizes = inStockVariants
+      .filter((variant) => !selectedColor || variant.color === selectedColor)
+      .map((variant) => variant.size);
+    return Array.from(new Set(sizes));
+  }, [inStockVariants, selectedColor]);
+
+  const selectedVariant = useMemo(
+    () =>
+      inStockVariants.find(
+        (variant) =>
+          variant.color === selectedColor && variant.size === selectedSize,
+      ) ?? null,
+    [inStockVariants, selectedColor, selectedSize],
+  );
+
+  const galleryImages = useMemo(() => {
+    if (variantImages?.length) return variantImages;
+    if (selectedVariant?.previewImage) return [selectedVariant.previewImage];
+    const firstWithPreview = inStockVariants.find(
+      (variant) => variant.previewImage,
     );
-    if (colorsForSize.length === 0) return null;
+    if (firstWithPreview?.previewImage) return [firstWithPreview.previewImage];
+    return product?.thumbnailUrl ? [product.thumbnailUrl] : [];
+  }, [variantImages, selectedVariant, inStockVariants, product]);
 
-    // Check if current color is valid for this size
-    const currentValid = colorsForSize.find((v) => v.color === currentColor);
-    if (currentValid) return currentColor;
-
-    // Return first available color
-    return colorsForSize[0]?.color ?? null;
-  };
-
-  // Handler: Color selection with smart size preservation
   const handleColorSelect = (color: string) => {
-    setSelectedColor(color);
-    const validSize = findValidSizeForColor(color, selectedSize);
-    setSelectedSize(validSize);
+    const nextSize =
+      inStockVariants.find(
+        (variant) => variant.color === color && variant.size === selectedSize,
+      )?.size ??
+      inStockVariants.find((variant) => variant.color === color)?.size ??
+      null;
+
+    setSelection({ color, size: nextSize });
   };
 
-  // Handler: Size selection with smart color preservation
   const handleSizeSelect = (size: string) => {
-    setSelectedSize(size);
-    const validColor = findValidColorForSize(size, selectedColor);
-    setSelectedColor(validColor);
-  };
+    const nextColor =
+      inStockVariants.find(
+        (variant) => variant.size === size && variant.color === selectedColor,
+      )?.color ??
+      inStockVariants.find((variant) => variant.size === size)?.color ??
+      null;
 
-  // Determine which images to show in the gallery
-  const selectedVariant = variants.find((v) => v.color === selectedColor);
-  const galleryImages = selectedVariant?.images?.length
-    ? selectedVariant.images
-    : product?.thumbnailUrl
-      ? [product.thumbnailUrl]
-      : [];
+    setSelection({ color: nextColor, size });
+  };
 
   const handleAddToCart = async () => {
-    if (!product || !fullProduct) return;
-
-    if (!selectedColor || !selectedSize) {
-      toast.error("Please select a color and size");
-      return;
-    }
-
-    const variant = variants.find(
-      (v) => v.color === selectedColor && v.size === selectedSize,
-    );
-    if (!variant) {
-      toast.error("Selected variant is not available");
+    if (!product || !selectedVariant) {
+      toast.error("Please choose an available color and size");
       return;
     }
 
     try {
       await addItem({
-        productVariantId: variant.id,
+        productVariantId: selectedVariant.id,
         quantity: 1,
         productName: product.name,
         productPrice: product.price,
-        productImage: variant.images?.[0] || product.thumbnailUrl || null,
-        size: variant.size,
-        color: variant.color,
-        stock: variant.stock,
+        productImage:
+          galleryImages[0] ||
+          selectedVariant.previewImage ||
+          product.thumbnailUrl ||
+          null,
+        size: selectedVariant.size,
+        color: selectedVariant.color,
+        stock: selectedVariant.stock,
       });
       toast.success("Added to cart");
       onOpenChange(false);
-    } catch (_err) {
-      // Error is handled by store
+    } catch {
+      // Store already handles error and optimistic rollback.
     }
   };
 
-  return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] p-0 flex flex-col rounded-t-2xl overflow-hidden">
-        {/* Visual Gallery */}
-        <div className="relative w-full h-[45vh] bg-secondary/50 shrink-0">
-          {(galleryImages || []).length > 0 ? (
-            <ScrollArea className="w-full h-full whitespace-nowrap">
-              <div className="flex w-max h-full">
-                {(galleryImages || []).map((url, index) => (
-                  <div key={url} className="relative w-screen h-full shrink-0">
-                    <Image
-                      src={url}
-                      alt={product?.name || "Product image"}
-                      fill
-                      className="object-contain p-4"
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      priority={index === 0}
-                    />
-                  </div>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" className="invisible" />
-            </ScrollArea>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              No image available
-            </div>
-          )}
-        </div>
+  const isUnavailable = !isLoadingDetails && inStockVariants.length === 0;
 
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="p-4 space-y-6 pb-24">
-            {/* Header */}
-            <div>
-              <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">
+  return (
+    <Drawer
+      open={isOpen}
+      onOpenChange={onOpenChange}
+      direction={isDesktop ? "right" : "bottom"}
+    >
+      <DrawerContent
+        className={cn(
+          "overflow-hidden p-0",
+          "data-[vaul-drawer-direction=bottom]:max-h-[94vh] data-[vaul-drawer-direction=bottom]:rounded-t-2xl",
+          "data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:sm:max-w-2xl",
+        )}
+      >
+        <div
+          className={cn(
+            "grid h-full grid-cols-1",
+            isDesktop && "md:grid-cols-[1.05fr_1fr]",
+          )}
+        >
+          <div
+            className={cn(
+              "relative h-[40vh] bg-muted/40",
+              isDesktop && "h-full",
+            )}
+          >
+            {galleryImages.length > 0 ? (
+              <div className="grid h-full w-full grid-cols-1 overflow-hidden">
+                <Image
+                  src={galleryImages[0]}
+                  alt={product?.name ?? "Product image"}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                />
+              </div>
+            ) : (
+              <div className="grid h-full place-items-center text-sm text-muted-foreground">
+                No image available
+              </div>
+            )}
+          </div>
+
+          <div className="flex h-full flex-col">
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 {product?.categoryName || "Product"}
               </p>
-              <DrawerTitle className="text-2xl font-bold mb-2">
+              <DrawerTitle className="mt-2 text-2xl font-semibold tracking-tight">
                 {product?.name}
               </DrawerTitle>
-              <p className="text-3xl font-bold">
-                ₹{product?.price.toLocaleString() || "0"}
+              <p className="mt-2 text-2xl font-semibold">
+                {currencyFormatter.format(product?.price ?? 0)}
               </p>
-            </div>
 
-            {/* Variant Selectors */}
-            <div className="space-y-6">
-              {/* Colors */}
-              <div>
-                <p className="text-sm font-medium mb-3">
-                  Color{" "}
-                  <span className="text-muted-foreground ml-1">
-                    • {selectedColor || "Select"}
-                  </span>
-                </p>
-                {isLoading ? (
-                  <div className="flex gap-2">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton
-                        key={`color-skel-${i}`}
-                        className="w-12 h-16 rounded-md animate-pulse"
-                      />
-                    ))}
+              <div className="mt-8 space-y-6">
+                <section>
+                  <div className="mb-3 flex items-center justify-between">
+                    <p className="text-sm font-medium">Color</p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedColor ?? "Not selected"}
+                    </p>
                   </div>
-                ) : availableColors.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {availableColors.map((color) => {
-                      const v = variants.find((v) => v.color === color);
-                      return (
+                  {isLoadingDetails ? (
+                    <div className="flex gap-2">
+                      {Array.from({ length: 4 }).map((_, index) => (
+                        <Skeleton
+                          key={`color-skeleton-${index.toString()}`}
+                          className="h-10 w-16 rounded-xl"
+                        />
+                      ))}
+                    </div>
+                  ) : colorOptions.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {colorOptions.map((color) => (
                         <button
                           type="button"
                           key={color}
                           onClick={() => handleColorSelect(color)}
                           className={cn(
-                            "relative w-12 h-16 rounded-md overflow-hidden border-2 transition-all active:scale-95",
+                            "rounded-xl border px-3 py-2 text-xs font-medium transition-colors",
                             selectedColor === color
-                              ? "border-primary"
-                              : "border-transparent ring-1 ring-border/50 hover:ring-border",
+                              ? "border-foreground bg-foreground text-background"
+                              : "border-border bg-background text-foreground hover:border-foreground/40",
                           )}
                         >
-                          {v?.images[0] ? (
-                            <Image
-                              src={v.images[0]}
-                              alt={color}
-                              fill
-                              sizes="48px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-secondary/50 flex items-center justify-center text-[10px]">
-                              {color}
-                            </div>
-                          )}
+                          {color}
                         </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No colors available
-                  </p>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No colors available
+                    </p>
+                  )}
+                </section>
 
-              {/* Sizes */}
-              <div>
-                <p className="text-sm font-medium mb-3">
-                  Size{" "}
-                  <span className="text-muted-foreground ml-1">
-                    • {selectedSize || "Select"}
-                  </span>
-                </p>
-                {isLoading ? (
-                  <div className="flex gap-2 flex-wrap">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Skeleton
-                        key={`size-skel-${i}`}
-                        className="w-16 h-10 rounded-md animate-pulse"
-                      />
-                    ))}
+                <section>
+                  <div className="mb-3 flex items-center justify-between">
+                    <p className="text-sm font-medium">Size</p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedSize ?? "Not selected"}
+                    </p>
                   </div>
-                ) : uniqueSizes.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {uniqueSizes.map((size) => (
-                      <button
-                        type="button"
-                        key={size}
-                        onClick={() => handleSizeSelect(size)}
-                        className={cn(
-                          "px-4 py-2 text-sm font-medium rounded-md border transition-all active:scale-95 min-w-[3rem]",
-                          selectedSize === size
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background text-foreground border-border hover:border-foreground/50",
-                        )}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Select a color to see sizes
-                  </p>
-                )}
+                  {isLoadingDetails ? (
+                    <div className="flex gap-2">
+                      {Array.from({ length: 4 }).map((_, index) => (
+                        <Skeleton
+                          key={`size-skeleton-${index.toString()}`}
+                          className="h-10 w-12 rounded-xl"
+                        />
+                      ))}
+                    </div>
+                  ) : sizeOptions.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {sizeOptions.map((size) => (
+                        <button
+                          type="button"
+                          key={size}
+                          onClick={() => handleSizeSelect(size)}
+                          className={cn(
+                            "min-w-12 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors",
+                            selectedSize === size
+                              ? "border-foreground bg-foreground text-background"
+                              : "border-border bg-background text-foreground hover:border-foreground/40",
+                          )}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No sizes available
+                    </p>
+                  )}
+                </section>
               </div>
             </div>
-          </div>
-        </ScrollArea>
 
-        {/* Sticky Action Bar */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t">
-          <div className="flex gap-3 items-center">
-            <Button
-              size="lg"
-              className="flex-1 rounded-xl h-14 text-base active:scale-95 transition-transform"
-              onClick={handleAddToCart}
-              disabled={isLoading || !selectedColor || !selectedSize}
-            >
-              <HugeiconsIcon
-                icon={ShoppingCart01Icon}
-                className="w-5 h-5 mr-2"
-              />
-              Add to cart
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              className="h-14 w-14 rounded-xl shrink-0 active:scale-95 transition-transform"
-            >
-              <HugeiconsIcon icon={StarIcon} className="w-5 h-5" />
-            </Button>
+            <div className="border-t bg-background px-5 py-4">
+              <Button
+                size="lg"
+                className="h-12 w-full rounded-xl"
+                onClick={handleAddToCart}
+                disabled={
+                  isLoadingDetails ||
+                  isLoadingVariantImages ||
+                  isAddingToCart ||
+                  !selectedVariant
+                }
+              >
+                <HugeiconsIcon
+                  icon={ShoppingCart01Icon}
+                  className="mr-2 h-5 w-5"
+                />
+                {isUnavailable ? "Out of stock" : "Add to cart"}
+              </Button>
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Free delivery on orders over {currencyFormatter.format(3000)}
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-center text-muted-foreground mt-3 flex items-center justify-center gap-1">
-            <span className="w-4 h-4 rounded-full bg-secondary flex items-center justify-center text-[10px]">
-              🚚
-            </span>
-            Free delivery on orders over ₹3000
-          </p>
         </div>
       </DrawerContent>
     </Drawer>

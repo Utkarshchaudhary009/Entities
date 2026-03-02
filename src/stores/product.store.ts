@@ -3,7 +3,7 @@
 import type { z } from "zod";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import type { Category, ProductVariant } from "@/generated/prisma/client";
+import type { Category } from "@/generated/prisma/client";
 import type { productQuerySchema } from "@/lib/api/query-schemas";
 import {
   createProductSchema,
@@ -17,7 +17,6 @@ import {
   createRequestDeduper,
   fetchApi,
   fetchJson,
-  unwrapApiPayload,
 } from "@/stores/http";
 import type {
   ApiProduct,
@@ -35,18 +34,26 @@ type UpdateVariantInput = z.infer<typeof updateVariantSchema>;
 type CategorySummary = Pick<Category, "id" | "name" | "slug">;
 type ProductDetails = ApiProduct & {
   category: CategorySummary | null;
-  variants: VariantSummary[];
+};
+
+type ProductOverviewPayload = {
+  product: ProductDetails;
+  variants: Array<
+    Omit<VariantSummary, "images"> & {
+      previewImage: string | null;
+    }
+  >;
 };
 
 interface ProductStoreState {
   products: ApiProduct[];
   product: ProductDetails | null;
   variants: VariantSummary[];
+  variantDetailsById: Record<string, VariantSummary>;
   meta: Meta;
   isLoading: boolean;
   error: string | null;
 
-  // Actions
   setProducts: (products: ApiProduct[]) => void;
   setProduct: (product: ProductDetails | null) => void;
   setVariants: (variants: VariantSummary[]) => void;
@@ -54,27 +61,42 @@ interface ProductStoreState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 
-  // CRUD
   fetchProducts: (params?: ProductQueryParams) => Promise<void>;
-  fetchProduct: (id: string) => Promise<void>;
+  fetchProductOverview: (id: string) => Promise<void>;
+  fetchVariantDetails: (id: string) => Promise<VariantSummary | null>;
   createProduct: (data: CreateProductInput) => Promise<void>;
   updateProduct: (id: string, data: UpdateProductInput) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
 
-  // Variant CRUD
   createVariant: (data: CreateVariantInput) => Promise<void>;
   updateVariant: (id: string, data: UpdateVariantInput) => Promise<void>;
   deleteVariant: (id: string) => Promise<void>;
+}
+
+function toVariantSummary(
+  variant: Omit<VariantSummary, "images"> & { previewImage: string | null },
+): VariantSummary {
+  return {
+    id: variant.id,
+    size: variant.size,
+    color: variant.color,
+    stock: variant.stock,
+    sku: variant.sku,
+    isActive: variant.isActive,
+    images: variant.previewImage ? [variant.previewImage] : [],
+  };
 }
 
 export const useProductStore = create<ProductStoreState>()(
   devtools(
     (set, get) => {
       const dedupe = createRequestDeduper();
+
       return {
         products: [],
         product: null,
         variants: [],
+        variantDetailsById: {},
         meta: { total: 0, page: 1, limit: 20, totalPages: 0 },
         isLoading: false,
         error: null,
@@ -87,16 +109,12 @@ export const useProductStore = create<ProductStoreState>()(
         setError: (error) => set({ error }),
 
         fetchProducts: async (params) => {
-          console.log(
-            `[ProductStore] fetchProducts() initiated. Current items:`,
-            get().products.length,
-            { params },
-          );
           const query = buildSearchParams(
             (params ?? {}) as unknown as Parameters<
               typeof buildSearchParams
             >[0],
           ).toString();
+
           await dedupe(`GET:/api/products?${query}`, async () => {
             set({ isLoading: true, error: null });
             try {
@@ -104,10 +122,6 @@ export const useProductStore = create<ProductStoreState>()(
                 query ? `/api/products?${query}` : "/api/products",
               );
               const payload = coercePaginatedResponse<ApiProduct>(json);
-              console.log(
-                `[ProductStore] fetchProducts() Success. Loaded items:`,
-                payload.data.length,
-              );
               set({
                 products: payload.data,
                 meta: payload.meta,
@@ -119,31 +133,21 @@ export const useProductStore = create<ProductStoreState>()(
                 error: err instanceof Error ? err.message : "Request failed",
                 isLoading: false,
               });
-              console.error(
-                `[ProductStore] fetchProducts() FAILED. Error:`,
-                err,
-              );
             }
           });
         },
 
-        fetchProduct: async (id) => {
-          console.log(`[ProductStore] fetchProduct() initiated`, { id });
-          // Check cache (SWR)
-          const cached = get().products.find((p) => p.id === id);
-          if (cached)
-            set({
-              product: { ...cached, category: null, variants: [] },
-            });
+        fetchProductOverview: async (id) => {
           set({ isLoading: true, error: null });
 
           try {
-            await dedupe(`GET:/api/products/${id}`, async () => {
-              const json = await fetchJson<unknown>(`/api/products/${id}`);
-              const product = unwrapApiPayload(json) as ProductDetails;
+            await dedupe(`GET:/api/admin/products/${id}/overview`, async () => {
+              const payload = await fetchApi<ProductOverviewPayload>(
+                `/api/admin/products/${id}/overview`,
+              );
               set({
-                product,
-                variants: product.variants ?? [],
+                product: payload.product,
+                variants: payload.variants.map(toVariantSummary),
                 isLoading: false,
                 error: null,
               });
@@ -153,27 +157,60 @@ export const useProductStore = create<ProductStoreState>()(
               error: err instanceof Error ? err.message : "Request failed",
               isLoading: false,
             });
-            console.error(`[ProductStore] fetchProduct() FAILED. Error:`, err);
+          }
+        },
+
+        fetchVariantDetails: async (id) => {
+          const cached = get().variantDetailsById[id];
+          if (cached) return cached;
+
+          set({ isLoading: true, error: null });
+
+          try {
+            const details = await dedupe(`GET:/api/admin/product-variants/${id}/details`, async () => {
+              const payload = await fetchApi<VariantSummary>(
+                `/api/admin/product-variants/${id}/details`,
+              );
+
+              set((state) => ({
+                variantDetailsById: {
+                  ...state.variantDetailsById,
+                  [id]: payload,
+                },
+              }));
+
+              return payload;
+            });
+
+            set({ isLoading: false });
+            return details;
+          } catch (err: unknown) {
+            set({
+              error: err instanceof Error ? err.message : "Request failed",
+              isLoading: false,
+            });
+            return null;
+          }
+        },
+              }));
+
+              return payload;
+            });
+
+            return details;
+          } catch (err: unknown) {
+            set({ error: err instanceof Error ? err.message : "Request failed" });
+            return null;
           }
         },
 
         createProduct: async (data) => {
-          console.log(
-            `[ProductStore] createProduct() initiated. Current items:`,
-            get().products.length,
-            { data },
-          );
-
           const validation = createProductSchema.safeParse(data);
           if (!validation.success) {
             const errorMessage = validation.error.issues
               .map((e) => `${e.path.join(".")}: ${e.message}`)
               .join(", ");
             set({ error: `Validation failed: ${errorMessage}` });
-            console.warn(
-              `[ProductStore] createProduct() Validation Failed:`,
-              errorMessage,
-            );
             return;
           }
 
@@ -190,14 +227,8 @@ export const useProductStore = create<ProductStoreState>()(
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(data),
             });
-            console.log(
-              `[ProductStore] createProduct() Success. New Item:`,
-              created,
-            );
             set((state) => ({
-              products: state.products.map((p) =>
-                p.id === tempId ? created : p,
-              ),
+              products: state.products.map((p) => (p.id === tempId ? created : p)),
               error: null,
             }));
           } catch (err: unknown) {
@@ -205,32 +236,16 @@ export const useProductStore = create<ProductStoreState>()(
               products: state.products.filter((p) => p.id !== tempId),
               error: err instanceof Error ? err.message : "Request failed",
             }));
-            console.error(
-              `[ProductStore] createProduct() FAILED. Reverted optimistic UI. Products count back to:`,
-              get().products.length,
-              `Error:`,
-              err,
-            );
           }
         },
 
         updateProduct: async (id, data) => {
-          console.log(
-            `[ProductStore] updateProduct() initiated on ID: ${id}. Current items:`,
-            get().products.length,
-            { data },
-          );
-
           const validation = updateProductSchema.safeParse(data);
           if (!validation.success) {
             const errorMessage = validation.error.issues
               .map((e) => `${e.path.join(".")}: ${e.message}`)
               .join(", ");
             set({ error: `Validation failed: ${errorMessage}` });
-            console.warn(
-              `[ProductStore] updateProduct() Validation Failed:`,
-              errorMessage,
-            );
             return;
           }
 
@@ -253,18 +268,10 @@ export const useProductStore = create<ProductStoreState>()(
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(data),
             });
-            console.log(
-              `[ProductStore] updateProduct() Success. Updated Item:`,
-              updated,
-            );
             set((state) => ({
               product: state.product
                 ? ({ ...state.product, ...updated } as ProductDetails)
-                : ({
-                    ...updated,
-                    category: null,
-                    variants: [],
-                  } as ProductDetails),
+                : ({ ...updated, category: null } as ProductDetails),
               products: state.products.map((p) => (p.id === id ? updated : p)),
               error: null,
             }));
@@ -274,18 +281,10 @@ export const useProductStore = create<ProductStoreState>()(
               products: prevProducts,
               error: err instanceof Error ? err.message : "Request failed",
             });
-            console.error(
-              `[ProductStore] updateProduct() FAILED. Reverting optimistic update on ID: ${id}. Error:`,
-              err,
-            );
           }
         },
 
         deleteProduct: async (id) => {
-          console.log(
-            `[ProductStore] deleteProduct() initiated on ID: ${id}. Items count before:`,
-            get().products.length,
-          );
           const prevProducts = get().products;
           set({
             products: prevProducts.filter((p) => p.id !== id),
@@ -296,134 +295,125 @@ export const useProductStore = create<ProductStoreState>()(
             await fetchJson<unknown>(`/api/products/${id}`, {
               method: "DELETE",
             });
-            console.log(
-              `[ProductStore] deleteProduct() Success for ID: ${id}. Items count now:`,
-              get().products.length - 1,
-            );
           } catch (err: unknown) {
             set({
               products: prevProducts,
               error: err instanceof Error ? err.message : "Request failed",
             });
-            console.error(
-              `[ProductStore] deleteProduct() FAILED. Reverted optimistic deletion for ID: ${id}. Products count back to:`,
-              prevProducts.length,
-              `Error:`,
-              err,
-            );
           }
         },
 
         createVariant: async (data) => {
-          console.log(`[ProductStore] createVariant() initiated`, { data });
-
           const validation = createVariantSchema.safeParse(data);
           if (!validation.success) {
             const errorMessage = validation.error.issues
               .map((e) => `${e.path.join(".")}: ${e.message}`)
               .join(", ");
             set({ error: `Validation failed: ${errorMessage}` });
-            console.warn(
-              `[ProductStore] createVariant() Validation Failed:`,
-              errorMessage,
-            );
             return;
           }
 
           const tempId = crypto.randomUUID();
-          const optimistic = { ...data, id: tempId } as ProductVariant;
+          const optimistic: VariantSummary = {
+            id: tempId,
+            size: data.size,
+            color: data.color,
+            images: data.images ?? [],
+            stock: data.stock ?? 0,
+            sku: data.sku ?? null,
+            isActive: data.isActive ?? true,
+          };
           set((state) => ({
             variants: [...state.variants, optimistic],
             error: null,
           }));
 
           try {
-            const created = await fetchApi<ProductVariant>(
-              "/api/product-variants",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-              },
-            );
+            const created = await fetchApi<VariantSummary>("/api/product-variants", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
             set((state) => ({
-              variants: state.variants.map((v) =>
-                v.id === tempId ? created : v,
+              variants: state.variants.map((variant) =>
+                variant.id === tempId ? created : variant,
               ),
+              variantDetailsById: {
+                ...state.variantDetailsById,
+                [created.id]: created,
+              },
               error: null,
             }));
           } catch (err: unknown) {
             set((state) => ({
-              variants: state.variants.filter((v) => v.id !== tempId),
+              variants: state.variants.filter((variant) => variant.id !== tempId),
               error: err instanceof Error ? err.message : "Request failed",
             }));
-            console.error(
-              `[ProductStore] createVariant() FAILED. Reverted optimistic UI. Variants count back to:`,
-              get().variants.length,
-              `Error:`,
-              err,
-            );
           }
         },
 
         updateVariant: async (id, data) => {
-          console.log(`[ProductStore] updateVariant() initiated`, { id, data });
-
           const validation = updateVariantSchema.safeParse(data);
           if (!validation.success) {
             const errorMessage = validation.error.issues
               .map((e) => `${e.path.join(".")}: ${e.message}`)
               .join(", ");
             set({ error: `Validation failed: ${errorMessage}` });
-            console.warn(
-              `[ProductStore] updateVariant() Validation Failed:`,
-              errorMessage,
-            );
             return;
           }
 
           const prevVariants = get().variants;
-          const prevVariant = prevVariants.find((v) => v.id === id);
+          const prevDetails = get().variantDetailsById;
 
-          if (prevVariant) {
-            const updated = { ...prevVariant, ...data } as ProductVariant;
-            set({
-              variants: prevVariants.map((v) => (v.id === id ? updated : v)),
-              error: null,
-            });
-          }
+          set((state) => ({
+            variants: state.variants.map((variant) =>
+              variant.id === id ? { ...variant, ...data } : variant,
+            ),
+            variantDetailsById: state.variantDetailsById[id]
+              ? {
+                  ...state.variantDetailsById,
+                  [id]: { ...state.variantDetailsById[id], ...data },
+                }
+              : state.variantDetailsById,
+            error: null,
+          }));
 
           try {
-            const updated = await fetchApi<ProductVariant>(
-              `/api/product-variants/${id}`,
-              {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-              },
-            );
+            const updated = await fetchApi<VariantSummary>(`/api/product-variants/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
             set((state) => ({
-              variants: state.variants.map((v) => (v.id === id ? updated : v)),
+              variants: state.variants.map((variant) =>
+                variant.id === id ? updated : variant,
+              ),
+              variantDetailsById: {
+                ...state.variantDetailsById,
+                [id]: updated,
+              },
               error: null,
             }));
           } catch (err: unknown) {
             set({
               variants: prevVariants,
+              variantDetailsById: prevDetails,
               error: err instanceof Error ? err.message : "Request failed",
             });
-            console.error(
-              `[ProductStore] updateVariant() FAILED. Reverting optimistic update on ID: ${id}. Error:`,
-              err,
-            );
           }
         },
 
         deleteVariant: async (id) => {
-          console.log(`[ProductStore] deleteVariant() initiated`, { id });
           const prevVariants = get().variants;
-          set({
-            variants: prevVariants.filter((v) => v.id !== id),
-            error: null,
+          const prevDetails = get().variantDetailsById;
+          set((state) => {
+            const nextDetails = { ...state.variantDetailsById };
+            delete nextDetails[id];
+            return {
+              variants: state.variants.filter((variant) => variant.id !== id),
+              variantDetailsById: nextDetails,
+              error: null,
+            };
           });
 
           try {
@@ -433,14 +423,9 @@ export const useProductStore = create<ProductStoreState>()(
           } catch (err: unknown) {
             set({
               variants: prevVariants,
+              variantDetailsById: prevDetails,
               error: err instanceof Error ? err.message : "Request failed",
             });
-            console.error(
-              `[ProductStore] deleteVariant() FAILED. Reverted optimistic deletion for ID: ${id}. Variants count back to:`,
-              prevVariants.length,
-              `Error:`,
-              err,
-            );
           }
         },
       };
