@@ -41,7 +41,9 @@ test.describe("Admin Dashboard Page", () => {
 
   test("displays recent orders section", async ({ page }) => {
     try {
-      const recentOrdersHeader = page.getByText("Recent Orders", { exact: true });
+      const recentOrdersHeader = page.getByText("Recent Orders", {
+        exact: true,
+      });
       await expect(recentOrdersHeader).toBeVisible({ timeout: 5000 });
       console.log(
         "PASS: admin-dashboard-recent-orders - Recent Orders section is visible",
@@ -56,7 +58,9 @@ test.describe("Admin Dashboard Page", () => {
 
   test("displays status breakdown section", async ({ page }) => {
     try {
-      const statusBreakdownHeader = page.getByText("Status Breakdown", { exact: true });
+      const statusBreakdownHeader = page.getByText("Status Breakdown", {
+        exact: true,
+      });
       await expect(statusBreakdownHeader).toBeVisible({ timeout: 5000 });
       console.log(
         "PASS: admin-dashboard-status - Status Breakdown section is visible",

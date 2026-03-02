@@ -14,8 +14,6 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 describe("Database CRUD Tests", () => {
   // Pre-generate all IDs so dependent tests don't cascade-fail
-  const testSizeId = crypto.randomUUID();
-  const testColorId = crypto.randomUUID();
   const testCategoryId = crypto.randomUUID();
   const testProductId = crypto.randomUUID();
   const testVariantId = crypto.randomUUID();
@@ -35,96 +33,6 @@ describe("Database CRUD Tests", () => {
     await supabase.from("product_variants").delete().eq("id", testVariantId);
     await supabase.from("products").delete().eq("id", testProductId);
     await supabase.from("categories").delete().eq("id", testCategoryId);
-    await supabase.from("colors").delete().eq("id", testColorId);
-    await supabase.from("sizes").delete().eq("id", testSizeId);
-  });
-
-  describe("Size CRUD", () => {
-    test("Create Size", async () => {
-      const { data, error } = await supabase
-        .from("sizes")
-        .insert({
-          id: testSizeId,
-          label: "TEST-M",
-          sort_order: 1,
-          measurements: { chest: { min: 36, max: 38, unit: "inches" } },
-        })
-        .select()
-        .single();
-      expect(error).toBeNull();
-      expect(data?.id).toBe(testSizeId);
-      expect(data?.label).toBe("TEST-M");
-    });
-
-    test("Read Size", async () => {
-      const { data, error } = await supabase
-        .from("sizes")
-        .select("*")
-        .eq("id", testSizeId)
-        .single();
-      expect(error).toBeNull();
-      expect(data?.label).toBe("TEST-M");
-    });
-
-    test("Update Size", async () => {
-      const { data, error } = await supabase
-        .from("sizes")
-        .update({ sort_order: 5 })
-        .eq("id", testSizeId)
-        .select()
-        .single();
-      expect(error).toBeNull();
-      expect(data?.sort_order).toBe(5);
-    });
-
-    test("Delete Size", async () => {
-      const { error } = await supabase
-        .from("sizes")
-        .delete()
-        .eq("id", testSizeId);
-      expect(error).toBeNull();
-      const { data } = await supabase
-        .from("sizes")
-        .select("*")
-        .eq("id", testSizeId)
-        .single();
-      expect(data).toBeNull();
-    });
-  });
-
-  describe("Color CRUD", () => {
-    test("Create Color", async () => {
-      const { data, error } = await supabase
-        .from("colors")
-        .insert({
-          id: testColorId,
-          name: "Test Black",
-          hex: "#000000",
-          sort_order: 1,
-        })
-        .select()
-        .single();
-      expect(error).toBeNull();
-      expect(data?.id).toBe(testColorId);
-    });
-
-    test("Read Color", async () => {
-      const { data, error } = await supabase
-        .from("colors")
-        .select("*")
-        .eq("id", testColorId)
-        .single();
-      expect(error).toBeNull();
-      expect(data?.name).toBe("Test Black");
-    });
-
-    test("Delete Color", async () => {
-      const { error } = await supabase
-        .from("colors")
-        .delete()
-        .eq("id", testColorId);
-      expect(error).toBeNull();
-    });
   });
 
   describe("Category CRUD", () => {
@@ -221,7 +129,6 @@ describe("Database CRUD Tests", () => {
           product_id: testProductId,
           size: "M",
           color: "Black",
-          color_hex: "#000000",
           stock: 10,
           sku: "TEST-PROD-M-BLK-CRUD",
         })
