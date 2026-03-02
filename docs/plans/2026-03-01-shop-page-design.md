@@ -4,7 +4,7 @@
 The `/shop` page will act as a mobile-optimized gateway for discovery. Instead of external search dependencies like Algolia, we will leverage client-side fuzzy search on a cached payload for 0ms latency. The UI focuses on immediate gratification: showing New Arrivals on load, instant search results on type, and a premium Drawer for product details without leaving the page.
 
 ### Data Flow
-1. **Catalog Payload:** An Edge-cached endpoint (`/api/shop/catalog`) returns a lightweight index of active products (`id`, `name`, `thumbnailUrl`, `price`, `categorySlug`).
+1. **Catalog Payload:** An Edge-cached endpoint (`/api/shop/catalog`) returns a lightweight index of active products (`id`, `name`, `thumbnailUrl`, `price`, `categorySlug`), add revalidation of thins path on products api edit, create or delete path.
 2. **Search Store:** `useShopStore` fetches the catalog on mount. It uses `fuse.js` to instantly filter the catalog in memory based on the `searchQuery`.
 3. **Hydration (Drawer):** When a user clicks a product, the Drawer opens instantly with the cached basic info. Simultaneously, it triggers `useProductStore().fetchProduct(id)` to load variants, full images, and stock.
 
