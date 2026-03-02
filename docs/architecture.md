@@ -65,7 +65,7 @@ The Next.js configuration (`next.config.ts`) sets important security and perform
 The store factory provides reusable patterns for common CRUD operations:
 
 **`createEntityStore<TItem, TCreate, TUpdate, TExtend>`**
-Generates a fully-featured store for entity management with optimistic updates and request deduping. Used by most admin entity stores (categories, colors, sizes, discounts, etc.).
+Generates a fully-featured store for entity management with optimistic updates and request deduping. Used by most admin entity stores (categories, discounts, etc.).
 
 The factory accepts an optional `schemas` argument:
 - `schemas.create?: z.ZodType<TCreate>` – validates data on `create()`
@@ -477,7 +477,7 @@ Functions (`src/inngest/functions/user-profile.ts`) perform audit logging and si
 
 ## Seed Data System (`prisma/seed.ts`)
 - Tagged seed data with `SEED::ENTITIES` prefix for safe identification and cleanup.
-- Creates: founders, brands, categories, products, variants, colors, sizes, discounts, orders (100), carts (20).
+- Creates: founders, brands, categories, products, variants, discounts, orders (100), carts (20).
 - Modes:
   - Default (`bun db:seed`): Cleans existing seed data, then creates fresh test data.
   - Clean-only (`--clean` flag): Removes seed data without reseeding.
