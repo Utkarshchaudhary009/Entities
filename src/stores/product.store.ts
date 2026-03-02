@@ -167,20 +167,23 @@ export const useProductStore = create<ProductStoreState>()(
           set({ isLoading: true, error: null });
 
           try {
-            const details = await dedupe(`GET:/api/admin/product-variants/${id}/details`, async () => {
-              const payload = await fetchApi<VariantSummary>(
-                `/api/admin/product-variants/${id}/details`,
-              );
+            const details = await dedupe(
+              `GET:/api/admin/product-variants/${id}/details`,
+              async () => {
+                const payload = await fetchApi<VariantSummary>(
+                  `/api/admin/product-variants/${id}/details`,
+                );
 
-              set((state) => ({
-                variantDetailsById: {
-                  ...state.variantDetailsById,
-                  [id]: payload,
-                },
-              }));
+                set((state) => ({
+                  variantDetailsById: {
+                    ...state.variantDetailsById,
+                    [id]: payload,
+                  },
+                }));
 
-              return payload;
-            });
+                return payload;
+              },
+            );
 
             set({ isLoading: false });
             return details;
@@ -189,17 +192,6 @@ export const useProductStore = create<ProductStoreState>()(
               error: err instanceof Error ? err.message : "Request failed",
               isLoading: false,
             });
-            return null;
-          }
-        },
-              }));
-
-              return payload;
-            });
-
-            return details;
-          } catch (err: unknown) {
-            set({ error: err instanceof Error ? err.message : "Request failed" });
             return null;
           }
         },
@@ -228,7 +220,9 @@ export const useProductStore = create<ProductStoreState>()(
               body: JSON.stringify(data),
             });
             set((state) => ({
-              products: state.products.map((p) => (p.id === tempId ? created : p)),
+              products: state.products.map((p) =>
+                p.id === tempId ? created : p,
+              ),
               error: null,
             }));
           } catch (err: unknown) {
@@ -329,11 +323,14 @@ export const useProductStore = create<ProductStoreState>()(
           }));
 
           try {
-            const created = await fetchApi<VariantSummary>("/api/product-variants", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data),
-            });
+            const created = await fetchApi<VariantSummary>(
+              "/api/product-variants",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+              },
+            );
             set((state) => ({
               variants: state.variants.map((variant) =>
                 variant.id === tempId ? created : variant,
@@ -346,7 +343,9 @@ export const useProductStore = create<ProductStoreState>()(
             }));
           } catch (err: unknown) {
             set((state) => ({
-              variants: state.variants.filter((variant) => variant.id !== tempId),
+              variants: state.variants.filter(
+                (variant) => variant.id !== tempId,
+              ),
               error: err instanceof Error ? err.message : "Request failed",
             }));
           }
@@ -379,11 +378,14 @@ export const useProductStore = create<ProductStoreState>()(
           }));
 
           try {
-            const updated = await fetchApi<VariantSummary>(`/api/product-variants/${id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data),
-            });
+            const updated = await fetchApi<VariantSummary>(
+              `/api/product-variants/${id}`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+              },
+            );
             set((state) => ({
               variants: state.variants.map((variant) =>
                 variant.id === id ? updated : variant,

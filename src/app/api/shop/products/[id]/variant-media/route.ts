@@ -30,7 +30,9 @@ export async function GET(request: Request, { params }: RouteParamsAsync) {
 
     const dedupedImages = Array.from(
       new Set(
-        variants.flatMap((variant) => variant.images).filter((image) => !!image),
+        variants
+          .flatMap((variant) => variant.images)
+          .filter((image) => !!image),
       ),
     );
 
@@ -39,4 +41,3 @@ export async function GET(request: Request, { params }: RouteParamsAsync) {
     return handleError(error, "Fetch shop variant media");
   }
 }
-

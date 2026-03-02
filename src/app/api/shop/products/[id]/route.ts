@@ -68,4 +68,3 @@ export async function GET(_request: Request, { params }: RouteParamsAsync) {
     return handleError(error, "Fetch shop product details");
   }
 }
-
