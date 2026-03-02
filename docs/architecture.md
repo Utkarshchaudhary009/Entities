@@ -206,6 +206,8 @@ This design eliminates separate color/size management endpoints and UI, simplify
   - `GET /api/product-variants/[id]` — fetch variant details (public)
   - `PUT /api/product-variants/[id]` — update variant (admin required)
   - `DELETE /api/product-variants/[id]` — delete variant; removes variant images from storage (admin required)
+  - `GET /api/admin/products/[id]/overview` — fetch product overview with variants and category (admin required)
+  - `GET /api/admin/product-variants/[id]/details` — fetch variant with full images and metadata (admin required)
 - **Service**: `src/services/product.service.ts` handles product operations; `src/services/product-variant.service.ts` manages variants with stock tracking.
 - **Store**: `src/stores/product.store.ts` manages:
   - Product list (`products`, `meta`, `isLoading`)
@@ -229,6 +231,26 @@ This design eliminates separate color/size management endpoints and UI, simplify
 - ImageUpload component for variant images (stored in `variants` bucket)
 - Stock and SKU management with active toggle
 - Store-driven submission with `createVariant`/`updateVariant` actions and optimistic updates
+
+## Shop Product Browsing
+
+The public shop interface provides optimized product data fetching with caching and per-color variant media aggregation.
+
+- **Routes**:
+  - `GET /api/shop/catalog` — fetch lightweight product index for browsing (cached)
+  - `GET /api/shop/products/[id]` — fetch public product details with active variants (cached)
+  - `GET /api/shop/products/[id]/variant-media?color=<color>` — fetch deduplicated image list for a specific color across active variants (cached)
+
+- **Store**: `src/stores/shop.store.ts` manages:
+  - Product catalog with Fuse.js search (`catalog`, `filteredCatalog`, `searchQuery`)
+  - Product detail hydration (`productDetailsById`) with lazy loading
+  - Variant media cache (`variantMediaByProductId`) indexed by product ID and color
+  - Granular loading states (`loadingProductIds`, `loadingVariantMediaByKey`)
+  - Request deduping and cache-first patterns
+
+- **UI Components**:
+  - `ShopContent` (`src/app/(user)/shop/shop-content.tsx`) renders the catalog grid with category filtering and search
+  - `ProductDrawer` (`src/components/shop/product-drawer.tsx`) displays product details and variant selection, fetching media on-demand by color
 
 ## Admin Category Management
 Category administration follows the standard architecture flow:
