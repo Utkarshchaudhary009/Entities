@@ -413,10 +413,10 @@ All routes validate input with `src/lib/validations/user-profile.ts` schemas (`a
   - Optimistic updates per-field with granular saving indicator.
 
 ### UI Components & Pages
-Profile section under `(shop)` group (customer-facing):
+Profile section under `(user)` group (customer-facing):
 
-- **Profile Layout** (`src/app/(shop)/profile/layout.tsx`): Wraps profile pages with consistent card container and mobile navigation header.
-- **Profile Home** (`src/app/(shop)/profile/page.tsx`): Dashboard with dark mode toggle, menu links to subpages, and logout button.
+- **Profile Layout** (`src/app/(user)/profile/layout.tsx`): Wraps profile pages with consistent card container and mobile navigation header.
+- **Profile Home** (`src/app/(user)/profile/page.tsx`): Dashboard with dark mode toggle, menu links to subpages, and logout button.
 - **Subpages**:
   - `orders`: Order history (reads from existing order domain)
   - `coupons`: Available discounts

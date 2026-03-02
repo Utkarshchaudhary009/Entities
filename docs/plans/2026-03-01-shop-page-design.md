@@ -10,7 +10,7 @@ The `/shop` page will act as a mobile-optimized gateway for discovery. Instead o
 
 ## 2. Component Design
 
-### 2.1 The `/shop` Page (`src/app/(shop)/page.tsx`)
+### 2.1 The `/shop` Page (`src/app/(user)/shop/page.tsx`)
 - **Sticky Header:** A prominent, sticky search input (`Command` pattern adapted for mobile). 
 - **Categories Bar:** A horizontal scrolling list of rounded pills for categories. Clicking one updates the URL (`?category=slug`). Visible only when search is empty.
 - **Product Grid:** 
