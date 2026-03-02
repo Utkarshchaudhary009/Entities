@@ -1,0 +1,143 @@
+# Admin Dashboard — Build Plan
+
+> **Workflow per section**: `git checkout -b feat/admin-<section>` → write code → `bun --bun biome check <file>` + `bun --bun tsc <file> --noEmit` on every new file → commit → PR → merge → move to next section.
+
+---
+
+## Layout Architecture (read before Phase 0)
+
+```
+src/app/layout.tsx  (root — wraps entire site)
+  └── <SidebarProvider>         ← client context: { isOpen, toggle }
+        ├── <Topbar />          ← SHARED across all pages
+        │     ├── brand logo / nav links    (always)
+        │     ├── 🍔 hamburger             (only rendered when sidebar context is "active")
+        │     └── "Admin" button           (only visible when Clerk role === "admin")
+        └── {children}
+              ├── Public pages   → no sidebar, hamburger hidden automatically
+              └── admin layout → activates sidebar context → hamburger appears
+                    ├── <AdminSidebar />   ← slide-in panel (admin nav links)
+                    └── {admin page content}
+```
+
+**Key insight:** `<Topbar>` calls `useSidebar()`. If a `SidebarProvider` ancestor has `enabled=true` (set by the admin layout), it shows the hamburger. Otherwise the slot is empty. No code duplication.
+
+---
+
+## Phase 0 — Foundation
+- [x] Branch: `feat/admin-foundation`
+
+### Shared (lives in root layout, used site-wide)
+- [x] `src/contexts/sidebar-context.tsx` — `SidebarProvider` + `useSidebar()` hook; holds `{ isOpen, toggle, enabled }` state
+- [x] `src/components/layout/topbar.tsx` — site-wide topbar: logo, nav, 🍔 (conditional on `enabled`), "Admin" button (conditional on `role="admin"`), user avatar
+- [x] Update `src/app/layout.tsx` — wrap with `<SidebarProvider>`, add `<Topbar />`
+
+### Admin-only
+- [x] `src/app/admin/layout.tsx` — Clerk `role="admin"` guard; calls `setSidebarEnabled(true)` on mount; renders `<AdminSidebar />` next to `{children}`
+- [x] `src/app/admin/page.tsx` — redirect to `/admin/dashboard`
+- [x] `src/components/admin/sidebar.tsx` — admin nav links, active state; reads `{ isOpen }` from `useSidebar()`
+- [x] `src/components/admin/data-table.tsx` — generic paginated table (columns, search, skeleton)
+- [x] `src/components/admin/stat-card.tsx` — KPI card (icon, title, value, delta badge)
+- [x] `src/components/admin/status-badge.tsx` — `OrderStatus` colored badge
+
+- [x] Lint & TSC all files
+- [x] PR → merge
+
+---
+
+## Phase 1 — Dashboard Overview
+- [x] Branch: `feat/admin-dashboard`
+- [x] `src/app/admin/dashboard/page.tsx`
+  - KPI cards: total orders, revenue, pending orders, low-stock SKUs, active discounts
+  - Recent orders mini-table (last 10)
+  - Order status breakdown bar/donut
+- [x] Lint & TSC
+- [x] PR → merge
+
+---
+
+## Phase 2 — Orders
+- [x] Branch: `feat/admin-orders`
+- [x] `src/app/admin/orders/page.tsx` — filterable + paginated table; filter by `OrderStatus`, date range, search by order# / customer
+- [x] `src/app/admin/orders/[orderId]/page.tsx` — order detail: items, address block, status editor, admin notes textarea
+- [x] Lint & TSC
+- [x] PR → merge
+
+---
+
+## Phase 3 — Products & Variants
+- [x] Branch: `feat/admin-products`
+- [x] `src/app/admin/products/page.tsx` — table: thumbnail, name, category chip, price, active toggle
+- [x] use drawer(open : bottom) component — product creation form and variety creation.
+- [x] create a component for img upload and live preview. It must be independent with proper UX and UI. add micro interactions.
+- [x] `src/app/admin/products/[productId]/page.tsx` — product details display and edit drawer(open : bottom) +  ProductVariant -> button to add and edit and delete || display variants.
+- [x] task already done ( 
+          Vaul drawer(open : bottom) with controlled open/close state                                
+        • Form fields for size (dropdown using label), color (dropdown with hex preview), colorHex (auto-filled),images (ImageUpload), stock, SKU, isActive
+        • Zod validation before submit 
+        • Store-driven CRUD via useProductStore, useSizeStore, useColorStore
+        • Toast notifications for success/error         
+        • Edit mode pre-populates form with existing variant data )
+- [x] Lint & TSC
+- [x] PR → merge
+
+---
+
+## Phase 4 — Categories
+- [x] Branch: `feat/admin-categories`
+- [x] `src/app/admin/categories/page.tsx` — table: name, slug, discount %, active toggle, sort-order controls
+- [x] Create / edit drawer(open : bottom)(open : bottom) (thumbnail URL, about, discount %, sort order)
+- [x] Lint & TSC
+- [x] PR → merge
+
+---
+
+## Phase 5 — Discounts
+- [x] Branch: `feat/admin-discounts`
+- [x] `src/app/admin/discounts/page.tsx` — table: code, type (%, FIXED, BOGO), value, usage count / limit, active, expiry
+- [x] Create / edit drawer(open : bottom) (all `Discount` fields, date pickers for `startsAt` / `expiresAt`)
+- [x] Lint & TSC
+- [x] PR → merge
+
+---
+
+## Phase 6 — Sizes & Colors
+- [x] Branch: `feat/admin-catalog-meta`
+- [x] `src/app/admin/sizes/page.tsx` — CRUD table: label, sort order, measurements JSON editor
+- [x] `src/app/admin/colors/page.tsx` — CRUD table: name, hex swatch picker, sort order
+- [x] Lint & TSC
+- [x] PR → merge
+
+---
+
+## Phase 7 — Brand & Founder
+- [x] Branch: `feat/admin-brand`
+- [x] `src/app/admin/brand/page.tsx`
+  - Brand profile form (name, logo URL, tagline, brand story, support email/phone, active)
+  - Philosophy section (mission, vision, values, story, hero image)
+  - Social links list editor
+- [x] `src/app/admin/founder/page.tsx`
+  - Founder form (name, age, story, education, quote, thumbnail)
+  - Social links list editor
+- [x] Lint & TSC
+- [x] PR → merge
+
+---
+
+## Phase 8 — Brand Documents (Policies)
+- [x] Branch: `feat/admin-brand-documents`
+- [x] `src/app/admin/brand-documents/page.tsx`
+  - Tab per `DocumentType`: RETURN_POLICY, SHIPPING_POLICY, REFUND_POLICY, PRIVACY_POLICY, TERMS_AND_CONDITIONS
+  - Markdown / textarea editor + version display + active toggle
+- [x] Lint & TSC
+- [x] PR → merge
+
+---
+
+## General Rules (apply to every phase)
+- Follow `DB → Service → API → Store → UI` architecture — UI never calls API directly
+- Store-driven optimistic UI via Zustand; revert on failure with toast
+- Granular loading states — no global spinners; use `<Skeleton>` per card/row
+- Every file: `bun --bun biome check <filepath>` then `bun --bun tsc <filepath> --noEmit`
+- No `npm` / `pnpm` — Bun only
+- Clerk guard: `role === "admin"` (metadata `user_role`)

@@ -7,6 +7,14 @@ test.describe("Shop Page", () => {
     await page.waitForLoadState("networkidle");
   });
 
+  test.afterEach(async (_test, testInfo) => {
+    if (testInfo.status === "passed") {
+      console.log(`PASS: ${testInfo.title} - All assertions passed`);
+    } else if (testInfo.status === "failed") {
+      console.log(`FAIL: ${testInfo.title} - Test failed`);
+    }
+  });
+
   test("displays default New Arrivals view", async ({ page }) => {
     // Should display the New Arrivals heading
     await expect(page.getByText("New Arrivals")).toBeVisible();
@@ -29,7 +37,6 @@ test.describe("Shop Page", () => {
   });
 
   test("can open the product drawer", async ({ page }) => {
-    // Find the first product button and click it
     // Wait for the skeleton loaders to disappear
     await expect(page.locator(".animate-pulse")).toHaveCount(0, {
       timeout: 10000,
@@ -37,17 +44,18 @@ test.describe("Shop Page", () => {
 
     const productCards = page.locator("button.group.flex.flex-col");
 
-    // Ensure there is at least one product
-    if ((await productCards.count()) > 0) {
-      await productCards.first().click();
+    // Ensure there is at least one product - fail if no products
+    const productCount = await productCards.count();
+    expect(productCount, "No products found on the page").toBeGreaterThan(0);
 
-      // Drawer should open and display Add to cart button
-      const addToCartBtn = page.getByRole("button", { name: /Add to cart/i });
-      await expect(addToCartBtn).toBeVisible();
+    await productCards.first().click();
 
-      // Drawer should display Color and Size text
-      await expect(page.getByText(/Color/)).toBeVisible();
-      await expect(page.getByText(/Size/)).toBeVisible();
-    }
+    // Drawer should open and display Add to cart button
+    const addToCartBtn = page.getByRole("button", { name: /Add to cart/i });
+    await expect(addToCartBtn).toBeVisible();
+
+    // Drawer should display Color and Size text
+    await expect(page.getByText(/Color/)).toBeVisible();
+    await expect(page.getByText(/Size/)).toBeVisible();
   });
 });

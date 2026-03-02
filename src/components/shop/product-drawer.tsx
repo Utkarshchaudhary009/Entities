@@ -53,10 +53,60 @@ export function ProductDrawer({
 
   const uniqueSizes = Array.from(new Set(availableSizes));
 
+  // Helper: Find valid size for a given color (returns first available if current invalid)
+  const findValidSizeForColor = (
+    color: string,
+    currentSize: string | null,
+  ): string | null => {
+    const sizesForColor = variants.filter(
+      (v) => v.color === color && v.stock > 0,
+    );
+    if (sizesForColor.length === 0) return null;
+
+    // Check if current size is valid for this color
+    const currentValid = sizesForColor.find((v) => v.size === currentSize);
+    if (currentValid) return currentSize;
+
+    // Return first available size
+    return sizesForColor[0]?.size ?? null;
+  };
+
+  // Helper: Find valid color for a given size (returns first available if current invalid)
+  const findValidColorForSize = (
+    size: string,
+    currentColor: string | null,
+  ): string | null => {
+    const colorsForSize = variants.filter(
+      (v) => v.size === size && v.stock > 0,
+    );
+    if (colorsForSize.length === 0) return null;
+
+    // Check if current color is valid for this size
+    const currentValid = colorsForSize.find((v) => v.color === currentColor);
+    if (currentValid) return currentColor;
+
+    // Return first available color
+    return colorsForSize[0]?.color ?? null;
+  };
+
+  // Handler: Color selection with smart size preservation
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    const validSize = findValidSizeForColor(color, selectedSize);
+    setSelectedSize(validSize);
+  };
+
+  // Handler: Size selection with smart color preservation
+  const handleSizeSelect = (size: string) => {
+    setSelectedSize(size);
+    const validColor = findValidColorForSize(size, selectedColor);
+    setSelectedColor(validColor);
+  };
+
   // Determine which images to show in the gallery
-  const galleryImages = variants.find((v) => v.color === selectedColor)?.images
-    ?.length
-    ? variants.find((v) => v.color === selectedColor)?.images
+  const selectedVariant = variants.find((v) => v.color === selectedColor);
+  const galleryImages = selectedVariant?.images?.length
+    ? selectedVariant.images
     : product?.thumbnailUrl
       ? [product.thumbnailUrl]
       : [];
@@ -154,7 +204,7 @@ export function ProductDrawer({
                   <div className="flex gap-2">
                     {[1, 2, 3].map((i) => (
                       <Skeleton
-                        key={i}
+                        key={`color-skel-${i}`}
                         className="w-12 h-16 rounded-md animate-pulse"
                       />
                     ))}
@@ -167,7 +217,7 @@ export function ProductDrawer({
                         <button
                           type="button"
                           key={color}
-                          onClick={() => setSelectedColor(color)}
+                          onClick={() => handleColorSelect(color)}
                           className={cn(
                             "relative w-12 h-16 rounded-md overflow-hidden border-2 transition-all active:scale-95",
                             selectedColor === color
@@ -180,6 +230,7 @@ export function ProductDrawer({
                               src={v.images[0]}
                               alt={color}
                               fill
+                              sizes="48px"
                               className="object-cover"
                             />
                           ) : (
@@ -210,7 +261,7 @@ export function ProductDrawer({
                   <div className="flex gap-2 flex-wrap">
                     {[1, 2, 3, 4, 5].map((i) => (
                       <Skeleton
-                        key={i}
+                        key={`size-skel-${i}`}
                         className="w-16 h-10 rounded-md animate-pulse"
                       />
                     ))}
@@ -221,7 +272,7 @@ export function ProductDrawer({
                       <button
                         type="button"
                         key={size}
-                        onClick={() => setSelectedSize(size)}
+                        onClick={() => handleSizeSelect(size)}
                         className={cn(
                           "px-4 py-2 text-sm font-medium rounded-md border transition-all active:scale-95 min-w-[3rem]",
                           selectedSize === size

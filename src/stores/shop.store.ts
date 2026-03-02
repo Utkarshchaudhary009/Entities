@@ -54,9 +54,18 @@ export const useShopStore = create<ShopStoreState>()(
               threshold: 0.3,
             });
 
+            const currentSearchQuery = get().searchQuery.trim();
+
+            const filteredCatalog =
+              currentSearchQuery && fuseInstance
+                ? fuseInstance
+                    .search(currentSearchQuery)
+                    .map((result) => result.item)
+                : catalog;
+
             set({
               catalog,
-              filteredCatalog: catalog,
+              filteredCatalog,
               isLoadingCatalog: false,
             });
           } catch (err: unknown) {
@@ -69,17 +78,19 @@ export const useShopStore = create<ShopStoreState>()(
         },
 
         setSearchQuery: (query) => {
-          set({ searchQuery: query });
+          set({ searchQuery: query, isSearching: true });
           const { catalog } = get();
 
           if (!query.trim()) {
-            set({ filteredCatalog: catalog });
+            set({ filteredCatalog: catalog, isSearching: false });
             return;
           }
 
           if (fuseInstance) {
             const results = fuseInstance.search(query).map((res) => res.item);
-            set({ filteredCatalog: results });
+            set({ filteredCatalog: results, isSearching: false });
+          } else {
+            set({ isSearching: false });
           }
         },
       };
