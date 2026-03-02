@@ -23,13 +23,7 @@ Date: 2026-02-28
    - Detail: These routes return `successDataResponse(result)` where `result` is already a paginated object. Other list routes commonly return top-level paginated payloads.
    - Risk: Client parsing remains workable today (`unwrapApiPayload` handles nested shapes), but this increases contract ambiguity and onboarding cost.
 
-2. Product detail fetch keeps stale cached data visible on fetch failure.
-   - References:
-     - `src/stores/product.store.ts:117`
-     - `src/stores/product.store.ts:119`
-     - `src/stores/product.store.ts:124`
-   - Detail: `fetchProduct` sets cached product first, then runs network request. On request failure, stale cached data remains visible while only `error` is set.
-   - Risk: User sees outdated details without clear stale-state handling.
+
 
 ### Low
 1. Console usage is repeated across shared store factory methods.

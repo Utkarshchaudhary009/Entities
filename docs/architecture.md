@@ -104,7 +104,7 @@ Some domains require hand-written stores for complex state management that excee
 
 - **Brand Store** (`src/stores/brand.store.ts`): Manages brand profile with nested relationships (founder, documents, social links, philosophy). Provides dedicated `fetchBrandDetails(id)` to populate compound state, plus full CRUD with optimistic updates. Uses request deduplication, validation via Zod schemas, and granular loading/error states.
 
-- **Product Store** (`src/stores/product.store.ts`): Handles product catalog with pagination (`products`, `meta`) and detail view (`product`, `variants`). Implements cache hydration (SWR pattern) where `fetchProduct` shows cached data before network request. Supports product and variant CRUD with optimistic updates and rollback. Uses dedicated helper utilities (`buildSearchParams`, `coercePaginatedResponse`, `unwrapApiPayload`) for API payload normalization.
+- **Product Store** (`src/stores/product.store.ts`): Handles product catalog with pagination (`products`, `meta`) and detail view (`product`, `variants`). Uses cache-first fetching for product details (`fetchProductOverview` returns cached data when available). Supports product and variant CRUD with optimistic updates and rollback. Uses dedicated helper utilities (`buildSearchParams`, `coercePaginatedResponse`, `unwrapApiPayload`) for API payload normalization.
 
 Custom stores follow the same principles as factory-generated stores: optimistic UI, request deduplication, granular state, and consistent error handling.
 
@@ -206,13 +206,15 @@ This design eliminates separate color/size management endpoints and UI, simplify
   - `GET /api/product-variants/[id]` — fetch variant details (public)
   - `PUT /api/product-variants/[id]` — update variant (admin required)
   - `DELETE /api/product-variants/[id]` — delete variant; removes variant images from storage (admin required)
+  - `GET /api/admin/products/[id]/overview` — fetch product overview with variants and category (admin required)
+  - `GET /api/admin/product-variants/[id]/details` — fetch variant with full images and metadata (admin required)
 - **Service**: `src/services/product.service.ts` handles product operations; `src/services/product-variant.service.ts` manages variants with stock tracking.
 - **Store**: `src/stores/product.store.ts` manages:
   - Product list (`products`, `meta`, `isLoading`)
   - Product detail with variants (`product`, `variants`)
   - Optimistic CRUD with rollback on failure
   - Request deduping via `createRequestDeduper`
-  - SWR-style cache hydration (displays cached data while fetching fresh)
+  - Cache-first fetching: product details are loaded once and reused until explicitly refreshed
 - **UI**: 
   - `/admin/products` — DataTable with search, category filter, active toggle
   - `/admin/products/[productId]` — detail view with variant table (no separate colors/sizes pages)
@@ -229,6 +231,26 @@ This design eliminates separate color/size management endpoints and UI, simplify
 - ImageUpload component for variant images (stored in `variants` bucket)
 - Stock and SKU management with active toggle
 - Store-driven submission with `createVariant`/`updateVariant` actions and optimistic updates
+
+## Shop Product Browsing
+
+The public shop interface provides optimized product data fetching with caching and per-color variant media aggregation.
+
+- **Routes**:
+  - `GET /api/shop/catalog` — fetch lightweight product index for browsing (cached)
+  - `GET /api/shop/products/[id]` — fetch public product details with active variants (cached)
+  - `GET /api/shop/products/[id]/variant-media?color=<color>` — fetch deduplicated image list for a specific color across active variants (cached)
+
+- **Store**: `src/stores/shop.store.ts` manages:
+  - Product catalog with Fuse.js search (`catalog`, `filteredCatalog`, `searchQuery`)
+  - Product detail hydration (`productDetailsById`) with lazy loading
+  - Variant media cache (`variantMediaByProductId`) indexed by product ID and color
+  - Granular loading states (`loadingProductIds`, `loadingVariantMediaByKey`)
+  - Request deduping and cache-first patterns
+
+- **UI Components**:
+  - `ShopContent` (`src/app/(user)/shop/shop-content.tsx`) renders the catalog grid with category filtering and search
+  - `ProductDrawer` (`src/components/shop/product-drawer.tsx`) displays product details and variant selection, fetching media on-demand by color
 
 ## Admin Category Management
 Category administration follows the standard architecture flow:
@@ -413,10 +435,10 @@ All routes validate input with `src/lib/validations/user-profile.ts` schemas (`a
   - Optimistic updates per-field with granular saving indicator.
 
 ### UI Components & Pages
-Profile section under `(shop)` group (customer-facing):
+Profile section under `(user)` group (customer-facing):
 
-- **Profile Layout** (`src/app/(shop)/profile/layout.tsx`): Wraps profile pages with consistent card container and mobile navigation header.
-- **Profile Home** (`src/app/(shop)/profile/page.tsx`): Dashboard with dark mode toggle, menu links to subpages, and logout button.
+- **Profile Layout** (`src/app/(user)/profile/layout.tsx`): Wraps profile pages with consistent card container and mobile navigation header.
+- **Profile Home** (`src/app/(user)/profile/page.tsx`): Dashboard with dark mode toggle, menu links to subpages, and logout button.
 - **Subpages**:
   - `orders`: Order history (reads from existing order domain)
   - `coupons`: Available discounts

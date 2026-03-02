@@ -50,8 +50,14 @@ export default function ProductDetailsPage({
   params: Promise<{ productId: string }>;
 }) {
   const { productId } = use(params);
-  const { product, variants, isLoading, fetchProduct, deleteVariant } =
-    useProductStore();
+  const {
+    product,
+    variants,
+    isLoading,
+    fetchProductOverview,
+    fetchVariantDetails,
+    deleteVariant,
+  } = useProductStore();
   const { items: categories, fetchAll: fetchCategories } = useCategoryStore();
 
   const [productDrawerOpen, setProductDrawerOpen] = useState(false);
@@ -65,9 +71,9 @@ export default function ProductDetailsPage({
   const [variantToDelete, setVariantToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProduct(productId);
+    fetchProductOverview(productId);
     fetchCategories();
-  }, [productId, fetchProduct, fetchCategories]);
+  }, [productId, fetchProductOverview, fetchCategories]);
 
   const handleEditProduct = () => {
     setProductDrawerOpen(true);
@@ -79,8 +85,13 @@ export default function ProductDetailsPage({
     setVariantDrawerOpen(true);
   };
 
-  const handleEditVariant = (variant: VariantSummary) => {
-    setSelectedVariant(variant);
+  const handleEditVariant = async (variant: VariantSummary) => {
+    const fullVariant = await fetchVariantDetails(variant.id);
+    if (!fullVariant) {
+      toast.error("Failed to load variant details");
+      return;
+    }
+    setSelectedVariant(fullVariant);
     setVariantDrawerMode("edit");
     setVariantDrawerOpen(true);
   };
