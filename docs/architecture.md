@@ -104,7 +104,7 @@ Some domains require hand-written stores for complex state management that excee
 
 - **Brand Store** (`src/stores/brand.store.ts`): Manages brand profile with nested relationships (founder, documents, social links, philosophy). Provides dedicated `fetchBrandDetails(id)` to populate compound state, plus full CRUD with optimistic updates. Uses request deduplication, validation via Zod schemas, and granular loading/error states.
 
-- **Product Store** (`src/stores/product.store.ts`): Handles product catalog with pagination (`products`, `meta`) and detail view (`product`, `variants`). Implements cache hydration (SWR pattern) where `fetchProduct` shows cached data before network request. Supports product and variant CRUD with optimistic updates and rollback. Uses dedicated helper utilities (`buildSearchParams`, `coercePaginatedResponse`, `unwrapApiPayload`) for API payload normalization.
+- **Product Store** (`src/stores/product.store.ts`): Handles product catalog with pagination (`products`, `meta`) and detail view (`product`, `variants`). Uses cache-first fetching for product details (`fetchProductOverview` returns cached data when available). Supports product and variant CRUD with optimistic updates and rollback. Uses dedicated helper utilities (`buildSearchParams`, `coercePaginatedResponse`, `unwrapApiPayload`) for API payload normalization.
 
 Custom stores follow the same principles as factory-generated stores: optimistic UI, request deduplication, granular state, and consistent error handling.
 
@@ -214,7 +214,7 @@ This design eliminates separate color/size management endpoints and UI, simplify
   - Product detail with variants (`product`, `variants`)
   - Optimistic CRUD with rollback on failure
   - Request deduping via `createRequestDeduper`
-  - SWR-style cache hydration (displays cached data while fetching fresh)
+  - Cache-first fetching: product details are loaded once and reused until explicitly refreshed
 - **UI**: 
   - `/admin/products` — DataTable with search, category filter, active toggle
   - `/admin/products/[productId]` — detail view with variant table (no separate colors/sizes pages)
