@@ -27,22 +27,6 @@
       "react": "recommended"
     }
   },
-  "overrides": [
-    {
-      "includes": ["tests/**"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noExplicitAny": "off"
-          },
-          "correctness": {
-            "noUnusedImports": "off",
-            "noUnusedFunctionParameters": "off"
-          }
-        }
-      }
-    }
-  ],
   "assist": {
     "actions": {
       "source": {
