@@ -1,10 +1,7 @@
 import { founderQuerySchema, parseSearchParams } from "@/lib/api/query-schemas";
-import {
-  cachedSuccessResponse,
-  createdDataResponse,
-  handleError,
-} from "@/lib/api/response";
+import { createdDataResponse, handleError } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import { cached } from "@/lib/cache-headers";
 import { createFounderSchema } from "@/lib/validations/founder";
 import { founderService } from "@/services/founder.service";
 
@@ -19,7 +16,7 @@ export async function GET(request: Request) {
       search: query.search,
     });
 
-    return cachedSuccessResponse(result, 300, 120);
+    return cached.static(result);
   } catch (error) {
     return handleError(error, "Fetch founders");
   }

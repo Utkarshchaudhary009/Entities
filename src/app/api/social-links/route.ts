@@ -2,12 +2,9 @@ import {
   parseSearchParams,
   socialLinkQuerySchema,
 } from "@/lib/api/query-schemas";
-import {
-  cachedSuccessResponse,
-  createdDataResponse,
-  handleError,
-} from "@/lib/api/response";
+import { createdDataResponse, handleError } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import { cached } from "@/lib/cache-headers";
 import { createSocialLinkSchema } from "@/lib/validations/social-link";
 import { socialLinkService } from "@/services/social-link.service";
 
@@ -24,7 +21,7 @@ export async function GET(request: Request) {
       platform: query.platform,
     });
 
-    return cachedSuccessResponse(result, 300, 120);
+    return cached.static(result);
   } catch (error) {
     return handleError(error, "Fetch social links");
   }

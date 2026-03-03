@@ -1,13 +1,9 @@
 import { revalidatePath } from "next/cache";
-
 import { safeInngestSend } from "@/inngest/safe-send";
 import { brandQuerySchema, parseSearchParams } from "@/lib/api/query-schemas";
-import {
-  cachedPaginatedResponse,
-  createdDataResponse,
-  handleError,
-} from "@/lib/api/response";
+import { createdDataResponse, handleError } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import { cached } from "@/lib/cache-headers";
 import prisma from "@/lib/prisma";
 import { createBrandSchema } from "@/lib/validations/brand";
 import { brandService } from "@/services/brand.service";
@@ -23,7 +19,7 @@ export async function GET(request: Request) {
       search: query.search,
     });
 
-    return cachedPaginatedResponse(result, 120, 60);
+    return cached.static(result);
   } catch (error) {
     return handleError(error, "Fetch brands");
   }

@@ -1,14 +1,18 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { useProductStore } from "@/stores/product.store";
 
 // --- MOCK SETUP ---
 mock.module("@/stores/http", () => ({
-  createRequestDeduper: () => (key: string, fn: any) => fn(),
+  createRequestDeduper: () => (_key: string, fn: () => void | Promise<void>) =>
+    fn(),
   fetchApi: mock(),
   fetchJson: mock(),
   buildSearchParams: () => new URLSearchParams(),
-  coercePaginatedResponse: (json: any) => ({ data: json, meta: { total: 1 } }),
-  unwrapApiPayload: (json: any) => json,
+  coercePaginatedResponse: (json: unknown) => ({
+    data: json,
+    meta: { total: 1 },
+  }),
+  unwrapApiPayload: (json: unknown) => json,
 }));
 
 const { fetchApi, fetchJson } = await import("@/stores/http");
@@ -22,8 +26,8 @@ describe("ProductStore", () => {
       isLoading: false,
       error: null,
     });
-    (fetchApi as any).mockReset();
-    (fetchJson as any).mockReset();
+    (fetchApi as ReturnType<typeof fetchApi>).mockReset();
+    (fetchJson as ReturnType<typeof fetchJson>).mockReset();
   });
 
   describe("createProduct", () => {
@@ -31,7 +35,9 @@ describe("ProductStore", () => {
       // ARRANGE
       const input = { name: "Shoe", price: 100, slug: "shoe" };
       const serverResponse = { id: "p1", ...input };
-      (fetchApi as any).mockResolvedValue(serverResponse);
+      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue(
+        serverResponse,
+      );
 
       // ACT
       const promise = useProductStore.getState().createProduct(input);
@@ -55,7 +61,9 @@ describe("ProductStore", () => {
         color: "Red",
       };
       const serverResponse = { id: "v1", ...input };
-      (fetchApi as any).mockResolvedValue(serverResponse);
+      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue(
+        serverResponse,
+      );
 
       // ACT
       const promise = useProductStore.getState().createVariant(input);

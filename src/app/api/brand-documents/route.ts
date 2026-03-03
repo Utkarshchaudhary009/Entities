@@ -2,12 +2,9 @@ import {
   brandDocumentQuerySchema,
   parseSearchParams,
 } from "@/lib/api/query-schemas";
-import {
-  cachedSuccessResponse,
-  createdDataResponse,
-  handleError,
-} from "@/lib/api/response";
+import { createdDataResponse, handleError } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import { cached } from "@/lib/cache-headers";
 import { createBrandDocumentSchema } from "@/lib/validations/brand-document";
 import { brandDocumentService } from "@/services/brand-document.service";
 
@@ -23,7 +20,7 @@ export async function GET(request: Request) {
       type: query.type,
     });
 
-    return cachedSuccessResponse(result, 300, 120);
+    return cached.static(result);
   } catch (error) {
     return handleError(error, "Fetch brand documents");
   }

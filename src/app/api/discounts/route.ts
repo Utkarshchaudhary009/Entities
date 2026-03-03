@@ -1,13 +1,9 @@
 import { revalidatePath } from "next/cache";
-
 import type { DiscountType } from "@/generated/prisma/client";
 import { paginationSchema, parseSearchParams } from "@/lib/api/query-schemas";
-import {
-  cachedPaginatedResponse,
-  createdDataResponse,
-  handleError,
-} from "@/lib/api/response";
+import { createdDataResponse, handleError } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import { cached } from "@/lib/cache-headers";
 import { createDiscountSchema } from "@/lib/validations/discount";
 import { discountService } from "@/services/discount.service";
 
@@ -24,7 +20,7 @@ export async function GET(request: Request) {
       limit: query.limit,
     });
 
-    return cachedPaginatedResponse(result, 120, 60);
+    return cached.static(result);
   } catch (error) {
     return handleError(error, "Fetch discounts");
   }

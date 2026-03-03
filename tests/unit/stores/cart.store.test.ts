@@ -1,18 +1,11 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  mock,
-  spyOn,
-} from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { useCartStore } from "@/stores/cart.store";
 
 // --- MOCK SETUP ---
 // Mock the fetchApi function from "@/stores/http"
 mock.module("@/stores/http", () => ({
-  createRequestDeduper: () => (key: string, fn: any) => fn(),
+  createRequestDeduper: () => (_key: string, fn: () => void | Promise<void>) =>
+    fn(),
   fetchApi: mock(),
 }));
 
@@ -26,7 +19,7 @@ describe("CartStore", () => {
       error: null,
       sessionId: "sess_123",
     });
-    (fetchApi as any).mockReset();
+    (fetchApi as ReturnType<typeof fetchApi>).mockReset();
   });
 
   describe("addItem", () => {
@@ -59,7 +52,9 @@ describe("CartStore", () => {
         },
       };
 
-      (fetchApi as any).mockResolvedValue(serverResponse);
+      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue(
+        serverResponse,
+      );
 
       // ACT
       const promise = useCartStore.getState().addItem(itemToAdd);
@@ -93,7 +88,9 @@ describe("CartStore", () => {
         stock: 10,
       };
 
-      (fetchApi as any).mockRejectedValue(new Error("API Error"));
+      (fetchApi as ReturnType<typeof fetchApi>).mockRejectedValue(
+        new Error("API Error"),
+      );
 
       // ACT
       await useCartStore.getState().addItem(itemToAdd);
@@ -126,7 +123,7 @@ describe("CartStore", () => {
         ],
       });
 
-      (fetchApi as any).mockResolvedValue({});
+      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue({});
 
       // ACT
       const promise = useCartStore
@@ -169,7 +166,7 @@ describe("CartStore", () => {
         ],
       });
 
-      (fetchApi as any).mockResolvedValue({});
+      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue({});
 
       // ACT
       const promise = useCartStore

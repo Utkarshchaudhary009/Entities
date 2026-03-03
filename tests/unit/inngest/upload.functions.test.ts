@@ -32,7 +32,7 @@ describe("Inngest: Upload Functions", () => {
     it("should upload file to bucket", async () => {
       // Note: Testing Inngest functions unit-style requires mocking the 'step' object
       const mockStep = {
-        run: mock((id: string, fn: () => any) => fn()),
+        run: mock((_id: string, fn: () => any) => fn()),
       };
 
       const event = {
@@ -70,7 +70,7 @@ describe("Inngest: Upload Functions", () => {
   describe("handleFileDelete", () => {
     it("should remove files from bucket", async () => {
       const mockStep = {
-        run: mock((id: string, fn: () => any) => fn()),
+        run: mock((_id: string, fn: () => any) => fn()),
       };
 
       const event = {

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 
 test.describe("Admin Brand Documents", () => {
   test.beforeEach(async ({ page }) => {

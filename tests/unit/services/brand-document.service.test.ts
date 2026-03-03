@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { setupServiceModule } from "./service-test.utils";
 
 // --- MOCK SETUP ---
