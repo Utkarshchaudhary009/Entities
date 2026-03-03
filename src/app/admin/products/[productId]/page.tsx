@@ -8,7 +8,6 @@ import {
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Image from "next/image";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { BlurImage } from "@/components/ui/blur-image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -208,7 +208,7 @@ export default function ProductDetailsPage({
                           <TableCell>
                             <div className="relative size-10 overflow-hidden rounded-md border bg-muted">
                               {variant.images?.[0] ? (
-                                <Image
+                                <BlurImage
                                   src={variant.images[0]}
                                   alt={`${product.name} ${variant.size} ${variant.color}`}
                                   fill
@@ -387,7 +387,7 @@ export default function ProductDetailsPage({
 
           <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
             {product.thumbnailUrl ? (
-              <Image
+              <BlurImage
                 src={product.thumbnailUrl}
                 alt={product.name}
                 fill

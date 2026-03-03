@@ -7,7 +7,6 @@ import {
   FilterHorizontalIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -24,6 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { BlurImage } from "@/components/ui/blur-image";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -136,7 +136,7 @@ export default function AdminProductsPage() {
       render: (_: unknown, row: ApiProduct) => (
         <div className="relative size-10 overflow-hidden rounded-md border bg-muted">
           {row.thumbnailUrl ? (
-            <Image
+            <BlurImage
               src={row.thumbnailUrl}
               alt={row.name}
               fill

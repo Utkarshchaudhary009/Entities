@@ -10,6 +10,7 @@ export const createOrderSchema = z.object({
   state: z.string().min(1, "State is required"),
   pincode: z.string().min(5, "Invalid pincode"),
   sessionId: z.string().min(1).max(128),
+  discountCode: z.string().optional(),
 });
 
 export const updateOrderDetailsSchema = z

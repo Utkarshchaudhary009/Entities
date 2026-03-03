@@ -37,15 +37,9 @@ const nextConfig: NextConfig = {
     turbopackFileSystemCacheForBuild: true,
   },
   images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 31536000,
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.supabase.co",
-      },
       {
         protocol: "https",
         hostname: "ffpfapdnnoasqvehcdff.supabase.co",

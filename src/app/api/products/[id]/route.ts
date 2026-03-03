@@ -42,6 +42,7 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
     });
 
     revalidatePath("/api/products");
+    revalidatePath("/api/shop/catalog");
     revalidatePath(`/api/products/${id}`);
     return successDataResponse(product);
   } catch (error) {
@@ -95,6 +96,7 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
     }
 
     revalidatePath("/api/products");
+    revalidatePath("/api/shop/catalog");
     revalidatePath(`/api/products/${id}`);
     return successDataResponse({ success: true });
   } catch (error) {

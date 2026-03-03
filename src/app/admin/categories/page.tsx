@@ -2,10 +2,10 @@
 
 import { PencilEdit01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { CategoryDrawer } from "@/components/admin/category-drawer";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
+import { BlurImage } from "@/components/ui/blur-image";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useCategoryStore } from "@/stores/category.store";
@@ -66,7 +66,7 @@ export default function AdminCategoriesPage() {
         return (
           <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted/50">
             {url ? (
-              <Image
+              <BlurImage
                 src={url}
                 alt="Category thumbnail"
                 width={40}

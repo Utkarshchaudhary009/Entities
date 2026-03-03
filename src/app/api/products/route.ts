@@ -1,13 +1,9 @@
 import { revalidatePath } from "next/cache";
-
 import { safeInngestSend } from "@/inngest/safe-send";
 import { parseSearchParams, productQuerySchema } from "@/lib/api/query-schemas";
-import {
-  cachedPaginatedResponse,
-  createdDataResponse,
-  handleError,
-} from "@/lib/api/response";
+import { createdDataResponse, handleError } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import { cached } from "@/lib/cache-headers";
 import { createProductSchema } from "@/lib/validations/product";
 import { productService } from "@/services/product.service";
 
@@ -29,7 +25,7 @@ export async function GET(request: Request) {
       includeInactive: isAdmin,
     });
 
-    return cachedPaginatedResponse(result, 60, 30);
+    return cached.noStore(result);
   } catch (error) {
     return handleError(error, "Fetch products");
   }
@@ -59,6 +55,7 @@ export async function POST(request: Request) {
     });
 
     revalidatePath("/api/products");
+    revalidatePath("/api/shop/catalog");
     return createdDataResponse(product);
   } catch (error) {
     return handleError(error, "Create product");

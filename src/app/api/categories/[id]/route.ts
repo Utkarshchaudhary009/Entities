@@ -42,6 +42,7 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
     });
 
     revalidatePath("/api/categories");
+    revalidatePath("/api/shop/catalog");
     revalidatePath(`/api/categories/${id}`);
     return successDataResponse(category);
   } catch (error) {
@@ -67,8 +68,7 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
     });
 
     revalidatePath("/api/categories");
-    revalidatePath(`/api/categories/${id}`);
-    revalidatePath("/api/categories");
+    revalidatePath("/api/shop/catalog");
     revalidatePath(`/api/categories/${id}`);
     return successDataResponse({ success: true });
   } catch (error) {

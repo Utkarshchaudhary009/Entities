@@ -1,12 +1,11 @@
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface ProfileMenuItemProps {
   href: string;
-  // biome-ignore lint/suspicious/noExplicitAny: HugeiconsIcon type is complex
-  icon?: any;
+  icon?: IconSvgElement;
   label: string;
   className?: string;
 }

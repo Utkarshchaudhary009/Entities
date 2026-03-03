@@ -1,16 +1,12 @@
 import { revalidatePath } from "next/cache";
-
 import { safeInngestSend } from "@/inngest/safe-send";
 import {
   categoryQuerySchema,
   parseSearchParams,
 } from "@/lib/api/query-schemas";
-import {
-  cachedPaginatedResponse,
-  createdDataResponse,
-  handleError,
-} from "@/lib/api/response";
+import { createdDataResponse, handleError } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import { cached } from "@/lib/cache-headers";
 import { createCategorySchema } from "@/lib/validations/category";
 import { categoryService } from "@/services/category.service";
 
@@ -25,7 +21,7 @@ export async function GET(request: Request) {
       search: query.search,
     });
 
-    return cachedPaginatedResponse(result, 120, 60);
+    return cached.static(result);
   } catch (error) {
     return handleError(error, "Fetch categories");
   }
@@ -54,7 +50,7 @@ export async function POST(request: Request) {
     });
 
     revalidatePath("/api/categories");
-    revalidatePath("/api/categories");
+    revalidatePath("/api/shop/catalog");
     return createdDataResponse(category);
   } catch (error) {
     return handleError(error, "Create category");
