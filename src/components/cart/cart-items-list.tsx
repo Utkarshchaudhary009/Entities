@@ -8,8 +8,8 @@ import {
   ShoppingCart01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Image from "next/image";
 import Link from "next/link";
+import { BlurImage } from "@/components/ui/blur-image";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -92,7 +92,7 @@ export function CartItemsList() {
           {/* Thumbnail */}
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted/40">
             {item.productImage ? (
-              <Image
+              <BlurImage
                 src={item.productImage}
                 alt={item.productName}
                 fill

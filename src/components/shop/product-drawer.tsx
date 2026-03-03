@@ -2,9 +2,9 @@
 
 import { ShoppingCart01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { BlurImage } from "@/components/ui/blur-image";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,6 +52,8 @@ export function ProductDrawer({
     color: string | null;
     size: string | null;
   }>({ color: null, size: null });
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
   const selectedColor = selection.color;
   const selectedSize = selection.size;
   const details = useShopStore((state) =>
@@ -94,7 +96,13 @@ export function ProductDrawer({
   useEffect(() => {
     if (!product || !isOpen) return;
     setSelection({ color: null, size: null });
+    setSelectedImageIndex(0);
   }, [product, isOpen]);
+
+  useEffect(() => {
+    // Reset image index when variants change
+    setSelectedImageIndex(0);
+  }, []);
 
   useEffect(() => {
     if (!isOpen || !product || variants.length === 0) return;
@@ -234,24 +242,55 @@ export function ProductDrawer({
         >
           <div
             className={cn(
-              "relative h-[40vh] bg-muted/40",
-              isDesktop && "h-full",
+              "relative flex flex-col bg-muted/20 pb-4 h-[45vh]",
+              isDesktop && "h-full pb-0",
             )}
           >
-            {galleryImages.length > 0 ? (
-              <div className="grid h-full w-full grid-cols-1 overflow-hidden">
-                <Image
-                  src={galleryImages[0]}
+            {/* Main Image */}
+            <div className="relative flex-1 overflow-hidden">
+              {galleryImages.length > 0 ? (
+                <BlurImage
+                  src={galleryImages[selectedImageIndex] ?? galleryImages[0]}
                   alt={product?.name ?? "Product image"}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
                   priority
                 />
-              </div>
-            ) : (
-              <div className="grid h-full place-items-center text-sm text-muted-foreground">
-                No image available
+              ) : (
+                <div className="grid h-full place-items-center text-sm text-muted-foreground bg-muted/40">
+                  No image available
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            {galleryImages.length > 1 && (
+              <div className="mt-3 px-4 md:absolute md:bottom-6 md:left-0 md:w-full md:px-6 md:mt-0 md:bg-transparent">
+                <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none md:justify-center">
+                  {galleryImages.map((image, idx) => (
+                    <button
+                      type="button"
+                      // biome-ignore lint/suspicious/noArrayIndexKey: images might not have unique IDs
+                      key={`thumb-${idx}`}
+                      onClick={() => setSelectedImageIndex(idx)}
+                      className={cn(
+                        "relative h-16 w-12 shrink-0 overflow-hidden rounded-md border-2 transition-all md:h-20 md:w-16 md:shadow-sm md:rounded-lg",
+                        selectedImageIndex === idx
+                          ? "border-primary md:border-foreground md:scale-105"
+                          : "border-transparent opacity-60 hover:opacity-100",
+                      )}
+                    >
+                      <BlurImage
+                        src={image}
+                        alt={`Thumbnail ${idx + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
