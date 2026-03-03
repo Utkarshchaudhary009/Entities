@@ -3,6 +3,18 @@ import { afterAll, describe, expect, it, mock } from "bun:test";
 mock.restore();
 
 // --- MOCK SETUP ---
+mock.module("sharp", () => {
+  const sharpMock = {
+    resize: mock().mockReturnThis(),
+    webp: mock().mockReturnThis(),
+    blur: mock().mockReturnThis(),
+    toBuffer: mock().mockResolvedValue(Buffer.from("mock-buffer")),
+  };
+  return {
+    default: mock(() => sharpMock),
+  };
+});
+
 mock.module("@/lib/supabase/admin", () => ({
   supabaseAdmin: {
     storage: {
@@ -70,7 +82,19 @@ describe("Inngest: Upload Functions", () => {
         expect.any(Function),
       );
       expect(mockStep.run).toHaveBeenCalledWith(
-        "upload-to-supabase",
+        "process-main-image",
+        expect.any(Function),
+      );
+      expect(mockStep.run).toHaveBeenCalledWith(
+        "upload-main-to-supabase",
+        expect.any(Function),
+      );
+      expect(mockStep.run).toHaveBeenCalledWith(
+        "process-blur-image",
+        expect.any(Function),
+      );
+      expect(mockStep.run).toHaveBeenCalledWith(
+        "upload-blur-to-supabase",
         expect.any(Function),
       );
     });
