@@ -36,7 +36,7 @@ export async function GET() {
       categoryName: p.category?.name || null,
     }));
 
-    return cached.static(catalog);
+    return cached.aggressive(catalog);
   } catch (error) {
     return handleError(error, "Fetch catalog");
   }

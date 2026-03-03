@@ -3,6 +3,11 @@ import { z } from "zod";
 export const createBrandSchema = z.object({
   name: z.string().min(1, "Name is required"),
   logoUrl: z.string().url("Invalid logo URL").optional().or(z.literal("")),
+  heroImageUrl: z
+    .string()
+    .url("Invalid hero image URL")
+    .optional()
+    .or(z.literal("")),
   tagline: z.string().optional(),
   brandStory: z.string().optional(),
   supportEmail: z

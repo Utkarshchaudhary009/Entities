@@ -4,6 +4,7 @@ import { safeInngestSend } from "@/inngest/safe-send";
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import { cached } from "@/lib/cache-headers";
 import { updateBrandSchema } from "@/lib/validations/brand";
 import { brandService } from "@/services/brand.service";
 import type { RouteParamsAsync } from "@/types/api";
@@ -12,7 +13,8 @@ export async function GET(_request: Request, { params }: RouteParamsAsync) {
   try {
     const { id } = idParamSchema.parse(await params);
     const brand = await brandService.findById(id);
-    return successDataResponse(brand);
+    // Individual brand detail — static cache, bust on mutation
+    return cached.static(successDataResponse(brand));
   } catch (error) {
     return handleError(error, "Fetch brand");
   }
@@ -35,6 +37,7 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
         name: brand.name,
         tagline: brand.tagline ?? undefined,
         logoUrl: brand.logoUrl ?? undefined,
+        heroImageUrl: brand.heroImageUrl ?? undefined,
         isActive: brand.isActive,
         actorId: guard.auth.userId,
         idempotencyKey: `entity/brand.updated.v1:${brand.id}:${brand.updatedAt.getTime()}`,
@@ -43,6 +46,7 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
 
     revalidatePath("/api/brands");
     revalidatePath(`/api/brands/${id}`);
+    revalidatePath("/"); // Bust homepage ISR cache
     return successDataResponse(brand);
   } catch (error) {
     return handleError(error, "Update brand");
@@ -68,8 +72,7 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
 
     revalidatePath("/api/brands");
     revalidatePath(`/api/brands/${id}`);
-    revalidatePath("/api/brands");
-    revalidatePath(`/api/brands/${id}`);
+    revalidatePath("/"); // Bust homepage ISR cache
     return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete brand");

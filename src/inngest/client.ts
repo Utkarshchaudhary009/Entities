@@ -7,6 +7,7 @@ type EntityEvents = {
       name: string;
       tagline?: string;
       logoUrl?: string;
+      heroImageUrl?: string;
       isActive?: boolean;
       actorId?: string;
       idempotencyKey: string;
@@ -18,6 +19,7 @@ type EntityEvents = {
       name?: string;
       tagline?: string;
       logoUrl?: string;
+      heroImageUrl?: string;
       isActive?: boolean;
       actorId?: string;
       idempotencyKey: string;

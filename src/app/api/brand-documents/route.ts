@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       type: query.type,
     });
 
-    return cached.dynamic(result);
+    return cached.aggressive(result);
   } catch (error) {
     return handleError(error, "Fetch brand documents");
   }

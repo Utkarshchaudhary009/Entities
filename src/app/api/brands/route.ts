@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       search: query.search,
     });
 
-    return cached.static(result);
+    return cached.aggressive(result);
   } catch (error) {
     return handleError(error, "Fetch brands");
   }
@@ -49,6 +49,7 @@ export async function POST(request: Request) {
       ...restBody,
       founderId,
       logoUrl: restBody.logoUrl || null,
+      heroImageUrl: restBody.heroImageUrl || null,
       supportEmail: restBody.supportEmail || null,
     });
 
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
         name: brand.name,
         tagline: brand.tagline ?? undefined,
         logoUrl: brand.logoUrl ?? undefined,
+        heroImageUrl: brand.heroImageUrl ?? undefined,
         isActive: brand.isActive,
         actorId: guard.auth.userId,
         idempotencyKey: `entity/brand.created.v1:${brand.id}:${brand.createdAt.getTime()}`,

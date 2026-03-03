@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type * as z from "zod";
+import { ImageUpload } from "@/components/admin/image-upload";
 import { SocialLinksEditor } from "@/components/admin/social-links-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +69,7 @@ export default function AdminBrandPage() {
     defaultValues: {
       name: "",
       logoUrl: "",
+      heroImageUrl: "",
       tagline: "",
       brandStory: "",
       supportEmail: "",
@@ -84,6 +86,7 @@ export default function AdminBrandPage() {
       reset({
         name: brand.name,
         logoUrl: brand.logoUrl || "",
+        heroImageUrl: brand.heroImageUrl || "",
         tagline: brand.tagline || "",
         brandStory: brand.brandStory || "",
         supportEmail: brand.supportEmail || "",
@@ -175,6 +178,36 @@ export default function AdminBrandPage() {
                 {errors.logoUrl && (
                   <p className="text-xs text-destructive">
                     {errors.logoUrl.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+                <div className="space-y-1">
+                  <Label>Hero Image (Homepage Background)</Label>
+                  <p className="text-[13px] text-muted-foreground">
+                    This image will be used as the immersive full-screen
+                    background for the homepage hero section.
+                  </p>
+                </div>
+                <ImageUpload
+                  value={
+                    watch("heroImageUrl")
+                      ? [watch("heroImageUrl") as string]
+                      : []
+                  }
+                  onChange={(urls) =>
+                    setValue("heroImageUrl", urls[0] || "", {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                  bucket="brands"
+                  maxImages={1}
+                />
+                {errors.heroImageUrl && (
+                  <p className="text-xs text-destructive">
+                    {errors.heroImageUrl.message}
                   </p>
                 )}
               </div>

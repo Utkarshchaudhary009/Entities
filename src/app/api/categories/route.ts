@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       search: query.search,
     });
 
-    return cached.static(result);
+    return cached.aggressive(result);
   } catch (error) {
     return handleError(error, "Fetch categories");
   }

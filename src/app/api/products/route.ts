@@ -25,7 +25,12 @@ export async function GET(request: Request) {
       includeInactive: isAdmin,
     });
 
-    return cached.noStore(result);
+    // Admin sees inactive products — never cache on CDN to avoid data leaks.
+    // Public requesters get aggressive CDN caching (24 h) for maximum performance.
+    if (isAdmin) {
+      return cached.noStore(result);
+    }
+    return cached.aggressive(result);
   } catch (error) {
     return handleError(error, "Fetch products");
   }

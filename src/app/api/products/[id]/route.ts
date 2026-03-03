@@ -4,6 +4,7 @@ import { safeInngestSend } from "@/inngest/safe-send";
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
 import { requireAdmin } from "@/lib/auth/guards";
+import { cached } from "@/lib/cache-headers";
 import { updateProductSchema } from "@/lib/validations/product";
 import { productService } from "@/services/product.service";
 import type { RouteParamsAsync } from "@/types/api";
@@ -12,7 +13,8 @@ export async function GET(_request: Request, { params }: RouteParamsAsync) {
   try {
     const { id } = idParamSchema.parse(await params);
     const product = await productService.findById(id);
-    return successDataResponse(product);
+    // Individual product detail — static cache, bust via revalidatePath on mutation
+    return cached.static(successDataResponse(product));
   } catch (error) {
     return handleError(error, "Fetch product");
   }
@@ -44,6 +46,7 @@ export async function PUT(request: Request, { params }: RouteParamsAsync) {
     revalidatePath("/api/products");
     revalidatePath("/api/shop/catalog");
     revalidatePath(`/api/products/${id}`);
+    revalidatePath("/"); // Bust homepage ISR cache
     return successDataResponse(product);
   } catch (error) {
     return handleError(error, "Update product");
@@ -98,6 +101,7 @@ export async function DELETE(_request: Request, { params }: RouteParamsAsync) {
     revalidatePath("/api/products");
     revalidatePath("/api/shop/catalog");
     revalidatePath(`/api/products/${id}`);
+    revalidatePath("/"); // Bust homepage ISR cache
     return successDataResponse({ success: true });
   } catch (error) {
     return handleError(error, "Delete product");

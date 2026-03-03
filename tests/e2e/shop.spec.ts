@@ -8,7 +8,7 @@ test.describe("Shop Page", () => {
   });
 
   // biome-ignore lint/correctness/noEmptyPattern: Playwright requires the first argument to be an object pattern
-  test.afterEach(async ({ }, testInfo) => {
+  test.afterEach(async ({}, testInfo) => {
     if (testInfo.status === "passed") {
       console.log(`PASS: ${testInfo.title} - All assertions passed`);
     } else if (testInfo.status === "failed") {

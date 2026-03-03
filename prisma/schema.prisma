@@ -183,6 +183,7 @@ model Brand {
   id             String           @id @default(uuid())
   name           String
   logoUrl        String?          @map("logo_url")
+  heroImageUrl   String?          @map("hero_image_url")
   tagline        String?
   brandStory     String?          @map("brand_story")
   supportEmail   String?          @map("support_email")

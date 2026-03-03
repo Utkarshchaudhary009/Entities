@@ -20,7 +20,8 @@ export async function GET(request: Request) {
       limit: query.limit,
     });
 
-    return cached.noStore(result);
+    // Admin-only: private browser cache (60 s) — CDN never stores this.
+    return cached.static(result);
   } catch (error) {
     return handleError(error, "Fetch discounts");
   }

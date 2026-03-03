@@ -50,6 +50,16 @@ export class BrandService {
                 url: true,
               },
             },
+            philosophy: {
+              select: {
+                id: true,
+                mission: true,
+                vision: true,
+                values: true,
+                story: true,
+                heroImageUrl: true,
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         }),
@@ -78,6 +88,7 @@ export class BrandService {
           founder: true,
           documents: { where: { isActive: true } },
           socialLinks: { where: { isActive: true } },
+          philosophy: true,
         },
       });
       if (!brand) {

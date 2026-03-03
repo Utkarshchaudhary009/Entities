@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       search: query.search,
     });
 
-    return cached.dynamic(result);
+    return cached.aggressive(result);
   } catch (error) {
     return handleError(error, "Fetch founders");
   }
