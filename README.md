@@ -25,6 +25,7 @@ Required flow:
 - Supabase Storage (file uploads)
 - Inngest events/functions
 - Zustand state management
+- PostHog Analytics
 - Biome lint/format
 
 ## Commands

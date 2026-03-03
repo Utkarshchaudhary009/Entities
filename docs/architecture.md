@@ -19,11 +19,11 @@ The Next.js configuration (`next.config.ts`) sets important security and perform
   - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
 - API routes additionally receive `Cache-Control: private, no-store`.
 - **Turbopack Cache**: File system caching enabled for both development (`turbopackFileSystemCacheForDev`) and build (`turbopackFileSystemCacheForBuild`) to improve performance.
-- **Remote Image Patterns**: Allows images from:
-  - `images.unsplash.com`
-  - `**.supabase.co` (wildcard subdomains)
-  - `ffpfapdnnoasqvehcdff.supabase.co` (specific bucket)
-  - `img.clerk.com`
+- **Image Optimization**:
+  - Modern formats: `image/avif`, `image/webp`
+  - Long cache TTL: `31536000` seconds (1 year)
+  - **Remote Image Patterns**: Allows images from specific Supabase bucket only:
+    - `ffpfapdnnoasqvehcdff.supabase.co` (project storage bucket)
 
 ## Layer Responsibilities
 
@@ -118,6 +118,7 @@ The root layout establishes the global UI framework:
 - `<html>` includes `suppressHydrationWarning` to avoid theme class hydration mismatches.
 - `<ThemeProvider>` configured with `attribute="class"`, `defaultTheme="system"`, `enableSystem`, and `disableTransitionOnChange`.
 - Integrates `<GoogleOneTap />` for seamless sign-in.
+- Integrates `<PostHogProvider>` for analytics with Clerk user identification.
 - Layout structure: fixed `<Topbar>` (64px), `<BottomNav>` for mobile, with content offset via `pt-16` and `pb-16` (mobile) / `pb-0` (desktop).
 - `<Toaster>` from `sonner` displays notifications at `top-right` with rich colors.
 
@@ -471,6 +472,7 @@ Functions (`src/inngest/functions/user-profile.ts`) perform audit logging and si
 ## UI Components
 - **shadcn/ui**: Install via `bunx --bun shadcn@latest add <name>`. Components in `components/ui/`.
 - **ThemeProvider**: Client component wrapper around `next-themes` `ThemeProvider` (`src/components/theme-provider.tsx`), configured with `attribute="class"`, `defaultTheme="system"`, `enableSystem`, and `disableTransitionOnChange`. Used at the root layout for global theme management.
+- **BlurImage**: Optimized image component (`src/components/ui/blur-image.tsx`) that automatically loads low-quality blur placeholders (`-blurpic` suffix) before the main image. Uses backend-generated blur images for smooth visual transitions. Accepts all standard `next/image` props plus `useBlur` toggle (default: true).
 - **Drawer**: `vaul`-based drawer component (`src/components/ui/drawer.tsx`) supports bottom/left/right/top directions with animated overlay.
 - **Icon Library**: Uses `@hugeicons/core-free-icons` and `@hugeicons/react` for all iconography. Do not use `lucide-react`.
 - **Chart**: Recharts-based chart wrapper (`src/components/ui/chart.tsx`) with theme-aware CSS variable injection. Exports `ChartContainer`, `ChartTooltip`, `ChartTooltipContent`, `ChartLegend`, `ChartLegendContent`, `ChartStyle`. Uses dynamic imports for SSR safety.
@@ -538,8 +540,11 @@ The upload system uses Supabase Storage with async Inngest processing for non-bl
   - Allowed types: `image/jpeg`, `image/png`, `image/webp`, `image/gif`, `application/pdf`
 - **Store** (`src/stores/upload.store.ts`): Manages upload state with `UploadEntry` tracking (pending, uploading, done, error), preview URLs via blob, and projected public URLs
 - **Inngest Functions** (`src/inngest/functions/upload.functions.ts`):
-  - `handleFileUpload`: Receives base64 file buffer, ensures bucket exists, uploads to Supabase
-  - `handleFileDelete`: Removes files from storage by URL path extraction
+  - `handleFileUpload`: Receives base64 file buffer, ensures bucket exists. For images:
+    - Processes main image with `sharp`: resizes to 1920x1920 (maintains aspect), converts to WebP (quality 80)
+    - Generates blur placeholder: 10x10 resized, blurred (radius 10), WebP (quality 20) and uploads with `-blurpic` suffix
+    - Both images uploaded with 1-year cache control
+  - `handleFileDelete`: Removes files from storage by URL path extraction; also deletes potential `-blurpic` counterparts
 - **Supabase Admin** (`src/lib/supabase/admin.ts`): Server-only client with bypass RLS privileges using `SUPABASE_SERVICE_ROLE_KEY`
 
 ### Inngest Events
@@ -553,6 +558,34 @@ The upload system uses Supabase Storage with async Inngest processing for non-bl
 - Background upload with status overlay (uploading spinner, done checkmark, error alert)
 - Blob preview URLs during upload, swapped to public URLs on completion
 - Configurable `maxImages` (default 10) and `bucket` prop
+
+### Blur Image System
+The `BlurImage` component (`src/components/ui/blur-image.tsx`) provides optimized image loading with automatic blur placeholders:
+- Automatically attempts to load `${src}-blurpic` as the initial blurred placeholder
+- Main image fades in over the blur after loading
+- Backend upload pipeline generates blur placeholders automatically via `sharp`
+- Used throughout the UI to replace standard `next/image` for better perceived performance
+
+## Analytics
+
+The project uses **PostHog** for product analytics with automatic user identification and pageview tracking.
+
+### Integration
+- **Client Provider** (`src/components/providers/posthog-provider.tsx`):
+  - Initializes PostHog with environment credentials (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`)
+  - Uses `posthog-js` SDK with `PostHogProvider` wrapper
+  - Configures `person_profiles: "identified_only"` for cost optimization
+  - Manual pageview capture (App Router compatible) via `usePathname` and `useSearchParams`
+  - Automatic user identification from Clerk session: `user.id`, `email`, `name`, `username`
+  - Handles logout via `posthog.reset()`
+- **Root Layout**: Wraps the entire app with `<PostHogProvider>` inside `<ThemeProvider>` to ensure all pages are tracked
+
+### Environment Variables
+- `NEXT_PUBLIC_POSTHOG_KEY`: PostHog project API key
+- `NEXT_PUBLIC_POSTHOG_HOST`: PostHog instance host (default: `https://us.i.posthog.com`)
+
+### Custom Events
+Pageviews are captured automatically as `$pageview` with `$current_url` property. Custom events can be sent via `posthog.capture(eventName, properties)` from any client component.
 
 ## Error Handling
 - Domain and persistence errors mapped through `src/lib/errors.ts`.
