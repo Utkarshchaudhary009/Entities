@@ -253,7 +253,7 @@ This design eliminates separate color/size management endpoints and UI, simplify
 - **Routes**:
   - `GET /api/products` — list products (**NoStore cache**, admin required, paginated, searchable; includes inactive products)
   - `POST /api/products` — create product (admin required)
-  - `GET /api/products/[id]` — fetch product with variants (**Dynamic cache**, 1m CDN, 5m SWR; public)
+  - `GET /api/products/[id]` — fetch product with variants (**Static cache**, 1h CDN, 24h SWR; public)
   - `PUT /api/products/[id]` — update product (admin required); busts `/api/products`, `/api/shop/catalog`, and homepage ISR cache
   - `DELETE /api/products/[id]` — delete product (admin required); removes product thumbnail and all variant images from storage via Inngest events; busts related caches
   - `GET /api/product-variants/[id]` — fetch variant details (public)
@@ -467,12 +467,12 @@ The public home page (`src/app/page.tsx`) is a server component that aggregates 
 **HomeFooter** (`src/components/home/home-footer.tsx`)
 - Full-width footer with 4-column layout and social links.
 - Props: `categories: Category[]`, `socialLinks: SocialLink[]`
-- Columns: Brand description, Collections (dynamic categories), Company links, Policies links.
-- Social icons map via `PLATFORM_ICONS` using `@hugeicons/react`; unknown platforms fall back to text label.
+- Columns: Brand description, Collections (dynamic categories), Company links, Policy links.
+- Social icons map via `PLATFORM_ICONS` using `@hugeicons/react`; unknown platforms fall back to a text label.
 
 ### Data Flow Summary
 
-```
+```text
 HomePage (server)
   └─ prisma queries (brand + philosophy + socialLinks, featured products, categories)
       └─ props → child components (all client-capable, server-rendered)
