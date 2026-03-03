@@ -1,12 +1,4 @@
-import {
-  afterAll,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  mock,
-} from "bun:test";
+import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
 
 mock.restore();
 
@@ -51,20 +43,23 @@ describe("API: Orders [id]", () => {
   const mockParams = Promise.resolve({ id: VALID_ID });
 
   beforeEach(() => {
-    (requireAuth as any).mockReset();
-    (requireAdmin as any).mockReset();
-    (orderService.findById as any).mockReset();
-    (orderService.updateOrderDetails as any).mockReset();
+    (requireAuth as ReturnType<typeof mock>).mockReset();
+    (requireAdmin as ReturnType<typeof mock>).mockReset();
+    (orderService.findById as ReturnType<typeof mock>).mockReset();
+    (orderService.updateOrderDetails as ReturnType<typeof mock>).mockReset();
+    (orderService.findByIdWithOwnership as ReturnType<typeof mock>).mockReset();
   });
 
   describe("GET", () => {
     it("should return order for owner", async () => {
       // ARRANGE
-      (requireAuth as any).mockResolvedValue({
+      (requireAuth as ReturnType<typeof mock>).mockResolvedValue({
         success: true,
         auth: { userId: "user_1", role: "USER" },
       });
-      (orderService.findByIdWithOwnership as any).mockResolvedValue({
+      (
+        orderService.findByIdWithOwnership as ReturnType<typeof mock>
+      ).mockResolvedValue({
         id: VALID_ID,
       });
 
@@ -84,7 +79,7 @@ describe("API: Orders [id]", () => {
 
     it("should return 401 if not authenticated", async () => {
       // ARRANGE
-      (requireAuth as any).mockResolvedValue({
+      (requireAuth as ReturnType<typeof mock>).mockResolvedValue({
         success: false,
         response: new Response(null, { status: 401 }),
       });
@@ -102,16 +97,18 @@ describe("API: Orders [id]", () => {
   describe("PUT (Status Update)", () => {
     it("should update status if admin", async () => {
       // ARRANGE
-      (requireAdmin as any).mockResolvedValue({
+      (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
         success: true,
         auth: { userId: "admin_1" },
       });
-      (orderService.findById as any).mockResolvedValue({
+      (orderService.findById as ReturnType<typeof mock>).mockResolvedValue({
         id: VALID_ID,
         status: "PENDING",
         orderNumber: "ORD-1",
       });
-      (orderService.updateOrderDetails as any).mockResolvedValue({
+      (
+        orderService.updateOrderDetails as ReturnType<typeof mock>
+      ).mockResolvedValue({
         id: VALID_ID,
         status: "SHIPPED",
         createdAt: new Date("2024-01-01T00:00:00Z"),

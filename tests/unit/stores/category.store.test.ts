@@ -1,13 +1,17 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { useCategoryStore } from "@/stores/category.store";
 
 // --- MOCK SETUP ---
 mock.module("@/stores/http", () => ({
-  createRequestDeduper: () => (key: string, fn: any) => fn(),
+  createRequestDeduper: () => (_key: string, fn: () => void | Promise<void>) =>
+    fn(),
   fetchApi: mock(),
   fetchJson: mock(),
   buildSearchParams: () => new URLSearchParams(),
-  coercePaginatedResponse: (json: any) => ({ data: json, meta: { total: 1 } }),
+  coercePaginatedResponse: (json: unknown) => ({
+    data: json,
+    meta: { total: 1 },
+  }),
 }));
 
 const { fetchApi } = await import("@/stores/http");
@@ -20,7 +24,7 @@ describe("CategoryStore (Factory)", () => {
       isLoading: false,
       error: null,
     });
-    (fetchApi as any).mockReset();
+    (fetchApi as ReturnType<typeof mock>).mockReset();
   });
 
   describe("create", () => {
@@ -28,7 +32,7 @@ describe("CategoryStore (Factory)", () => {
       // ARRANGE
       const input = { name: "Tops", slug: "tops" };
       const serverResponse = { id: "c1", ...input };
-      (fetchApi as any).mockResolvedValue(serverResponse);
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue(serverResponse);
 
       // ACT
       const promise = useCategoryStore.getState().create(input);

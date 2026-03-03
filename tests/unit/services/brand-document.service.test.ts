@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { setupServiceModule } from "./service-test.utils";
 
 // --- MOCK SETUP ---
@@ -74,11 +74,9 @@ describe("BrandDocumentService", () => {
       mockPrisma.brandDocument.findUnique.mockResolvedValue(null);
 
       // ACT & ASSERT
-      try {
-        await brandDocumentService.findById("999");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
-      }
+      await expect(brandDocumentService.findById("999")).rejects.toMatchObject({
+        name: "NotFoundError",
+      });
     });
   });
 
@@ -94,6 +92,7 @@ describe("BrandDocumentService", () => {
       mockPrisma.brandDocument.create.mockResolvedValue(mockDoc);
 
       // ACT
+      // biome-ignore lint/suspicious/noExplicitAny: Intentional invalid input for test
       const result = await brandDocumentService.create(input as any);
 
       // ASSERT

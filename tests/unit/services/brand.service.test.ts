@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { setupServiceModule } from "./service-test.utils";
 
 // --- MOCK SETUP ---
@@ -80,12 +80,9 @@ describe("BrandService", () => {
       mockPrisma.brand.findUnique.mockResolvedValue(null);
 
       // ACT & ASSERT
-      try {
-        await brandService.findById("999");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
-        expect(error.message).toContain("Brand");
-      }
+      await expect(brandService.findById("999")).rejects.toMatchObject({
+        name: "NotFoundError",
+      });
     });
   });
 

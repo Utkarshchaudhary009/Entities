@@ -3,6 +3,18 @@ import { afterAll, describe, expect, it, mock } from "bun:test";
 mock.restore();
 
 // --- MOCK SETUP ---
+mock.module("sharp", () => {
+  const sharpMock = {
+    resize: mock().mockReturnThis(),
+    webp: mock().mockReturnThis(),
+    blur: mock().mockReturnThis(),
+    toBuffer: mock().mockResolvedValue(Buffer.from("mock-buffer")),
+  };
+  return {
+    default: mock(() => sharpMock),
+  };
+});
+
 mock.module("@/lib/supabase/admin", () => ({
   supabaseAdmin: {
     storage: {
@@ -23,6 +35,10 @@ const { handleFileUpload, handleFileDelete } = await import(
 );
 const { supabaseAdmin } = await import("@/lib/supabase/admin");
 
+type InngestHandlerFn = {
+  fn: (args: { event: unknown; step?: unknown }) => Promise<unknown>;
+};
+
 afterAll(() => {
   mock.restore();
 });
@@ -32,7 +48,7 @@ describe("Inngest: Upload Functions", () => {
     it("should upload file to bucket", async () => {
       // Note: Testing Inngest functions unit-style requires mocking the 'step' object
       const mockStep = {
-        run: mock((id: string, fn: () => any) => fn()),
+        run: mock((_id: string, fn: () => unknown) => fn()),
       };
 
       const event = {
@@ -45,23 +61,40 @@ describe("Inngest: Upload Functions", () => {
       };
 
       // Mock bucket exists check
-      (supabaseAdmin.storage.listBuckets as any).mockResolvedValue({
+      (
+        supabaseAdmin.storage.listBuckets as ReturnType<typeof mock>
+      ).mockResolvedValue({
         data: [{ name: "products" }],
         error: null,
       });
 
-      (supabaseAdmin.storage.from as any).mockReturnValue({
+      (supabaseAdmin.storage.from as ReturnType<typeof mock>).mockReturnValue({
         upload: mock(() => ({ error: null })),
       });
 
-      await (handleFileUpload as any).fn({ event, step: mockStep });
+      await (handleFileUpload as InngestHandlerFn).fn({
+        event,
+        step: mockStep,
+      });
 
       expect(mockStep.run).toHaveBeenCalledWith(
         "ensure-bucket-exists",
         expect.any(Function),
       );
       expect(mockStep.run).toHaveBeenCalledWith(
-        "upload-to-supabase",
+        "process-main-image",
+        expect.any(Function),
+      );
+      expect(mockStep.run).toHaveBeenCalledWith(
+        "upload-main-to-supabase",
+        expect.any(Function),
+      );
+      expect(mockStep.run).toHaveBeenCalledWith(
+        "process-blur-image",
+        expect.any(Function),
+      );
+      expect(mockStep.run).toHaveBeenCalledWith(
+        "upload-blur-to-supabase",
         expect.any(Function),
       );
     });
@@ -70,7 +103,7 @@ describe("Inngest: Upload Functions", () => {
   describe("handleFileDelete", () => {
     it("should remove files from bucket", async () => {
       const mockStep = {
-        run: mock((id: string, fn: () => any) => fn()),
+        run: mock((_id: string, fn: () => unknown) => fn()),
       };
 
       const event = {
@@ -82,11 +115,14 @@ describe("Inngest: Upload Functions", () => {
         },
       };
 
-      (supabaseAdmin.storage.from as any).mockReturnValue({
+      (supabaseAdmin.storage.from as ReturnType<typeof mock>).mockReturnValue({
         remove: mock(() => ({ data: [], error: null })),
       });
 
-      await (handleFileDelete as any).fn({ event, step: mockStep });
+      await (handleFileDelete as InngestHandlerFn).fn({
+        event,
+        step: mockStep,
+      });
 
       expect(mockStep.run).toHaveBeenCalledWith(
         "delete-from-supabase",

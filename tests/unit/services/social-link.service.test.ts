@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { setupServiceModule } from "./service-test.utils";
 
 // --- MOCK SETUP ---
@@ -65,18 +65,16 @@ describe("SocialLinkService", () => {
       mockPrisma.socialLink.findUnique.mockResolvedValue(null);
 
       // ACT & ASSERT
-      try {
-        await socialLinkService.findById("999");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
-      }
+      await expect(socialLinkService.findById("999")).rejects.toMatchObject({
+        name: "NotFoundError",
+      });
     });
   });
 
   describe("create", () => {
     it("should create link successfully", async () => {
       // ARRANGE
-      const input = {
+      const input: Parameters<typeof socialLinkService.create>[0] = {
         platform: "GitHub",
         url: "https://github.com",
         brandId: "b1",
@@ -85,7 +83,7 @@ describe("SocialLinkService", () => {
       mockPrisma.socialLink.create.mockResolvedValue(mockLink);
 
       // ACT
-      const result = await socialLinkService.create(input as any);
+      const result = await socialLinkService.create(input);
 
       // ASSERT
       expect(result).toEqual(mockLink);

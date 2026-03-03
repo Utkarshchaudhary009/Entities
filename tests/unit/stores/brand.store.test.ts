@@ -1,9 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { useBrandStore } from "@/stores/brand.store";
+import type { ApiBrand } from "@/types/api";
 
 // --- MOCK SETUP ---
 mock.module("@/stores/http", () => ({
-  createRequestDeduper: () => (key: string, fn: any) => fn(),
+  createRequestDeduper: () => (_key: string, fn: () => void | Promise<void>) =>
+    fn(),
   fetchApi: mock(),
   fetchJson: mock(),
 }));
@@ -18,8 +20,8 @@ describe("BrandStore", () => {
       isLoading: false,
       error: null,
     });
-    (fetchApi as any).mockReset();
-    (fetchJson as any).mockReset();
+    (fetchApi as ReturnType<typeof mock>).mockReset();
+    (fetchJson as ReturnType<typeof mock>).mockReset();
   });
 
   describe("createBrand", () => {
@@ -30,7 +32,7 @@ describe("BrandStore", () => {
         founderId: "123e4567-e89b-12d3-a456-426614174000",
       };
       const serverResponse = { id: "server_id", name: "Nike" };
-      (fetchApi as any).mockResolvedValue(serverResponse);
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue(serverResponse);
 
       // ACT
       const promise = useBrandStore.getState().createBrand(input);
@@ -49,7 +51,9 @@ describe("BrandStore", () => {
 
     it("should revert on failure", async () => {
       // ARRANGE
-      (fetchApi as any).mockRejectedValue(new Error("Fail"));
+      (fetchApi as ReturnType<typeof mock>).mockRejectedValue(
+        new Error("Fail"),
+      );
 
       // ACT
       await useBrandStore.getState().createBrand({
@@ -67,10 +71,13 @@ describe("BrandStore", () => {
     it("should optimistically update", async () => {
       // ARRANGE
       useBrandStore.setState({
-        brands: [{ id: "1", name: "Nike" } as any],
-        brand: { id: "1", name: "Nike" } as any,
+        brands: [{ id: "1", name: "Nike" }] as ApiBrand[],
+        brand: { id: "1", name: "Nike" } as ApiBrand,
       });
-      (fetchApi as any).mockResolvedValue({ id: "1", name: "Nike Updated" });
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue({
+        id: "1",
+        name: "Nike Updated",
+      });
 
       // ACT
       await useBrandStore.getState().updateBrand("1", { name: "Nike Updated" });
@@ -86,9 +93,9 @@ describe("BrandStore", () => {
     it("should optimistically delete", async () => {
       // ARRANGE
       useBrandStore.setState({
-        brands: [{ id: "1", name: "Nike" } as any],
+        brands: [{ id: "1", name: "Nike" }] as ApiBrand[],
       });
-      (fetchJson as any).mockResolvedValue({});
+      (fetchJson as ReturnType<typeof mock>).mockResolvedValue({});
 
       // ACT
       await useBrandStore.getState().deleteBrand("1");

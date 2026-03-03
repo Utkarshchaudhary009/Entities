@@ -21,12 +21,12 @@ afterAll(() => {
 
 describe("API: Upload", () => {
   beforeEach(() => {
-    (requireAdmin as any).mockReset();
-    (safeInngestSend as any).mockReset();
+    (requireAdmin as ReturnType<typeof mock>).mockReset();
+    (safeInngestSend as ReturnType<typeof mock>).mockReset();
   });
 
   it("should reject unauthorized users", async () => {
-    (requireAdmin as any).mockResolvedValue({
+    (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
       success: false,
       response: new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -40,7 +40,7 @@ describe("API: Upload", () => {
   });
 
   it("should reject files larger than 10MB", async () => {
-    (requireAdmin as any).mockResolvedValue({
+    (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
       success: true,
       auth: { userId: "admin" },
     });
@@ -68,11 +68,13 @@ describe("API: Upload", () => {
   });
 
   it("should trigger Inngest and return 202 on successful upload request", async () => {
-    (requireAdmin as any).mockResolvedValue({
+    (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
       success: true,
       auth: { userId: "admin" },
     });
-    (safeInngestSend as any).mockResolvedValue({ ids: ["123"] });
+    (safeInngestSend as ReturnType<typeof mock>).mockResolvedValue({
+      ids: ["123"],
+    });
 
     const file = new File([new ArrayBuffer(1024)], "test.png", {
       type: "image/png",

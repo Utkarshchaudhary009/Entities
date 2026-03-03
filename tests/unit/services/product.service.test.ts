@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { setupServiceModule } from "./service-test.utils";
 
 // --- MOCK SETUP ---
@@ -82,9 +82,9 @@ describe("ProductService", () => {
       // ACT & ASSERT
       try {
         await productService.findById("999");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
-        expect(error.message).toContain("Product");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("NotFoundError");
+        expect((error as Error).message).toContain("Product");
       }
     });
   });
@@ -109,9 +109,9 @@ describe("ProductService", () => {
       // ACT & ASSERT
       try {
         await productService.findBySlug("unknown-slug");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
-        expect(error.message).toContain("Product");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("NotFoundError");
+        expect((error as Error).message).toContain("Product");
       }
     });
   });
