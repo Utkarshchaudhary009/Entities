@@ -250,8 +250,8 @@ The public shop interface provides optimized product data fetching with caching 
   - Request deduping and cache-first patterns
 
 - **UI Components**:
-  - `ShopContent` (`src/app/(user)/shop/shop-content.tsx`) renders the catalog grid with category filtering and search
-  - `ProductDrawer` (`src/components/shop/product-drawer.tsx`) displays product details and variant selection, fetching media on-demand by color
+  - `ShopContent` (`src/app/(user)/shop/shop-content.tsx`) renders the catalog grid with category filtering and search. Default view shows "New Arrivals" section when no filters are active. Search input placeholder: "Search by product or category". Search results display count in format "Results for \"<query>\" (N products)".
+  - `ProductDrawer` (`src/components/shop/product-drawer.tsx`) displays product details and variant selection, fetching media on-demand by color. Includes Color and Size selectors, image gallery with thumbnails, product description/material/fit/care info, and "Add to cart" button.
 
 ## Admin Category Management
 Category administration follows the standard architecture flow:
@@ -540,11 +540,13 @@ The upload system uses Supabase Storage with async Inngest processing for non-bl
   - Allowed types: `image/jpeg`, `image/png`, `image/webp`, `image/gif`, `application/pdf`
 - **Store** (`src/stores/upload.store.ts`): Manages upload state with `UploadEntry` tracking (pending, uploading, done, error), preview URLs via blob, and projected public URLs
 - **Inngest Functions** (`src/inngest/functions/upload.functions.ts`):
-  - `handleFileUpload`: Receives base64 file buffer, ensures bucket exists. For images:
-    - Processes main image with `sharp`: resizes to 1920x1920 (maintains aspect), converts to WebP (quality 80)
-    - Generates blur placeholder: 10x10 resized, blurred (radius 10), WebP (quality 20) and uploads with `-blurpic` suffix
-    - Both images uploaded with 1-year cache control
-  - `handleFileDelete`: Removes files from storage by URL path extraction; also deletes potential `-blurpic` counterparts
+  - `handleFileUpload` (`handle-file-upload`): Receives base64 file buffer. Executes steps:
+    - `ensure-bucket-exists`: Creates bucket if missing (public: true)
+    - `process-main-image`: For images, uses `sharp` to resize to 1920x1920 (maintains aspect, no enlargement), converts to WebP (quality 80). Non-images pass through unchanged.
+    - `upload-main-to-supabase`: Uploads main image with 1-year cache control.
+    - `process-blur-image` (images only): Creates 10x10 resized, blurred (radius 10), WebP (quality 20) placeholder.
+    - `upload-blur-to-supabase`: Uploads blur with `-blurpic` suffix; errors logged non-fatally.
+  - `handleFileDelete` (`handle-file-delete`): Removes files from storage. Extracts paths from public URLs and also deletes potential `-blurpic` counterparts. Step: `delete-from-supabase`.
 - **Supabase Admin** (`src/lib/supabase/admin.ts`): Server-only client with bypass RLS privileges using `SUPABASE_SERVICE_ROLE_KEY`
 
 ### Inngest Events
