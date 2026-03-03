@@ -67,8 +67,8 @@ describe("FounderService", () => {
       // ACT & ASSERT
       try {
         await founderService.findById("999");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("NotFoundError");
       }
     });
   });

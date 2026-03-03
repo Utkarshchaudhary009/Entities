@@ -68,9 +68,9 @@ describe("DiscountService", () => {
       // ACT & ASSERT
       try {
         await discountService.findById("999");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
-        expect(error.message).toContain("Discount");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("NotFoundError");
+        expect((error as Error).message).toContain("Discount");
       }
     });
   });

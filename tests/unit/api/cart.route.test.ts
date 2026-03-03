@@ -30,15 +30,17 @@ afterAll(() => {
 
 describe("API: Cart", () => {
   beforeEach(() => {
-    (cartService.getCartSummary as any).mockReset();
-    (cartService.addItem as any).mockReset();
-    (cartService.clearCart as any).mockReset();
+    (cartService.getCartSummary as ReturnType<typeof mock>).mockReset();
+    (cartService.addItem as ReturnType<typeof mock>).mockReset();
+    (cartService.clearCart as ReturnType<typeof mock>).mockReset();
   });
 
   describe("GET", () => {
     it("should return cart summary", async () => {
       // ARRANGE
-      (cartService.getCartSummary as any).mockResolvedValue({ items: [] });
+      (cartService.getCartSummary as ReturnType<typeof mock>).mockResolvedValue(
+        { items: [] },
+      );
       const request = new Request("http://localhost/api/cart", {
         headers: { "x-session-id": "sess_1" },
       });
@@ -56,7 +58,9 @@ describe("API: Cart", () => {
   describe("POST", () => {
     it("should add item to cart", async () => {
       // ARRANGE
-      (cartService.addItem as any).mockResolvedValue({ id: "i1" });
+      (cartService.addItem as ReturnType<typeof mock>).mockResolvedValue({
+        id: "i1",
+      });
       const request = new Request("http://localhost/api/cart", {
         method: "POST",
         headers: { "x-session-id": "sess_1" },

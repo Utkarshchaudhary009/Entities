@@ -82,9 +82,9 @@ describe("BrandService", () => {
       // ACT & ASSERT
       try {
         await brandService.findById("999");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
-        expect(error.message).toContain("Brand");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("NotFoundError");
+        expect((error as Error).message).toContain("Brand");
       }
     });
   });

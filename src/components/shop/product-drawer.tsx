@@ -351,6 +351,48 @@ export function ProductDrawer({
                   )}
                 </section>
               </div>
+
+              {details && (
+                <div className="mt-8 space-y-4 border-t pt-6">
+                  {details.description && (
+                    <div>
+                      <p className="text-sm font-medium">Description</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {details.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {(details.material || details.fabric) && (
+                    <div>
+                      <p className="text-sm font-medium">Material & Fabric</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {[details.material, details.fabric]
+                          .filter(Boolean)
+                          .join(" • ")}
+                      </p>
+                    </div>
+                  )}
+
+                  {details.fit && (
+                    <div>
+                      <p className="text-sm font-medium">Fit</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {details.fit}
+                      </p>
+                    </div>
+                  )}
+
+                  {details.careInstruction && (
+                    <div>
+                      <p className="text-sm font-medium">Care Instructions</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {details.careInstruction}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="border-t bg-background px-5 py-4">

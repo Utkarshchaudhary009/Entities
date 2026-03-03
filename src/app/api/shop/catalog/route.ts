@@ -8,12 +8,14 @@ export async function GET() {
       where: {
         isActive: true,
       },
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         name: true,
         slug: true,
         price: true,
         thumbnailUrl: true,
+        createdAt: true,
         category: {
           select: {
             slug: true,
@@ -29,6 +31,7 @@ export async function GET() {
       slug: p.slug,
       price: p.price,
       thumbnailUrl: p.thumbnailUrl,
+      createdAt: p.createdAt.toISOString(),
       categorySlug: p.category?.slug || null,
       categoryName: p.category?.name || null,
     }));

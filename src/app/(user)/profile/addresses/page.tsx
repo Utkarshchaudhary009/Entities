@@ -3,6 +3,7 @@
 import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
+import type { z } from "zod";
 import { AddressCard } from "@/components/profile/address-card";
 import { AddressForm } from "@/components/profile/address-form";
 import { BackButton } from "@/components/ui/back-button";
@@ -14,7 +15,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { addressSchema } from "@/lib/validations/user-profile";
 import { useUserAddressStore } from "@/stores/user-address.store";
+
+type AddressFormValues = z.infer<typeof addressSchema>;
 
 export default function AddressesPage() {
   const {
@@ -47,12 +51,15 @@ export default function AddressesPage() {
     setIsDialogOpen(true);
   };
 
-  // biome-ignore lint/suspicious/noExplicitAny: expected any for form data
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: AddressFormValues) => {
+    const payload = {
+      ...data,
+      isDefault: data.isDefault ?? false,
+    };
     if (editingAddressId) {
-      await updateAddress(editingAddressId, data);
+      await updateAddress(editingAddressId, payload);
     } else {
-      await addAddress(data);
+      await addAddress(payload);
     }
     setIsDialogOpen(false);
   };

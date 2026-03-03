@@ -90,9 +90,9 @@ describe("OrderService", () => {
       // ACT & ASSERT
       try {
         await orderService.create(validInput);
-      } catch (error: any) {
-        expect(error.name).toBe("ValidationError");
-        expect(error.message).toContain("Insufficient stock");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("ValidationError");
+        expect((error as Error).message).toContain("Insufficient stock");
         expect(error.message).toContain("Available: 1");
       }
 
@@ -110,9 +110,9 @@ describe("OrderService", () => {
       // ACT & ASSERT
       try {
         await orderService.create(validInput);
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
-        expect(error.message).toContain("Product variant");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("NotFoundError");
+        expect((error as Error).message).toContain("Product variant");
       }
     });
 
@@ -123,9 +123,11 @@ describe("OrderService", () => {
       // ACT & ASSERT
       try {
         await orderService.create(invalidInput);
-      } catch (error: any) {
-        expect(error.name).toBe("ValidationError");
-        expect(error.message).toBe("Order must have at least one item");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("ValidationError");
+        expect((error as Error).message).toBe(
+          "Order must have at least one item",
+        );
       }
     });
   });

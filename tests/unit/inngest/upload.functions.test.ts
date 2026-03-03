@@ -32,7 +32,7 @@ describe("Inngest: Upload Functions", () => {
     it("should upload file to bucket", async () => {
       // Note: Testing Inngest functions unit-style requires mocking the 'step' object
       const mockStep = {
-        run: mock((_id: string, fn: () => any) => fn()),
+        run: mock((_id: string, fn: () => unknown) => fn()),
       };
 
       const event = {
@@ -45,15 +45,18 @@ describe("Inngest: Upload Functions", () => {
       };
 
       // Mock bucket exists check
-      (supabaseAdmin.storage.listBuckets as any).mockResolvedValue({
+      (
+        supabaseAdmin.storage.listBuckets as ReturnType<typeof mock>
+      ).mockResolvedValue({
         data: [{ name: "products" }],
         error: null,
       });
 
-      (supabaseAdmin.storage.from as any).mockReturnValue({
+      (supabaseAdmin.storage.from as ReturnType<typeof mock>).mockReturnValue({
         upload: mock(() => ({ error: null })),
       });
 
+      // biome-ignore lint/suspicious/noExplicitAny: Need to call internal fn for test
       await (handleFileUpload as any).fn({ event, step: mockStep });
 
       expect(mockStep.run).toHaveBeenCalledWith(
@@ -70,7 +73,7 @@ describe("Inngest: Upload Functions", () => {
   describe("handleFileDelete", () => {
     it("should remove files from bucket", async () => {
       const mockStep = {
-        run: mock((_id: string, fn: () => any) => fn()),
+        run: mock((_id: string, fn: () => unknown) => fn()),
       };
 
       const event = {
@@ -82,10 +85,11 @@ describe("Inngest: Upload Functions", () => {
         },
       };
 
-      (supabaseAdmin.storage.from as any).mockReturnValue({
+      (supabaseAdmin.storage.from as ReturnType<typeof mock>).mockReturnValue({
         remove: mock(() => ({ data: [], error: null })),
       });
 
+      // biome-ignore lint/suspicious/noExplicitAny: Need to call internal fn for test
       await (handleFileDelete as any).fn({ event, step: mockStep });
 
       expect(mockStep.run).toHaveBeenCalledWith(

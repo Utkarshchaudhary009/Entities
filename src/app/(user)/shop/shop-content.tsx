@@ -5,6 +5,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { CollectionsSection } from "@/components/shop/collections-section";
+import { NewArrivalsSection } from "@/components/shop/new-arrivals-section";
 import { ProductDrawer } from "@/components/shop/product-drawer";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -23,6 +25,7 @@ export function ShopContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const categorySlug = searchParams.get("category");
+  const sortParam = searchParams.get("sort");
 
   const fetchCatalog = useShopStore((state) => state.fetchCatalog);
   const fetchProductDetails = useShopStore(
@@ -55,6 +58,8 @@ export function ShopContent() {
     if (!categorySlug) return base;
     return base.filter((product) => product.categorySlug === categorySlug);
   }, [searchQuery, filteredCatalog, catalog, categorySlug]);
+
+  const showDefaultView = !searchQuery.trim() && !categorySlug && !sortParam;
 
   const activeCategoryName = useMemo(
     () => categories.find((item) => item.slug === categorySlug)?.name ?? "All",
@@ -112,129 +117,142 @@ export function ShopContent() {
           </div>
         </div>
 
-        <div className="pt-5">
-          {isLoadingCategories ? (
-            <div className="flex gap-2 overflow-hidden">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Skeleton
-                  key={`category-loading-${index.toString()}`}
-                  className="h-9 w-24 rounded-full"
-                />
-              ))}
-            </div>
-          ) : (
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex w-max gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCategory(null)}
-                  className={cn(
-                    "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-                    !categorySlug
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-background text-foreground hover:border-foreground/40",
-                  )}
-                >
-                  All
-                </button>
-                {categories.map((category) => (
+        {showDefaultView ? (
+          <>
+            <NewArrivalsSection
+              products={catalog}
+              onProductClick={handleProductClick}
+            />
+            <CollectionsSection
+              categories={categories}
+              onCategoryClick={setCategory}
+            />
+          </>
+        ) : (
+          <div className="pt-5">
+            {isLoadingCategories ? (
+              <div className="flex gap-2 overflow-hidden">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Skeleton
+                    key={`category-loading-${index.toString()}`}
+                    className="h-9 w-24 rounded-full"
+                  />
+                ))}
+              </div>
+            ) : (
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex w-max gap-2">
                   <button
                     type="button"
-                    key={category.id}
-                    onClick={() =>
-                      setCategory(
-                        categorySlug === category.slug ? null : category.slug,
-                      )
-                    }
+                    onClick={() => setCategory(null)}
                     className={cn(
                       "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-                      categorySlug === category.slug
+                      !categorySlug
                         ? "border-foreground bg-foreground text-background"
                         : "border-border bg-background text-foreground hover:border-foreground/40",
                     )}
                   >
-                    {category.name}
+                    All
                   </button>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" className="invisible" />
-            </ScrollArea>
-          )}
-
-          <div className="mt-6 flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">
-                {sectionTitle}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {displayedProducts.length.toLocaleString()} products
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {isInitialLoading ? (
-              Array.from({ length: 10 }).map((_, index) => (
-                <div
-                  key={`catalog-loading-${index.toString()}`}
-                  className="space-y-2"
-                >
-                  <Skeleton className="aspect-[4/5] rounded-2xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+                  {categories.map((category) => (
+                    <button
+                      type="button"
+                      key={category.id}
+                      onClick={() =>
+                        setCategory(
+                          categorySlug === category.slug ? null : category.slug,
+                        )
+                      }
+                      className={cn(
+                        "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                        categorySlug === category.slug
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border bg-background text-foreground hover:border-foreground/40",
+                      )}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
                 </div>
-              ))
-            ) : displayedProducts.length > 0 ? (
-              displayedProducts.map((product) => (
-                <button
-                  type="button"
-                  key={product.id}
-                  onMouseEnter={() => fetchProductDetails(product.id)}
-                  onClick={() => handleProductClick(product)}
-                  className="group text-left"
-                >
-                  <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/50 bg-muted/40">
-                    {product.thumbnailUrl ? (
-                      <Image
-                        src={product.thumbnailUrl}
-                        alt={product.name}
-                        fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 20vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
-                        No image
-                      </div>
-                    )}
-                    <div className="absolute inset-x-3 bottom-3 rounded-xl bg-background/78 px-3 py-2 backdrop-blur-md">
-                      <p className="line-clamp-1 text-sm font-medium leading-tight">
-                        {product.name}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {product.categoryName ?? "Essential"}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-base font-semibold">
-                    {currencyFormatter.format(product.price)}
-                  </p>
-                </button>
-              ))
-            ) : (
-              <div className="col-span-full rounded-2xl border border-dashed border-border/80 bg-muted/20 py-14 text-center">
-                <HugeiconsIcon
-                  icon={Search02Icon}
-                  className="mx-auto mb-3 h-10 w-10 text-muted-foreground/55"
-                />
-                <p className="text-lg font-medium">No products found</p>
-                <p className="text-sm text-muted-foreground">
-                  Try changing your search or category filter.
+                <ScrollBar orientation="horizontal" className="invisible" />
+              </ScrollArea>
+            )}
+
+            <div className="mt-6 flex items-end justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight">
+                  {sectionTitle}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {displayedProducts.length.toLocaleString()} products
                 </p>
               </div>
-            )}
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {isInitialLoading ? (
+                Array.from({ length: 10 }).map((_, index) => (
+                  <div
+                    key={`catalog-loading-${index.toString()}`}
+                    className="space-y-2"
+                  >
+                    <Skeleton className="aspect-[4/5] rounded-2xl" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ))
+              ) : displayedProducts.length > 0 ? (
+                displayedProducts.map((product) => (
+                  <button
+                    type="button"
+                    key={product.id}
+                    onMouseEnter={() => fetchProductDetails(product.id)}
+                    onClick={() => handleProductClick(product)}
+                    className="group text-left"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/50 bg-muted/40">
+                      {product.thumbnailUrl ? (
+                        <Image
+                          src={product.thumbnailUrl}
+                          alt={product.name}
+                          fill
+                          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 20vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
+                          No image
+                        </div>
+                      )}
+                      <div className="absolute inset-x-3 bottom-3 rounded-xl bg-background/78 px-3 py-2 backdrop-blur-md">
+                        <p className="line-clamp-1 text-sm font-medium leading-tight">
+                          {product.name}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {product.categoryName ?? "Essential"}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-base font-semibold">
+                      {currencyFormatter.format(product.price)}
+                    </p>
+                  </button>
+                ))
+              ) : (
+                <div className="col-span-full rounded-2xl border border-dashed border-border/80 bg-muted/20 py-14 text-center">
+                  <HugeiconsIcon
+                    icon={Search02Icon}
+                    className="mx-auto mb-3 h-10 w-10 text-muted-foreground/55"
+                  />
+                  <p className="text-lg font-medium">No products found</p>
+                  <p className="text-sm text-muted-foreground">
+                    Try changing your search or category filter.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <ProductDrawer

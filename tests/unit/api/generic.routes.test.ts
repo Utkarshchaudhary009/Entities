@@ -50,18 +50,18 @@ afterAll(() => {
 
 describe("API: Generic Routes", () => {
   beforeEach(() => {
-    (requireAdmin as any).mockReset();
+    (requireAdmin as ReturnType<typeof mock>).mockReset();
   });
 
   ROUTES.forEach(({ name, route, service, endpoint, validBody }) => {
     describe(name, () => {
       beforeEach(() => {
-        (service.findAll as any).mockReset();
-        (service.create as any).mockReset();
+        (service.findAll as ReturnType<typeof mock>).mockReset();
+        (service.create as ReturnType<typeof mock>).mockReset();
       });
 
       it(`GET /api/${endpoint} should return items`, async () => {
-        (service.findAll as any).mockResolvedValue({
+        (service.findAll as ReturnType<typeof mock>).mockResolvedValue({
           data: [],
           meta: { total: 0 },
         });
@@ -72,11 +72,14 @@ describe("API: Generic Routes", () => {
       });
 
       it(`POST /api/${endpoint} should create item if admin`, async () => {
-        (requireAdmin as any).mockResolvedValue({
+        (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
           success: true,
           auth: { userId: "admin" },
         });
-        (service.create as any).mockResolvedValue({ id: "1", ...validBody });
+        (service.create as ReturnType<typeof mock>).mockResolvedValue({
+          id: "1",
+          ...validBody,
+        });
 
         // Map back to DB structure for mock return
         const dbEntity = { ...validBody };
@@ -89,7 +92,10 @@ describe("API: Generic Routes", () => {
           method: "POST",
           body: JSON.stringify(validBody),
         });
-        (service.create as any).mockResolvedValue({ id: "1", ...dbEntity });
+        (service.create as ReturnType<typeof mock>).mockResolvedValue({
+          id: "1",
+          ...dbEntity,
+        });
 
         const response = await route.POST(request);
         expect(response.status).toBe(201);

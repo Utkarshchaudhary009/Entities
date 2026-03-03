@@ -30,16 +30,18 @@ afterAll(() => {
 
 describe("API: Products", () => {
   beforeEach(() => {
-    (requireAdmin as any).mockReset();
-    (productService.findAll as any).mockReset();
-    (productService.create as any).mockReset();
+    (requireAdmin as ReturnType<typeof mock>).mockReset();
+    (productService.findAll as ReturnType<typeof mock>).mockReset();
+    (productService.create as ReturnType<typeof mock>).mockReset();
   });
 
   describe("GET", () => {
     it("should return products for normal user (active only)", async () => {
       // ARRANGE
-      (requireAdmin as any).mockResolvedValue({ success: false });
-      (productService.findAll as any).mockResolvedValue({
+      (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
+        success: false,
+      });
+      (productService.findAll as ReturnType<typeof mock>).mockResolvedValue({
         data: [],
         meta: { total: 0 },
       });
@@ -56,11 +58,11 @@ describe("API: Products", () => {
 
     it("should return products including inactive for admin", async () => {
       // ARRANGE
-      (requireAdmin as any).mockResolvedValue({
+      (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
         success: true,
         auth: { userId: "admin" },
       });
-      (productService.findAll as any).mockResolvedValue({
+      (productService.findAll as ReturnType<typeof mock>).mockResolvedValue({
         data: [],
         meta: { total: 0 },
       });
@@ -79,11 +81,11 @@ describe("API: Products", () => {
   describe("POST", () => {
     it("should create product if admin", async () => {
       // ARRANGE
-      (requireAdmin as any).mockResolvedValue({
+      (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
         success: true,
         auth: { userId: "admin" },
       });
-      (productService.create as any).mockResolvedValue({
+      (productService.create as ReturnType<typeof mock>).mockResolvedValue({
         id: "p1",
         createdAt: new Date("2024-01-01T00:00:00Z"),
         updatedAt: new Date("2024-01-01T00:00:00Z"),

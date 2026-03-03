@@ -34,15 +34,15 @@ afterAll(() => {
 
 describe("API: Brands", () => {
   beforeEach(() => {
-    (requireAdmin as any).mockReset();
-    (brandService.findAll as any).mockReset();
-    (brandService.create as any).mockReset();
+    (requireAdmin as ReturnType<typeof mock>).mockReset();
+    (brandService.findAll as ReturnType<typeof mock>).mockReset();
+    (brandService.create as ReturnType<typeof mock>).mockReset();
   });
 
   describe("GET", () => {
     it("should return brands", async () => {
       // ARRANGE
-      (brandService.findAll as any).mockResolvedValue({
+      (brandService.findAll as ReturnType<typeof mock>).mockResolvedValue({
         data: [],
         meta: { total: 0 },
       });
@@ -60,11 +60,11 @@ describe("API: Brands", () => {
   describe("POST", () => {
     it("should create brand if admin", async () => {
       // ARRANGE
-      (requireAdmin as any).mockResolvedValue({
+      (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
         success: true,
         auth: { userId: "admin" },
       });
-      (brandService.create as any).mockResolvedValue({
+      (brandService.create as ReturnType<typeof mock>).mockResolvedValue({
         id: "b1",
         name: "Nike",
         createdAt: new Date("2024-01-01T00:00:00Z"),

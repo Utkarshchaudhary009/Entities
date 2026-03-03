@@ -1,6 +1,6 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -8,8 +8,7 @@ import { cn } from "@/lib/utils";
 interface NavLinkProps {
   href: string;
   label: string;
-  // biome-ignore lint/suspicious/noExplicitAny: HugeiconsIcon type is complex
-  icon?: any; // HugeiconsIcon type
+  icon?: IconSvgElement;
   isActive?: boolean;
   className?: string;
   children?: React.ReactNode;

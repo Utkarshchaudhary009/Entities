@@ -35,9 +35,9 @@ describe("ProductService Integration", () => {
         price: 100,
       });
       expect(true).toBe(false);
-    } catch (e: any) {
-      expect(e.name).toBe("ConflictError");
-      expect(e.code).toBe("CONFLICT");
+    } catch (e: unknown) {
+      expect((e as Error).name).toBe("ConflictError");
+      expect((e as { code?: string }).code).toBe("CONFLICT");
     }
   });
 });

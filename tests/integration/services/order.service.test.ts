@@ -108,8 +108,8 @@ describe("OrderService Integration", () => {
     try {
       await orderService.create(orderInput);
       expect(true).toBe(false); // Should fail if no error thrown
-    } catch (e: any) {
-      expect(e.message).toContain("Insufficient stock");
+    } catch (e: unknown) {
+      expect((e as Error).message).toContain("Insufficient stock");
     }
 
     // ASSERT: Stock should still be 8

@@ -11,6 +11,7 @@ export interface CatalogProduct {
   slug: string;
   price: number;
   thumbnailUrl: string | null;
+  createdAt: string;
   categorySlug: string | null;
   categoryName: string | null;
 }
@@ -35,6 +36,11 @@ export type ProductDetails = {
   slug: string;
   price: number;
   thumbnailUrl: string | null;
+  description: string | null;
+  material: string | null;
+  fabric: string | null;
+  fit: string | null;
+  careInstruction: string | null;
   defaultColor: string | null;
   defaultSize: string | null;
   category: ProductCategorySummary | null;

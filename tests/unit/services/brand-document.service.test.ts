@@ -76,8 +76,8 @@ describe("BrandDocumentService", () => {
       // ACT & ASSERT
       try {
         await brandDocumentService.findById("999");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("NotFoundError");
       }
     });
   });
@@ -94,6 +94,7 @@ describe("BrandDocumentService", () => {
       mockPrisma.brandDocument.create.mockResolvedValue(mockDoc);
 
       // ACT
+      // biome-ignore lint/suspicious/noExplicitAny: Intentional invalid input for test
       const result = await brandDocumentService.create(input as any);
 
       // ASSERT

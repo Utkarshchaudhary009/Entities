@@ -67,8 +67,8 @@ describe("SocialLinkService", () => {
       // ACT & ASSERT
       try {
         await socialLinkService.findById("999");
-      } catch (error: any) {
-        expect(error.name).toBe("NotFoundError");
+      } catch (error: unknown) {
+        expect((error as Error).name).toBe("NotFoundError");
       }
     });
   });
@@ -85,6 +85,7 @@ describe("SocialLinkService", () => {
       mockPrisma.socialLink.create.mockResolvedValue(mockLink);
 
       // ACT
+      // biome-ignore lint/suspicious/noExplicitAny: Intentional invalid input for test
       const result = await socialLinkService.create(input as any);
 
       // ASSERT

@@ -30,16 +30,20 @@ afterAll(() => {
 
 describe("API: Discounts", () => {
   beforeEach(() => {
-    (requireAdmin as any).mockReset();
-    (discountService.findAll as any).mockReset();
-    (discountService.create as any).mockReset();
+    (requireAdmin as ReturnType<typeof mock>).mockReset();
+    (discountService.findAll as ReturnType<typeof mock>).mockReset();
+    (discountService.create as ReturnType<typeof mock>).mockReset();
   });
 
   describe("GET", () => {
     it("should return discounts if admin", async () => {
       // ARRANGE
-      (requireAdmin as any).mockResolvedValue({ success: true });
-      (discountService.findAll as any).mockResolvedValue({ data: [] });
+      (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
+        success: true,
+      });
+      (discountService.findAll as ReturnType<typeof mock>).mockResolvedValue({
+        data: [],
+      });
 
       // ACT
       const response = await GET(new Request("http://localhost/api/discounts"));
@@ -52,8 +56,10 @@ describe("API: Discounts", () => {
   describe("POST", () => {
     it("should create discount if admin", async () => {
       // ARRANGE
-      (requireAdmin as any).mockResolvedValue({ success: true });
-      (discountService.create as any).mockResolvedValue({
+      (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
+        success: true,
+      });
+      (discountService.create as ReturnType<typeof mock>).mockResolvedValue({
         id: "d1",
         createdAt: new Date("2024-01-01T00:00:00Z"),
         updatedAt: new Date("2024-01-01T00:00:00Z"),
