@@ -66,12 +66,9 @@ describe("CategoryService", () => {
       mockPrisma.category.findUnique.mockResolvedValue(null);
 
       // ACT & ASSERT
-      try {
-        await categoryService.findById("999");
-      } catch (error: unknown) {
-        expect((error as Error).name).toBe("NotFoundError");
-        expect((error as Error).message).toContain("Category");
-      }
+      await expect(categoryService.findById("999")).rejects.toMatchObject({
+        name: "NotFoundError",
+      });
     });
   });
 

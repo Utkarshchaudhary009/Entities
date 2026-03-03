@@ -10,6 +10,7 @@ import { requireAuth } from "@/lib/auth/guards";
 import { generateOrderNumber } from "@/lib/crypto";
 import { createOrderSchema } from "@/lib/validations/order";
 import { cartService } from "@/services/cart.service";
+import { discountService } from "@/services/discount.service";
 import { orderService } from "@/services/order.service";
 
 export async function GET(request: Request) {
@@ -55,10 +56,25 @@ export async function POST(request: Request) {
     const orderNumber = generateOrderNumber();
 
     const subtotal = cart.items.reduce(
-      (sum, item) => sum + item.productVariant.product.price * item.quantity,
+      (sum, item) =>
+        sum + Math.floor(item.productVariant.product.price) * item.quantity,
       0,
     );
-    const total = subtotal;
+
+    // Resolve discount if a code was provided
+    let discountCode: string | undefined;
+    let discountAmount = 0;
+
+    if (body.discountCode) {
+      const validated = await discountService.validateByCode(
+        body.discountCode,
+        subtotal,
+      );
+      discountCode = validated.code;
+      discountAmount = validated.discountAmount;
+    }
+
+    const total = Math.max(0, subtotal - discountAmount);
 
     const orderData = {
       orderNumber,
@@ -71,6 +87,8 @@ export async function POST(request: Request) {
       state: body.state,
       pincode: body.pincode,
       subtotal,
+      discountCode,
+      discountAmount,
       total,
       items: cart.items.map((item) => ({
         productVariantId: item.productVariantId,
@@ -79,12 +97,23 @@ export async function POST(request: Request) {
         size: item.productVariant.size,
         color: item.productVariant.color,
         quantity: item.quantity,
-        unitPrice: item.productVariant.product.price,
-        totalPrice: item.productVariant.product.price * item.quantity,
+        unitPrice: Math.floor(item.productVariant.product.price),
+        totalPrice:
+          Math.floor(item.productVariant.product.price) * item.quantity,
       })),
     };
 
     const order = await orderService.create(orderData);
+
+    // Increment discount usage count after successful order — fire-and-forget, non-critical
+    if (discountCode) {
+      void discountService.incrementUsage(discountCode).catch(() => {
+        console.error(
+          "[OrderAPI] POST /api/orders — Failed to increment usageCount for discount:",
+          discountCode,
+        );
+      });
+    }
 
     await safeInngestSend({
       name: "entity/order.created.v1",

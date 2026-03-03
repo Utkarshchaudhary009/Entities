@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       limit: query.limit,
     });
 
-    return cached.static(result);
+    return cached.noStore(result);
   } catch (error) {
     return handleError(error, "Fetch discounts");
   }

@@ -54,10 +54,26 @@ export function ShopContent() {
   }, [fetchCatalog, fetchCategories]);
 
   const displayedProducts = useMemo(() => {
-    const base = searchQuery.trim() ? filteredCatalog : catalog;
-    if (!categorySlug) return base;
-    return base.filter((product) => product.categorySlug === categorySlug);
-  }, [searchQuery, filteredCatalog, catalog, categorySlug]);
+    let result = searchQuery.trim() ? filteredCatalog : catalog;
+    if (categorySlug) {
+      result = result.filter(
+        (product) => product.categorySlug === categorySlug,
+      );
+    }
+
+    if (sortParam === "newest") {
+      result = [...result].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    } else if (sortParam === "price-asc") {
+      result = [...result].sort((a, b) => a.price - b.price);
+    } else if (sortParam === "price-desc") {
+      result = [...result].sort((a, b) => b.price - a.price);
+    }
+
+    return result;
+  }, [searchQuery, filteredCatalog, catalog, categorySlug, sortParam]);
 
   const showDefaultView = !searchQuery.trim() && !categorySlug && !sortParam;
 

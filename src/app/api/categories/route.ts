@@ -51,8 +51,6 @@ export async function POST(request: Request) {
 
     revalidatePath("/api/categories");
     revalidatePath("/api/shop/catalog");
-    revalidatePath("/api/categories");
-    revalidatePath("/api/shop/catalog");
     return createdDataResponse(category);
   } catch (error) {
     return handleError(error, "Create category");

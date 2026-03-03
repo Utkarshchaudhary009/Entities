@@ -19,7 +19,7 @@ describe("CartStore", () => {
       error: null,
       sessionId: "sess_123",
     });
-    (fetchApi as ReturnType<typeof fetchApi>).mockReset();
+    (fetchApi as ReturnType<typeof mock>).mockReset();
   });
 
   describe("addItem", () => {
@@ -52,9 +52,7 @@ describe("CartStore", () => {
         },
       };
 
-      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue(
-        serverResponse,
-      );
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue(serverResponse);
 
       // ACT
       const promise = useCartStore.getState().addItem(itemToAdd);
@@ -88,7 +86,7 @@ describe("CartStore", () => {
         stock: 10,
       };
 
-      (fetchApi as ReturnType<typeof fetchApi>).mockRejectedValue(
+      (fetchApi as ReturnType<typeof mock>).mockRejectedValue(
         new Error("API Error"),
       );
 
@@ -123,7 +121,7 @@ describe("CartStore", () => {
         ],
       });
 
-      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue({});
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue({});
 
       // ACT
       const promise = useCartStore
@@ -166,7 +164,7 @@ describe("CartStore", () => {
         ],
       });
 
-      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue({});
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue({});
 
       // ACT
       const promise = useCartStore

@@ -66,12 +66,9 @@ describe("DiscountService", () => {
       mockPrisma.discount.findUnique.mockResolvedValue(null);
 
       // ACT & ASSERT
-      try {
-        await discountService.findById("999");
-      } catch (error: unknown) {
-        expect((error as Error).name).toBe("NotFoundError");
-        expect((error as Error).message).toContain("Discount");
-      }
+      await expect(discountService.findById("999")).rejects.toMatchObject({
+        name: "NotFoundError",
+      });
     });
   });
 

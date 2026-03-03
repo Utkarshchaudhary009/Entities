@@ -24,7 +24,7 @@ describe("CategoryStore (Factory)", () => {
       isLoading: false,
       error: null,
     });
-    (fetchApi as ReturnType<typeof fetchApi>).mockReset();
+    (fetchApi as ReturnType<typeof mock>).mockReset();
   });
 
   describe("create", () => {
@@ -32,9 +32,7 @@ describe("CategoryStore (Factory)", () => {
       // ARRANGE
       const input = { name: "Tops", slug: "tops" };
       const serverResponse = { id: "c1", ...input };
-      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue(
-        serverResponse,
-      );
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue(serverResponse);
 
       // ACT
       const promise = useCategoryStore.getState().create(input);

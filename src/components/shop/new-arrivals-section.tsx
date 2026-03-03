@@ -28,6 +28,10 @@ export function NewArrivalsSection({
   const [shuffledProducts, setShuffledProducts] = useState<CatalogProduct[]>(
     [],
   );
+  const _productsKey = products
+    .slice(0, 10)
+    .map((p) => p.id)
+    .join(",");
 
   useEffect(() => {
     setShuffledProducts(shuffle(products.slice(0, 10)));

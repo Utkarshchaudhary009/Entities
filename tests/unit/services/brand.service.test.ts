@@ -80,12 +80,9 @@ describe("BrandService", () => {
       mockPrisma.brand.findUnique.mockResolvedValue(null);
 
       // ACT & ASSERT
-      try {
-        await brandService.findById("999");
-      } catch (error: unknown) {
-        expect((error as Error).name).toBe("NotFoundError");
-        expect((error as Error).message).toContain("Brand");
-      }
+      await expect(brandService.findById("999")).rejects.toMatchObject({
+        name: "NotFoundError",
+      });
     });
   });
 

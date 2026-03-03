@@ -76,10 +76,6 @@ describe("API: Generic Routes", () => {
           success: true,
           auth: { userId: "admin" },
         });
-        (service.create as ReturnType<typeof mock>).mockResolvedValue({
-          id: "1",
-          ...validBody,
-        });
 
         // Map back to DB structure for mock return
         const dbEntity = { ...validBody };

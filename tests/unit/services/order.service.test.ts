@@ -91,9 +91,10 @@ describe("OrderService", () => {
       try {
         await orderService.create(validInput);
       } catch (error: unknown) {
-        expect((error as Error).name).toBe("ValidationError");
-        expect((error as Error).message).toContain("Insufficient stock");
-        expect(error.message).toContain("Available: 1");
+        const err = error as Error;
+        expect(err.name).toBe("ValidationError");
+        expect(err.message).toContain("Insufficient stock");
+        expect(err.message).toContain("Available: 1");
       }
 
       // Verify order was NOT created

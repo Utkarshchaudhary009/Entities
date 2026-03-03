@@ -26,8 +26,8 @@ describe("ProductStore", () => {
       isLoading: false,
       error: null,
     });
-    (fetchApi as ReturnType<typeof fetchApi>).mockReset();
-    (fetchJson as ReturnType<typeof fetchJson>).mockReset();
+    (fetchApi as ReturnType<typeof mock>).mockReset();
+    (fetchJson as ReturnType<typeof mock>).mockReset();
   });
 
   describe("createProduct", () => {
@@ -35,9 +35,7 @@ describe("ProductStore", () => {
       // ARRANGE
       const input = { name: "Shoe", price: 100, slug: "shoe" };
       const serverResponse = { id: "p1", ...input };
-      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue(
-        serverResponse,
-      );
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue(serverResponse);
 
       // ACT
       const promise = useProductStore.getState().createProduct(input);
@@ -61,9 +59,7 @@ describe("ProductStore", () => {
         color: "Red",
       };
       const serverResponse = { id: "v1", ...input };
-      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue(
-        serverResponse,
-      );
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue(serverResponse);
 
       // ACT
       const promise = useProductStore.getState().createVariant(input);

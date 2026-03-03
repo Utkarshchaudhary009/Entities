@@ -25,7 +25,7 @@ export async function GET(request: Request) {
       includeInactive: isAdmin,
     });
 
-    return cached.static(result);
+    return cached.noStore(result);
   } catch (error) {
     return handleError(error, "Fetch products");
   }

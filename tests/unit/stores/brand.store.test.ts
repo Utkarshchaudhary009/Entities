@@ -20,8 +20,8 @@ describe("BrandStore", () => {
       isLoading: false,
       error: null,
     });
-    (fetchApi as ReturnType<typeof fetchApi>).mockReset();
-    (fetchJson as ReturnType<typeof fetchJson>).mockReset();
+    (fetchApi as ReturnType<typeof mock>).mockReset();
+    (fetchJson as ReturnType<typeof mock>).mockReset();
   });
 
   describe("createBrand", () => {
@@ -32,9 +32,7 @@ describe("BrandStore", () => {
         founderId: "123e4567-e89b-12d3-a456-426614174000",
       };
       const serverResponse = { id: "server_id", name: "Nike" };
-      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue(
-        serverResponse,
-      );
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue(serverResponse);
 
       // ACT
       const promise = useBrandStore.getState().createBrand(input);
@@ -53,7 +51,7 @@ describe("BrandStore", () => {
 
     it("should revert on failure", async () => {
       // ARRANGE
-      (fetchApi as ReturnType<typeof fetchApi>).mockRejectedValue(
+      (fetchApi as ReturnType<typeof mock>).mockRejectedValue(
         new Error("Fail"),
       );
 
@@ -76,7 +74,7 @@ describe("BrandStore", () => {
         brands: [{ id: "1", name: "Nike" }] as ApiBrand[],
         brand: { id: "1", name: "Nike" } as ApiBrand,
       });
-      (fetchApi as ReturnType<typeof fetchApi>).mockResolvedValue({
+      (fetchApi as ReturnType<typeof mock>).mockResolvedValue({
         id: "1",
         name: "Nike Updated",
       });
@@ -97,7 +95,7 @@ describe("BrandStore", () => {
       useBrandStore.setState({
         brands: [{ id: "1", name: "Nike" }] as ApiBrand[],
       });
-      (fetchJson as ReturnType<typeof fetchJson>).mockResolvedValue({});
+      (fetchJson as ReturnType<typeof mock>).mockResolvedValue({});
 
       // ACT
       await useBrandStore.getState().deleteBrand("1");

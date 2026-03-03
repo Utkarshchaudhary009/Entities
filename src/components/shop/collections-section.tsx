@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRef } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface Category {
@@ -19,23 +20,25 @@ export function CollectionsSection({
   categories,
   onCategoryClick,
 }: CollectionsSectionProps) {
+  const sectionRef = useRef<HTMLElement | null>(null);
+
   if (categories.length === 0) return null;
 
   return (
-    <section className="py-6">
+    <section ref={sectionRef} className="py-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-serif text-xl font-bold tracking-tight">
           Collections
         </h2>
         <button
           type="button"
-          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="active:scale-95 text-sm text-muted-foreground transition-all hover:text-foreground"
           onClick={() => {
-            const scrollArea = document.querySelector(
+            const scopedQuery = sectionRef.current?.querySelector(
               '[data-slot="scroll-area-viewport"]',
             );
-            scrollArea?.scrollTo({
-              left: scrollArea.scrollWidth,
+            scopedQuery?.scrollTo({
+              left: scopedQuery.scrollWidth,
               behavior: "smooth",
             });
           }}
@@ -51,7 +54,7 @@ export function CollectionsSection({
               type="button"
               key={category.id}
               onClick={() => onCategoryClick(category.slug)}
-              className="group flex flex-col items-center gap-2"
+              className="active:scale-95 group flex flex-col items-center gap-2 transition-transform"
             >
               <div className="relative h-32 w-20 overflow-hidden rounded-full border border-border/50 bg-muted/40 transition-transform duration-300 group-hover:scale-[1.03]">
                 {category.thumbnailUrl ? (

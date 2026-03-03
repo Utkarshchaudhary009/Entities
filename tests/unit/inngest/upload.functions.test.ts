@@ -23,6 +23,10 @@ const { handleFileUpload, handleFileDelete } = await import(
 );
 const { supabaseAdmin } = await import("@/lib/supabase/admin");
 
+type InngestHandlerFn = {
+  fn: (args: { event: unknown; step?: unknown }) => Promise<unknown>;
+};
+
 afterAll(() => {
   mock.restore();
 });
@@ -56,8 +60,10 @@ describe("Inngest: Upload Functions", () => {
         upload: mock(() => ({ error: null })),
       });
 
-      // biome-ignore lint/suspicious/noExplicitAny: Need to call internal fn for test
-      await (handleFileUpload as any).fn({ event, step: mockStep });
+      await (handleFileUpload as InngestHandlerFn).fn({
+        event,
+        step: mockStep,
+      });
 
       expect(mockStep.run).toHaveBeenCalledWith(
         "ensure-bucket-exists",
@@ -89,8 +95,10 @@ describe("Inngest: Upload Functions", () => {
         remove: mock(() => ({ data: [], error: null })),
       });
 
-      // biome-ignore lint/suspicious/noExplicitAny: Need to call internal fn for test
-      await (handleFileDelete as any).fn({ event, step: mockStep });
+      await (handleFileDelete as InngestHandlerFn).fn({
+        event,
+        step: mockStep,
+      });
 
       expect(mockStep.run).toHaveBeenCalledWith(
         "delete-from-supabase",

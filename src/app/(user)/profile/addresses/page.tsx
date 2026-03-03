@@ -52,14 +52,13 @@ export default function AddressesPage() {
   };
 
   const handleSubmit = async (data: AddressFormValues) => {
-    const payload = {
-      ...data,
-      isDefault: data.isDefault ?? false,
-    };
     if (editingAddressId) {
-      await updateAddress(editingAddressId, payload);
+      await updateAddress(editingAddressId, data);
     } else {
-      await addAddress(payload);
+      await addAddress({
+        ...data,
+        isDefault: data.isDefault ?? false,
+      });
     }
     setIsDialogOpen(false);
   };

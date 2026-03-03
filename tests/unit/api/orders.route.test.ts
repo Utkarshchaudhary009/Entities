@@ -47,6 +47,7 @@ describe("API: Orders [id]", () => {
     (requireAdmin as ReturnType<typeof mock>).mockReset();
     (orderService.findById as ReturnType<typeof mock>).mockReset();
     (orderService.updateOrderDetails as ReturnType<typeof mock>).mockReset();
+    (orderService.findByIdWithOwnership as ReturnType<typeof mock>).mockReset();
   });
 
   describe("GET", () => {

@@ -74,11 +74,9 @@ describe("BrandDocumentService", () => {
       mockPrisma.brandDocument.findUnique.mockResolvedValue(null);
 
       // ACT & ASSERT
-      try {
-        await brandDocumentService.findById("999");
-      } catch (error: unknown) {
-        expect((error as Error).name).toBe("NotFoundError");
-      }
+      await expect(brandDocumentService.findById("999")).rejects.toMatchObject({
+        name: "NotFoundError",
+      });
     });
   });
 
