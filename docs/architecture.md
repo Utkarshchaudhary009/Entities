@@ -25,6 +25,58 @@ The Next.js configuration (`next.config.ts`) sets important security and perform
   - **Remote Image Patterns**: Allows images from specific Supabase bucket only:
     - `ffpfapdnnoasqvehcdff.supabase.co` (project storage bucket)
 
+## Caching Strategy
+
+The application implements a tiered caching strategy via the `cache-headers` utility (`src/lib/cache-headers.ts`). API routes select a cache tier based on data volatility and privacy requirements, using the `cached` helper functions.
+
+### Cache Tiers
+
+**Aggressive** (`cached.aggressive`)
+- **Use case**: Public catalog data that changes infrequently (products, categories, catalog listings).
+- **Headers**: `public, s-maxage=86400, stale-while-revalidate=604800, stale-if-error=86400`
+- **CDN**: 24h, **SWR**: 7d, **stale-if-error**: 1d
+- **Examples**: `GET /api/shop/catalog`, `GET /api/categories`, `GET /api/founders`, `GET /api/brand-documents`
+- **Invalidation**: Mutations call `revalidatePath()` to purge CDN cache immediately.
+
+**Static** (`cached.static`)
+- **Use case**: Rarely changed public resources (brands, founders, philosophies, social links).
+- **Headers**: `public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=3600`
+- **CDN**: 1h, **SWR**: 24h, **stale-if-error**: 1h
+- **Examples**: `GET /api/brands/[id]`, `GET /api/products/[id]` (public details)
+- **Invalidation**: Brand/product mutations call `revalidatePath()` on affected routes.
+
+**Dynamic** (`cached.dynamic`)
+- **Use case**: Semi-public or frequently refreshed data (variant media, non-critical real-time data).
+- **Headers**: `public, s-maxage=60, stale-while-revalidate=300`
+- **CDN**: 1m, **SWR**: 5m
+- **Examples**: `GET /api/shop/products/[id]/variant-media`
+- **Invalidation**: Not typically applicable due to short TTL.
+
+**Private** (`cached.private`)
+- **Use case**: Authenticated user-specific data (admin-only dashboards, user profiles) that should not be stored by CDN.
+- **Headers**: `private, max-age=60, stale-while-revalidate=60`
+- **CDN**: Never stores; **Browser**: 60s
+- **Status**: Defined in utility but not yet in use across API routes.
+- **Invalidation**: Not applicable; data is user-specific.
+
+**NoStore** (`cached.noStore`)
+- **Use case**: Highly sensitive or real-time data (cart, orders, payments, admin product list).
+- **Headers**: `no-store`
+- **CDN/Browser**: No caching at any layer.
+- **Examples**: `GET /api/products` (admin query), other admin-sensitive endpoints.
+- **Invalidation**: Not applicable; always fresh.
+
+### Cache Invalidation Pattern
+
+Mutation endpoints (POST/PUT/DELETE) that modify cached resources call `revalidatePath()` to purge CDN cache for affected routes. For example, creating a product calls:
+
+```typescript
+revalidatePath("/api/products");
+revalidatePath("/api/shop/catalog");
+```
+
+Brand mutations additionally bust the homepage ISR cache: `revalidatePath("/")`.
+
 ## Layer Responsibilities
 
 ### 1. Database and Models
@@ -199,16 +251,16 @@ Available sizes and colors are defined as constant configurations in `src/lib/co
 This design eliminates separate color/size management endpoints and UI, simplifying the variant creation workflow.
 
 - **Routes**:
-  - `GET /api/products` — list products (admin required, paginated, searchable)
+  - `GET /api/products` — list products (**NoStore cache**, admin required, paginated, searchable; includes inactive products)
   - `POST /api/products` — create product (admin required)
-  - `GET /api/products/[id]` — fetch product with variants (public)
-  - `PUT /api/products/[id]` — update product (admin required)
-  - `DELETE /api/products/[id]` — delete product (admin required); removes product thumbnail and all variant images from storage via Inngest events
+  - `GET /api/products/[id]` — fetch product with variants (**Dynamic cache**, 1m CDN, 5m SWR; public)
+  - `PUT /api/products/[id]` — update product (admin required); busts `/api/products`, `/api/shop/catalog`, and homepage ISR cache
+  - `DELETE /api/products/[id]` — delete product (admin required); removes product thumbnail and all variant images from storage via Inngest events; busts related caches
   - `GET /api/product-variants/[id]` — fetch variant details (public)
   - `PUT /api/product-variants/[id]` — update variant (admin required)
   - `DELETE /api/product-variants/[id]` — delete variant; removes variant images from storage (admin required)
-  - `GET /api/admin/products/[id]/overview` — fetch product overview with variants and category (admin required)
-  - `GET /api/admin/product-variants/[id]/details` — fetch variant with full images and metadata (admin required)
+  - `GET /api/admin/products/[id]/overview` — fetch product overview with variants and category (**NoStore**, admin required)
+  - `GET /api/admin/product-variants/[id]/details` — fetch variant with full images and metadata (**NoStore**, admin required)
 - **Service**: `src/services/product.service.ts` handles product operations; `src/services/product-variant.service.ts` manages variants with stock tracking.
 - **Store**: `src/stores/product.store.ts` manages:
   - Product list (`products`, `meta`, `isLoading`)
@@ -235,12 +287,12 @@ This design eliminates separate color/size management endpoints and UI, simplify
 
 ## Shop Product Browsing
 
-The public shop interface provides optimized product data fetching with caching and per-color variant media aggregation.
+The public shop interface provides optimized product data fetching with tiered caching and per-color variant media aggregation.
 
 - **Routes**:
-  - `GET /api/shop/catalog` — fetch lightweight product index for browsing (cached)
-  - `GET /api/shop/products/[id]` — fetch public product details with active variants (cached)
-  - `GET /api/shop/products/[id]/variant-media?color=<color>` — fetch deduplicated image list for a specific color across active variants (cached)
+  - `GET /api/shop/catalog` — fetch lightweight product index for browsing (**Aggressive cache**, 24h CDN, 7d SWR)
+  - `GET /api/shop/products/[id]` — fetch public product details with active variants (**Dynamic cache**, 1m CDN, 5m SWR)
+  - `GET /api/shop/products/[id]/variant-media?color=<color>` — fetch deduplicated image list for a specific color across active variants (**Dynamic cache**, 1m CDN, 5m SWR)
 
 - **Store**: `src/stores/shop.store.ts` manages:
   - Product catalog with Fuse.js search (`catalog`, `filteredCatalog`, `searchQuery`)
@@ -257,9 +309,9 @@ The public shop interface provides optimized product data fetching with caching 
 Category administration follows the standard architecture flow:
 
 - **Routes**:
-  - `GET /api/categories` — list (public, paginated, searchable)
+  - `GET /api/categories` — list (**Aggressive cache**, 24h CDN; public, paginated, searchable)
   - `POST /api/categories` — create category (admin required)
-  - `GET /api/categories/[id]` — fetch category (public)
+  - `GET /api/categories/[id]` — fetch category (public, no special caching)
   - `PUT /api/categories/[id]` — update category (admin required)
   - `DELETE /api/categories/[id]` — delete category (admin required)
 - **Service**: `src/services/category.service.ts` handles category operations with search support and sort ordering.
@@ -280,7 +332,7 @@ The `CategoryDrawer` component demonstrates the project's form pattern:
 Discount administration follows the standard architecture flow:
 
 - **Routes**:
-  - `GET /api/discounts` — list (admin required, paginated, searchable)
+  - `GET /api/discounts` — list (**Static cache**, 1h CDN, 24h SWR; admin required, paginated, searchable)
   - `POST /api/discounts` — create discount (admin required)
   - `GET /api/discounts/[id]` — fetch discount (public)
   - `PUT /api/discounts/[id]` — update discount (admin required)
@@ -317,11 +369,11 @@ Brand administration manages the main brand profile and its social presence thro
   - Request deduping via `createRequestDeduper` prevents duplicate fetches
   - Optimistic updates for create/update/delete with automatic rollback on failure
 - **API Routes**:
-  - `GET /api/brands/[id]` — fetches brand with founder, documents, social links, philosophy (public)
+  - `GET /api/brands/[id]` — fetches brand with founder, documents, social links, philosophy (**Static cache**, 1h CDN; public)
   - `POST /api/brands` — creates brand; emits `brand.created.v1` (admin required)
-  - `PUT /api/brands/[id]` — updates brand; emits `brand.updated.v1` (admin required)
-   - `DELETE /api/brands/[id]` — hard delete; emits `brand.deleted.v1` (admin required)
-  - `GET /api/brands` — list (public, paginated/searchable)
+  - `PUT /api/brands/[id]` — updates brand; emits `brand.updated.v1` (admin required); also calls `revalidatePath("/")` to bust homepage ISR cache
+  - `DELETE /api/brands/[id]` — hard delete; emits `brand.deleted.v1` (admin required); also calls `revalidatePath("/")` to bust homepage ISR cache
+  - `GET /api/brands` — list (**Aggressive cache**, 24h CDN, 7d SWR; public, paginated/searchable)
 - **Validation**: `src/lib/validations/brand.ts` defines `createBrandSchema` and `updateBrandSchema` with fields:
   - `name`, `logoUrl`, `tagline`, `brandStory`, `supportEmail`, `supportPhone`, `isActive`, `founderId`
 - **UI Pattern**:
@@ -356,7 +408,7 @@ Brand documents administration provides a UI for managing policy documents (Retu
 - **Route**: `src/app/admin/brand-documents/page.tsx` (client component)
 - **State**: Document state managed locally per document type; brand ID obtained from `useBrandStore`.
 - **API Integration**:
-  - `GET /api/brand-documents?brandId=<id>` — fetches documents for the brand
+  - `GET /api/brand-documents?brandId=<id>` — fetches documents for the brand (**Aggressive cache**, 24h CDN, 7d SWR)
   - `POST /api/brand-documents` — creates a new document
   - `PUT /api/brand-documents/[id]` — updates content and active status
 - **UI Pattern**:
