@@ -12,6 +12,7 @@
 - `bun test:e2e:ui` opens Playwright Test UI
 - `bun logs:deployment` inspects latest Vercel deployment logs
 - Database utilities:
+  - `bun db:deploy` — apply pending migrations (used in CI/production)
   - `bun db:generate` — generate Prisma client
   - `bun db:push` — push schema changes without migration
   - `bun db:migrate` — create and apply migrations

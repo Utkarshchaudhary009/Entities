@@ -41,6 +41,7 @@ bun test:e2e:ui               # Open Playwright Test UI
 
 # Operations
 bun logs:deployment
+bun db:deploy
 bun db:generate
 bun db:push
 bun db:migrate
