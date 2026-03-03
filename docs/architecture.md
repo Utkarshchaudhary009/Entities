@@ -377,6 +377,57 @@ The `SocialLinksEditor` (`src/components/admin/social-links-editor.tsx`) is a re
 - **UX**: Immediate micro-interactions; button disabled during add/delete; toast notifications
 - **Pattern**: Demonstrates store-mediated optimistic updates in parent pages while keeping component self-contained for link input/list.
 
+## Home Page Architecture
+
+The public home page (`src/app/page.tsx`) is a server component that aggregates brand and catalog data and renders a composed layout of five specialized sections:
+
+- **Data Fetching**: Server-side parallel fetching using Prisma with ISR (`revalidate = 3600`).
+- **Loaded Data**:
+  - `brand`: Active brand record with `philosophy` and `socialLinks` (nested includes)
+  - `featuredProducts`: 3 most recent active products with `isFeatured: true`, including category and pricing
+  - `categories`: All active categories for footer navigation
+
+### Home Page Sections
+
+**HeroSection** (`src/components/home/hero-section.tsx`)
+- Displays full-viewport hero with brand imagery and call-to-action.
+- Props: `brand: Brand | null`
+- Renders `brand.heroImageUrl` as background (with muted fallback) and overlays brand name, tagline, and "Discover the Selection" link to `/shop`.
+- Uses `Brand` model fields: `heroImageUrl`, `name`, `tagline`, `brandStory`.
+
+**FeaturedSection** (`src/components/home/featured-section.tsx`)
+- Showcases 3 featured products in responsive grid.
+- Props: `products: ProductData[]` (id, name, slug, price, thumbnailUrl, category)
+- Displays product thumbnail, category, name, and price. Links to product detail via `/shop?product=<slug>`.
+- Includes "Shop All" link to `/shop`.
+
+**PhilosophySection** (`src/components/home/philosophy-section.tsx`)
+- Renders brand mission, vision, and values.
+- Props: `philosophy: BrandPhilosophy | null`
+- Content priority: `mission` → `story` → default brand narrative. Displays `vision` as italic quote when present.
+- Shows `values` as pill tags; includes "Discover More" link to `/about`.
+
+**NewsletterSection** (`src/components/home/newsletter-section.tsx`)
+- Email subscription form with client-side state.
+- Uses local `useState` for email and loading; submits with optimistic toast feedback (`sonner`).
+- No backend integration in current implementation; simulates success with `setTimeout`.
+
+**HomeFooter** (`src/components/home/home-footer.tsx`)
+- Full-width footer with 4-column layout and social links.
+- Props: `categories: Category[]`, `socialLinks: SocialLink[]`
+- Columns: Brand description, Collections (dynamic categories), Company links, Policies links.
+- Social icons map via `PLATFORM_ICONS` using `@hugeicons/react`; unknown platforms fall back to text label.
+
+### Data Flow Summary
+
+```
+HomePage (server)
+  └─ prisma queries (brand + philosophy + socialLinks, featured products, categories)
+      └─ props → child components (all client-capable, server-rendered)
+```
+
+All sections are pure presentational components with no direct API calls; data originates from the server component's Prisma queries. This maintains consistency with the `DB → UI` pattern for server-rendered pages.
+
 ## Order Domain
 - **OrderStatus enum**: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Managed via `ORDER_STATUSES` in `src/types/domain.ts`.
 - **Soft delete**: Orders use `deletedAt` timestamp for soft deletes. Queries filter `deletedAt: null` by default in `OrderService`.
