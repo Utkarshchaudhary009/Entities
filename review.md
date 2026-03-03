@@ -1,10 +1,10 @@
-# Code Review: PR #25
+# Code Review: PR #27
 
-**Title:** fix: resolve biome lint and typescript errors
+**Title:** feat: implement caching, homepage features, and comprehensive test suite
 **Author:** Utkarshchaudhary009
 **State:** OPEN
-**URL:** https://github.com/Utkarshchaudhary009/Entities/pull/25
-**Generated:** 2026-03-03T05:38:41.354Z
+**URL:** https://github.com/Utkarshchaudhary009/Entities/pull/27
+**Generated:** 2026-03-03T17:05:01.326Z
 
 ---
 
@@ -12,10 +12,11 @@
 
 ### Review by sourcery-ai
 
-Hey - I've found 4 issues, and left some high level feedback:
+Hey - I've found 3 issues, and left some high level feedback:
 
-- In `CollectionsSection`, the "See all" handler uses a global `document.querySelector('[data-slot="scroll-area-viewport"]')`, which will target only the first scroll area on the page; consider scoping this via a `ref` to the local `ScrollArea` so the button reliably scrolls the correct list.
-- The test changes that cast mocks like `fetchApi as ReturnType<typeof fetchApi>` are misleading, since `ReturnType` refers to the mock’s return value rather than the mock function itself; using `typeof fetchApi` or the concrete mock type would better express the intent and avoid type confusion.
+- In `src/app/api/discounts/route.ts`, the GET handler comment describes a private browser-only cache but the implementation uses `cached.static` (CDN cache); consider switching to the `private` tier (or adjusting the comment) to avoid caching admin-only data at the edge.
+- The documented cache tier for `GET /api/products/[id]` in `docs/architecture.md` is **Dynamic** (1m CDN, 5m SWR), but the route implementation uses `cached.static`; align the documentation and the actual cache tier so behavior is clear and intentional.
+- The new `HomeFooter` hardcodes the "ENTITIES" label and a `© 2026` copyright string; if this app is meant to be branded dynamically or reused, consider passing brand name and year as props or deriving them from existing brand data.
 
 <details>
 <summary>Prompt for AI Agents</summary>
@@ -24,115 +25,154 @@ Hey - I've found 4 issues, and left some high level feedback:
 Please address the comments from this code review:
 
 ## Overall Comments
-- In `CollectionsSection`, the "See all" handler uses a global `document.querySelector('[data-slot="scroll-area-viewport"]')`, which will target only the first scroll area on the page; consider scoping this via a `ref` to the local `ScrollArea` so the button reliably scrolls the correct list.
-- The test changes that cast mocks like `fetchApi as ReturnType<typeof fetchApi>` are misleading, since `ReturnType` refers to the mock’s return value rather than the mock function itself; using `typeof fetchApi` or the concrete mock type would better express the intent and avoid type confusion.
+- In `src/app/api/discounts/route.ts`, the GET handler comment describes a private browser-only cache but the implementation uses `cached.static` (CDN cache); consider switching to the `private` tier (or adjusting the comment) to avoid caching admin-only data at the edge.
+- The documented cache tier for `GET /api/products/[id]` in `docs/architecture.md` is **Dynamic** (1m CDN, 5m SWR), but the route implementation uses `cached.static`; align the documentation and the actual cache tier so behavior is clear and intentional.
+- The new `HomeFooter` hardcodes the "ENTITIES" label and a `© 2026` copyright string; if this app is meant to be branded dynamically or reused, consider passing brand name and year as props or deriving them from existing brand data.
 
 ## Individual Comments
 
 ### Comment 1
-<location path="src/components/shop/collections-section.tsx" line_range="30-37" />
+<location path="src/app/api/discounts/route.ts" line_range="23-24" />
 <code_context>
--          ) : (
--            <ScrollArea className="w-full whitespace-nowrap">
--              <div className="flex w-max gap-2">
--                <button
--                  type="button"
--                  onClick={() => setCategory(null)}
+     });
+
+-    return cached.noStore(result);
++    // Admin-only: private browser cache (60 s) — CDN never stores this.
++    return cached.static(result);
+   } catch (error) {
+     return handleError(error, "Fetch discounts");
 </code_context>
 <issue_to_address>
-**issue (bug_risk):** Using a global querySelector for the scroll viewport may target the wrong ScrollArea when multiple are present.
+**🚨 issue (security):** `cached.static` conflicts with the comment and may leak admin-only data via shared CDN caches.
 
-`document.querySelector('[data-slot="scroll-area-viewport"]')` will always pick the first matching viewport, so on pages with multiple `ScrollArea`s (like your shop page) this can scroll the wrong section.
+`cached.static` uses the public `static` config (`s-maxage=3600`, shared-cache friendly), which contradicts the “CDN never stores this” comment. For an auth-protected admin endpoint, storing responses in a shared CDN cache risks cross-user data leakage if the cache key doesn’t fully include auth context.
 
-Instead, attach a `ref` to this component’s `ScrollArea` and query the viewport within `ref.current` (optionally using a dedicated `data-*` attribute). This scopes the behavior to this instance and prevents cross-component interference.
+Consider using a non-shared strategy instead, e.g.:
+
+```ts
+return cached.private(result);
+// or, for no caching:
+// return cached.noStore(result);
+```
+
+to match the comment and avoid exposing admin data via shared caches.
 </issue_to_address>
 
 ### Comment 2
-<location path="src/components/shop/new-arrivals-section.tsx" line_range="41-43" />
+<location path="docs/architecture.md" line_range="470" />
 <code_context>
-+  return (
-+    <section className="py-6">
-+      <div className="mb-4 flex items-center justify-between">
-+        <h2 className="font-serif text-xl font-bold tracking-tight">
-+          Collections
-+        </h2>
++**HomeFooter** (`src/components/home/home-footer.tsx`)
++- Full-width footer with 4-column layout and social links.
++- Props: `categories: Category[]`, `socialLinks: SocialLink[]`
++- Columns: Brand description, Collections (dynamic categories), Company links, Policies links.
++- Social icons map via `PLATFORM_ICONS` using `@hugeicons/react`; unknown platforms fall back to text label.
++
 </code_context>
 <issue_to_address>
-**nitpick (typo):** Heading text "New Arrival" may be misleading when multiple products are shown.
+**nitpick (typo):** The phrase "Policies links" is slightly awkward; consider "Policy links".
 
-Since this section can display up to 10 items, consider using a plural label (e.g., “New Arrivals”) or another collection-focused title to better match the multi-item carousel.
+To stay consistent with the other singular column names, consider changing this to "Policy links."
 
 ```suggestion
-        <h2 className="font-serif text-xl font-bold tracking-tight">
-          New Arrivals
-        </h2>
+- Columns: Brand description, Collections (dynamic categories), Company links, Policy links.
 ```
 </issue_to_address>
 
 ### Comment 3
-<location path="tests/unit/stores/product.store.test.ts" line_range="29" />
+<location path="docs/architecture.md" line_range="471" />
 <code_context>
-     });
--    (fetchApi as any).mockReset();
--    (fetchJson as any).mockReset();
-+    (fetchApi as ReturnType<typeof fetchApi>).mockReset();
-+    (fetchJson as ReturnType<typeof fetchJson>).mockReset();
-   });
++- Full-width footer with 4-column layout and social links.
++- Props: `categories: Category[]`, `socialLinks: SocialLink[]`
++- Columns: Brand description, Collections (dynamic categories), Company links, Policies links.
++- Social icons map via `PLATFORM_ICONS` using `@hugeicons/react`; unknown platforms fall back to text label.
++
++### Data Flow Summary
 </code_context>
 <issue_to_address>
-**issue (testing):** The use of `ReturnType<typeof fetchApi>` for mocks looks incorrect and will break type-safety on `mockReset`/`mockResolvedValue` usages.
+**nitpick (typo):** Consider adding an article: "fall back to a text label" for clarity.
 
-`ReturnType<typeof fetchApi>` refers to the function’s return value, not the mock function, so TS won’t see `mockReset`, `mockResolvedValue`, etc. This applies to all similar casts in this PR (`fetchJson`, `requireAdmin`, `orderService.findById`, ...).
+This small tweak improves the readability of that documentation sentence.
 
-Please cast to the function type (or a Jest mock type) instead, for example:
-
-```ts
-(fetchApi as typeof fetchApi).mockReset();
-(fetchApi as typeof fetchApi).mockResolvedValue(serverResponse);
-(requireAdmin as typeof requireAdmin).mockResolvedValue({ success: true });
-// or, if you prefer:
-(fetchApi as jest.Mock).mockReset();
+```suggestion
+- Social icons map via `PLATFORM_ICONS` using `@hugeicons/react`; unknown platforms fall back to a text label.
 ```
-
-This keeps the mocks correctly typed and avoids TS errors in the tests.
-</issue_to_address>
-
-### Comment 4
-<location path="tests/unit/services/order.service.test.ts" line_range="96" />
-<code_context>
-+      } catch (error: unknown) {
-+        expect((error as Error).name).toBe("ValidationError");
-+        expect((error as Error).message).toContain("Insufficient stock");
-         expect(error.message).toContain("Available: 1");
-       }
-
-</code_context>
-<issue_to_address>
-**issue (bug_risk):** After changing the catch block to `unknown`, this assertion still uses `error.message` without casting, which will fail TypeScript.
-
-In this catch block you cast `error` for the first two expectations but not the third, so TypeScript still treats `error` as `unknown` here. Please cast the last usage too, e.g.:
-
-```ts
-expect((error as Error).message).toContain("Available: 1");
-```
-
-This aligns with the `unknown` typing and avoids a TS error.
 </issue_to_address>
 ~~~
 
 </details>
 
-*
+***
+
+<details>
+<summary>Sourcery is free for open source - if you like our reviews please consider sharing them ✨</summary>
+
+- [X](https://twitter.com/intent/tweet?text=I%20just%20got%20an%20instant%20code%20review%20from%20%40SourceryAI%2C%20and%20it%20was%20brilliant%21%20It%27s%20free%20for%20open%20source%20and%20has%20a%20free%20trial%20for%20private%20code.%20Check%20it%20out%20https%3A//sourcery.ai)
+- [Mastodon](https://mastodon.social/share?text=I%20just%20got%20an%20instant%20code%20review%20from%20%40SourceryAI%2C%20and%20it%20was%20brilliant%21%20It%27s%20free%20for%20open%20source%20and%20has%20a%20free%20trial%20for%20private%20code.%20Check%20it%20out%20https%3A//sourcery.ai)
+- [LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://sourcery.ai)
+- [Facebook](https://www.facebook.com/sharer/sharer.php?u=https://sourcery.ai)
+
+</details>
+
+<sub>
+Help me be more useful! Please click 👍 or 👎 on each comment and I'll use the feedback to improve your reviews.
+</sub>
+
+---
 
 ### Review by cubic-dev-ai
 
-**8 issues found** across 50 files
+**7 issues found** across 23 files
 
 <details>
 <summary>Prompt for AI agents (unresolved issues)</summary>
 
 ```text
 
+Check if these issues are valid — if so, understand the root cause of each and fix them. If appropriate, use sub-agents to investigate and fix each issue separately.
+
+
+<file name="src/app/api/founders/route.ts">
+
+<violation number="1" location="src/app/api/founders/route.ts:19">
+P1: Using `cached.aggressive` here can serve stale founders data for extended periods because founder mutation routes do not invalidate this cache. Use a less aggressive policy (or add explicit revalidation on mutations).</violation>
+</file>
+
+<file name="src/app/api/brands/[id]/route.ts">
+
+<violation number="1" location="src/app/api/brands/[id]/route.ts:17">
+P1: `cached.static` is being passed a `NextResponse` instead of raw payload data, causing a double-response wrap and incorrect GET response body.</violation>
+</file>
+
+<file name="src/components/home/home-footer.tsx">
+
+<violation number="1" location="src/components/home/home-footer.tsx:158">
+P1: Validate/sanitize dynamic social link URLs before passing them to `href` to prevent script-scheme injection (e.g. `javascript:`).</violation>
+</file>
+
+<file name="src/app/page.tsx">
+
+<violation number="1" location="src/app/page.tsx:6">
+P2: Move direct Prisma access out of the page component into a service to preserve the required `DB -> Service -> API -> Store -> UI` layering.</violation>
+</file>
+
+<file name="src/app/api/brand-documents/route.ts">
+
+<violation number="1" location="src/app/api/brand-documents/route.ts:23">
+P1: Using aggressive cache headers here can serve stale brand-document data after POST/PUT/DELETE because no cache invalidation is triggered for this resource.</violation>
+</file>
+
+<file name="src/app/api/discounts/route.ts">
+
+<violation number="1" location="src/app/api/discounts/route.ts:24">
+P0: Admin-only discounts response is now returned with `cached.static`, which sets a public shared cache policy. This can expose authenticated data through CDN/intermediary caching; use private cache headers for this route.</violation>
+</file>
+
+<file name="src/app/api/products/[id]/route.ts">
+
+<violation number="1" location="src/app/api/products/[id]/route.ts:17">
+P1: `cached.static` is being called with an already-built `NextResponse`, causing double JSON wrapping and a broken GET response shape.</violation>
+</file>
+```
 
 </details>
 
@@ -144,46 +184,75 @@ This aligns with the `unknown` typing and avoids a TS error.
 
 ### Review by coderabbitai
 
-**Actionable comments posted: 14**
+**Actionable comments posted: 7**
+
+> [!CAUTION]
+> Some comments are outside the diff and can’t be posted inline due to platform limitations.
+> 
+> 
+> 
+> <details>
+> <summary>⚠️ Outside diff range comments (1)</summary><blockquote>
+> 
+> <details>
+> <summary>tests/e2e/shop.spec.ts (1)</summary><blockquote>
+> 
+> `11-16`: _⚠️ Potential issue_ | _🟡 Minor_
+> 
+> **Use static log messages in test hooks.**
+> 
+> Line [13] and Line [15] interpolate `testInfo.title`. Replace with fixed log keys to stay compliant with the logging policy.
+> 
+> <details>
+> <summary>Suggested patch</summary>
+> 
+> ```diff
+>    test.afterEach(async ({}, testInfo) => {
+>      if (testInfo.status === "passed") {
+> -      console.log(`PASS: ${testInfo.title} - All assertions passed`);
+> +      console.log("SHOP_E2E_PASS");
+>      } else if (testInfo.status === "failed") {
+> -      console.log(`FAIL: ${testInfo.title} - Test failed`);
+> +      console.log("SHOP_E2E_FAIL");
+>      }
+>    });
+> ```
+> </details>
+> 
+>   
+> As per coding guidelines, "All logger/console calls must use static strings (no interpolated variables for sensitive data)".
+> 
+> <details>
+> <summary>🤖 Prompt for AI Agents</summary>
+> 
+> ```
+> Verify each finding against the current code and only fix it if needed.
+> 
+> In `@tests/e2e/shop.spec.ts` around lines 11 - 16, The console logging in the
+> test.afterEach hook uses interpolated testInfo.title (testInfo.title) which
+> violates the static-string logging policy; update the two console.log calls
+> inside test.afterEach to use fixed static log messages/keys (e.g. "PASS_TEST"
+> and "FAIL_TEST" or "TEST_PASSED" and "TEST_FAILED") instead of interpolating
+> testInfo.title, keeping the conditional structure intact and referencing the
+> same test.afterEach hook and testInfo.status to decide which static message to
+> emit.
+> ```
+> 
+> </details>
+> 
+> </blockquote></details>
+> 
+> </blockquote></details>
 
 <details>
-<summary>🧹 Nitpick comments (7)</summary><blockquote>
+<summary>🧹 Nitpick comments (3)</summary><blockquote>
 
 <details>
-<summary>src/components/shop/new-arrivals-section.tsx (1)</summary><blockquote>
+<summary>src/components/home/home-footer.tsx (1)</summary><blockquote>
 
-`32-34`: **Consider memoizing the initial shuffle.**
+`147-147`: **Avoid hardcoding the copyright year.**
 
-The shuffle runs on every `products` array reference change. If the parent re-renders with a new array reference (even with same items), the displayed products will re-shuffle, which may cause visual instability.
-
-If a stable initial shuffle is desired, consider using a ref or initializer pattern:
-
-<details>
-<summary>♻️ Optional: stabilize shuffle with ref</summary>
-
-```diff
-+import { useRef, useEffect, useState } from "react";
-+
- export function NewArrivalsSection({
-   products,
-   onProductClick,
- }: NewArrivalsSectionProps) {
--  const [shuffledProducts, setShuffledProducts] = useState<CatalogProduct[]>(
--    [],
--  );
-+  const hasShuffled = useRef(false);
-+  const [shuffledProducts, setShuffledProducts] = useState<CatalogProduct[]>([]);
-
-   useEffect(() => {
--    setShuffledProducts(shuffle(products.slice(0, 10)));
-+    if (products.length > 0 && !hasShuffled.current) {
-+      setShuffledProducts(shuffle(products.slice(0, 10)));
-+      hasShuffled.current = true;
-+    }
-   }, [products]);
-```
-
-</details>
+Use `new Date().getFullYear()` so the footer stays current without manual updates.
 
 <details>
 <summary>🤖 Prompt for AI Agents</summary>
@@ -191,46 +260,26 @@ If a stable initial shuffle is desired, consider using a ref or initializer patt
 ```
 Verify each finding against the current code and only fix it if needed.
 
-In `@src/components/shop/new-arrivals-section.tsx` around lines 32 - 34, The
-current useEffect calls setShuffledProducts(shuffle(products.slice(0, 10))) on
-every products reference change, causing unnecessary re-shuffles; change this to
-compute the initial shuffle only once per meaningful change by using a ref or a
-state initializer: e.g., useRef to store the shuffled array (compute
-shuffle(products.slice(0,10)) only when you detect items actually changed) or
-use useState(() => shuffle(products.slice(0,10))) and update it only when
-product contents change (deep-compare or derive a stable key), updating
-references in the component where setShuffledProducts, shuffle, and products are
-used.
+In `@src/components/home/home-footer.tsx` at line 147, Replace the hardcoded year
+in the HomeFooter component (src/components/home/home-footer.tsx) with a runtime
+expression that uses new Date().getFullYear(); update the JSX paragraph that
+currently renders "© 2026 ENTITIES. All rights reserved." to interpolate the
+dynamic year (e.g., use {new Date().getFullYear()} inside the <p> element) so
+the footer updates automatically each year.
 ```
 
 </details>
 
 </blockquote></details>
 <details>
-<summary>tests/unit/api/generic.routes.test.ts (1)</summary><blockquote>
+<summary>src/components/home/newsletter-section.tsx (1)</summary><blockquote>
 
-`75-98`: **Redundant mock setup detected.**
+`14-24`: **Bind submission state to a real action/store lifecycle.**
 
-`service.create.mockResolvedValue` is called twice (lines 79-82 and 95-98). The second call overwrites the first, making the initial setup at lines 79-82 unnecessary.
+The current `setTimeout(..., 10)` creates a synthetic success path and can drift from real request timing. Use a store/API-backed pending flag and include an error branch with user-friendly copy.
 
-
-<details>
-<summary>♻️ Proposed fix to remove redundant mock setup</summary>
-
-```diff
-       (requireAdmin as ReturnType<typeof mock>).mockResolvedValue({
-         success: true,
-         auth: { userId: "admin" },
-       });
--      (service.create as ReturnType<typeof mock>).mockResolvedValue({
--        id: "1",
--        ...validBody,
--      });
-
-       // Map back to DB structure for mock return
-       const dbEntity = { ...validBody };
-```
-</details>
+  
+As per coding guidelines, "Use granular loading states bound to store-managed state properties (e.g., `isAddingBrand`, `deletingId`)" and "Add meaningful error logs with full debugging context; create copywritten user-facing error messages".
 
 <details>
 <summary>🤖 Prompt for AI Agents</summary>
@@ -238,45 +287,40 @@ used.
 ```
 Verify each finding against the current code and only fix it if needed.
 
-In `@tests/unit/api/generic.routes.test.ts` around lines 75 - 98, Remove the
-duplicate mockResolvedValue for service.create so only the intended DB-mapped
-response remains: keep the mock that returns { id: "1", ...dbEntity } and delete
-the earlier service.create.mockResolvedValue({ id: "1", ...validBody }) call;
-ensure there is a single service.create mock in this test (references:
-service.create, dbEntity, validBody, requireAdmin).
+In `@src/components/home/newsletter-section.tsx` around lines 14 - 24, The current
+handleSubmit uses setTimeout to simulate success; replace that with a real async
+subscribe flow bound to a store/API pending flag (e.g.,
+useNewsletterStore.isSubscribing or a subscribeToNewsletter action) instead of
+local setIsLoading, call the API/store method from handleSubmit, await its
+result, set the store-managed pending flag while awaiting, and on success call
+setEmail("") and toast.success("Subscribed to the Entities newsletter."); on
+failure catch the error, log full context (error object and input email) and
+show a user-friendly toast.error message; keep setIsLoading only if it mirrors
+the store flag and remove the synthetic setTimeout.
 ```
 
 </details>
 
 </blockquote></details>
 <details>
-<summary>tests/unit/services/brand.service.test.ts (1)</summary><blockquote>
+<summary>src/components/home/philosophy-section.tsx (1)</summary><blockquote>
 
-`78-89`: **Test may pass silently if no error is thrown.**
+`54-57`: **Add press-state micro-interaction to the CTA link.**
 
-The `try/catch` pattern without a fail assertion means this test will pass even if `findById` doesn't throw. Consider adding `expect.assertions(2)` or using `expect(...).rejects.toThrow()`.
-
+The link has hover feedback, but no active press-state feedback. Add `active:scale-95` (and transform transition) to match UI interaction guidelines.
 
 <details>
-<summary>♻️ Suggested refactor using rejects pattern</summary>
+<summary>♻️ Suggested class update</summary>
 
 ```diff
-     it("should throw NotFoundError when brand not found", async () => {
-       // ARRANGE
-       mockPrisma.brand.findUnique.mockResolvedValue(null);
-
--      // ACT & ASSERT
--      try {
--        await brandService.findById("999");
--      } catch (error: unknown) {
--        expect((error as Error).name).toBe("NotFoundError");
--        expect((error as Error).message).toContain("Brand");
--      }
-+      // ACT & ASSERT
-+      await expect(brandService.findById("999")).rejects.toThrow("Brand");
-     });
+-        className="border-b-2 border-black pb-1 text-sm font-semibold tracking-widest uppercase hover:opacity-60 transition-opacity"
++        className="border-b-2 border-black pb-1 text-sm font-semibold tracking-widest uppercase hover:opacity-60 active:scale-95 transition-opacity transition-transform duration-150"
 ```
 </details>
+
+
+
+As per coding guidelines: "Provide instant visual feedback for every UI action (< 100ms) using `active:scale-95` and similar micro-interactions, strictly synced to store's synchronous actions".
 
 <details>
 <summary>🤖 Prompt for AI Agents</summary>
@@ -284,200 +328,13 @@ The `try/catch` pattern without a fail assertion means this test will pass even 
 ```
 Verify each finding against the current code and only fix it if needed.
 
-In `@tests/unit/services/brand.service.test.ts` around lines 78 - 89, The test
-uses a try/catch so it can pass silently if no error is thrown; update the test
-for brandService.findById to assert the rejection deterministically by either
-adding expect.assertions(2) at the top of the test or converting the ACT/ASSERT
-to Jest's rejects pattern (e.g., await
-expect(brandService.findById("999")).rejects.toThrow() and/or
-.rejects.toHaveProperty('name','NotFoundError') ), and keep the mock reference
-mockPrisma.brand.findUnique.mockResolvedValue(null) unchanged.
-```
-
-</details>
-
-</blockquote></details>
-<details>
-<summary>tests/unit/services/discount.service.test.ts (1)</summary><blockquote>
-
-`64-75`: **Test may pass silently if no error is thrown.**
-
-Same pattern issue as other service tests. The `try/catch` without a forced failure allows silent passes.
-
-
-<details>
-<summary>♻️ Suggested refactor</summary>
-
-```diff
-     it("should throw NotFoundError when discount not found", async () => {
-       // ARRANGE
-       mockPrisma.discount.findUnique.mockResolvedValue(null);
-
--      // ACT & ASSERT
--      try {
--        await discountService.findById("999");
--      } catch (error: unknown) {
--        expect((error as Error).name).toBe("NotFoundError");
--        expect((error as Error).message).toContain("Discount");
--      }
-+      // ACT & ASSERT
-+      await expect(discountService.findById("999")).rejects.toThrow("Discount");
-     });
-```
-</details>
-
-<details>
-<summary>🤖 Prompt for AI Agents</summary>
-
-```
-Verify each finding against the current code and only fix it if needed.
-
-In `@tests/unit/services/discount.service.test.ts` around lines 64 - 75, The test
-for discountService.findById("999") can pass silently because the try/catch
-doesn’t fail the test when no error is thrown; update the test to explicitly
-assert rejection instead of swallowing success—either replace the try/catch with
-await expect(discountService.findById("999")).rejects.toThrow(/Discount/) (or
-.rejects.toHaveProperty('name','NotFoundError')), or keep the try block but add
-a fail() (or throw new Error) immediately after the await to ensure the test
-fails if findById does not throw; reference discountService.findById and the
-test case name when making the change.
-```
-
-</details>
-
-</blockquote></details>
-<details>
-<summary>tests/unit/services/category.service.test.ts (1)</summary><blockquote>
-
-`64-75`: **Test may pass silently if no error is thrown.**
-
-Same pattern issue as other service tests. Consider using `expect(...).rejects.toThrow()` or adding `expect.assertions(2)` at the start of the test.
-
-
-<details>
-<summary>♻️ Suggested refactor</summary>
-
-```diff
-     it("should throw NotFoundError when category not found", async () => {
-       // ARRANGE
-       mockPrisma.category.findUnique.mockResolvedValue(null);
-
--      // ACT & ASSERT
--      try {
--        await categoryService.findById("999");
--      } catch (error: unknown) {
--        expect((error as Error).name).toBe("NotFoundError");
--        expect((error as Error).message).toContain("Category");
--      }
-+      // ACT & ASSERT
-+      await expect(categoryService.findById("999")).rejects.toThrow("Category");
-     });
-```
-</details>
-
-<details>
-<summary>🤖 Prompt for AI Agents</summary>
-
-```
-Verify each finding against the current code and only fix it if needed.
-
-In `@tests/unit/services/category.service.test.ts` around lines 64 - 75, The test
-for categoryService.findById can pass silently if no error is thrown because the
-catch block may never run; update the test to assert the promise rejects (e.g.,
-use await expect(categoryService.findById("999")).rejects.toThrow() or add
-expect.assertions(2) at the start) and keep the
-mockPrisma.category.findUnique.mockResolvedValue(null) arrangement; reference
-the mock call mockPrisma.category.findUnique and the method
-categoryService.findById when making the change so the test fails if no
-NotFoundError is thrown.
-```
-
-</details>
-
-</blockquote></details>
-<details>
-<summary>tests/unit/services/brand-document.service.test.ts (1)</summary><blockquote>
-
-`72-82`: **Test may pass silently if no error is thrown.**
-
-Same issue as in other service tests—if `findById` doesn't throw, the test passes without any assertions. Consider using `expect(...).rejects.toThrow()` or adding `expect.assertions(1)`.
-
-
-<details>
-<summary>♻️ Suggested refactor</summary>
-
-```diff
-     it("should throw NotFoundError when document not found", async () => {
-       // ARRANGE
-       mockPrisma.brandDocument.findUnique.mockResolvedValue(null);
-
--      // ACT & ASSERT
--      try {
--        await brandDocumentService.findById("999");
--      } catch (error: unknown) {
--        expect((error as Error).name).toBe("NotFoundError");
--      }
-+      // ACT & ASSERT
-+      await expect(brandDocumentService.findById("999")).rejects.toMatchObject({
-+        name: "NotFoundError",
-+      });
-     });
-```
-</details>
-
-<details>
-<summary>🤖 Prompt for AI Agents</summary>
-
-```
-Verify each finding against the current code and only fix it if needed.
-
-In `@tests/unit/services/brand-document.service.test.ts` around lines 72 - 82, The
-test currently swallows a missing-throw case because it uses try/catch without
-asserting the catch path; update the test for brandDocumentService.findById to
-assert a rejection instead (e.g. use await
-expect(brandDocumentService.findById("999")).rejects.toThrow() or await
-expect(...).rejects.toMatchObject({ name: "NotFoundError" })), or add
-expect.assertions(1) at the start of the test to ensure the catch block runs;
-reference the existing test for brandDocumentService.findById to make the
-change.
-```
-
-</details>
-
-</blockquote></details>
-<details>
-<summary>tests/unit/api/orders.route.test.ts (1)</summary><blockquote>
-
-`46-50`: **Reset all used service mocks in `beforeEach`**
-
-`orderService.findByIdWithOwnership` is exercised in this suite (Line 60-61) but not reset in setup. Add its reset to keep tests fully isolated as this file grows.
-
-<details>
-<summary>♻️ Suggested adjustment</summary>
-
-```diff
-   beforeEach(() => {
-     (requireAuth as ReturnType<typeof mock>).mockReset();
-     (requireAdmin as ReturnType<typeof mock>).mockReset();
-     (orderService.findById as ReturnType<typeof mock>).mockReset();
-+    (orderService.findByIdWithOwnership as ReturnType<typeof mock>).mockReset();
-     (orderService.updateOrderDetails as ReturnType<typeof mock>).mockReset();
-   });
-```
-</details>
-
-<details>
-<summary>🤖 Prompt for AI Agents</summary>
-
-```
-Verify each finding against the current code and only fix it if needed.
-
-In `@tests/unit/api/orders.route.test.ts` around lines 46 - 50, The test setup in
-the beforeEach misses resetting orderService.findByIdWithOwnership which is used
-later; update the beforeEach reset block to call
-(orderService.findByIdWithOwnership as ReturnType<typeof mock>).mockReset()
-alongside the existing resets (requireAuth, requireAdmin, orderService.findById,
-orderService.updateOrderDetails) so mocks are fully isolated between tests.
+In `@src/components/home/philosophy-section.tsx` around lines 54 - 57, Update the
+CTA Link component in philosophy-section.tsx (the Link with href="/about") to
+add an active press-state and transform transition: include the classes
+active:scale-95, transition-transform, and transform in its className so the
+link scales down on press and the transform is animated; keep existing classes
+(border-b-2, pb-1, text-sm, font-semibold, tracking-widest, uppercase,
+hover:opacity-60, transition-opacity) and add the new classes alongside them.
 ```
 
 </details>
@@ -489,245 +346,172 @@ orderService.updateOrderDetails) so mocks are fully isolated between tests.
 <details>
 <summary>🤖 Prompt for all review comments with AI agents</summary>
 
-```
+````
+Verify each finding against the current code and only fix it if needed.
 
-Check if these issues are valid — if so, understand the root cause of each and fix them. If appropriate, use sub-agents to investigate and fix each issue separately.
+Inline comments:
+In `@docs/architecture.md`:
+- Around line 475-479: The fenced code block containing "HomePage (server) └─
+prisma queries ..." is missing a language tag and triggers markdownlint MD040;
+update the opening fence from ``` to include a language identifier (e.g.,
+```text) so the block becomes ```text, preserving the block content exactly;
+ensure the modified block in docs/architecture.md still contains the same
+"HomePage (server)" lines and spacing.
 
+In `@src/app/api/brand-documents/route.ts`:
+- Line 23: GET handler currently returns cached.aggressive(result) which uses
+aggressive caching, but the POST handler that creates new brand documents does
+not invalidate that cache; update the exported POST handler (the function that
+processes the create request and returns the new document/response) to call
+revalidatePath for the GET route path after successfully creating the document
+and before returning the response, and ensure revalidatePath is imported from
+next/cache so the aggressive GET cache is correctly invalidated when new
+documents are added.
 
-<file name="tests/unit/services/social-link.service.test.ts">
+In `@src/app/api/brands/`[id]/route.ts:
+- Around line 16-17: The current code passes a NextResponse into cached.static,
+causing re-serialization and breaking the API shape; instead call cached.static
+with the raw payload (the brand object) and only wrap the cached result with
+successDataResponse when returning. Locate the return that uses
+cached.static(successDataResponse(brand)) and change it so cached.static
+receives brand (or the plain data object) and then return
+successDataResponse(...) around the cached value.
 
-<violation number="1" location="tests/unit/services/social-link.service.test.ts:70">
-P2: This test can pass even when no error is thrown, because assertions only run inside `catch`. Add an explicit failure/assertion for the non-throwing path.</violation>
-</file>
+In `@src/app/api/founders/route.ts`:
+- Line 19: The GET handler uses cached.aggressive(result) (see return
+cached.aggressive(result)) but the POST handler that creates a founder does not
+invalidate that cache; after the code path that creates the founder in the POST
+endpoint (the function/method that performs the create at the POST handler
+around line 32), call the cache invalidation method on the same cached object
+(e.g., cached.clear() or cached.invalidate(...) depending on your caching API)
+immediately after a successful create so the aggressive cache for the founders
+list is removed and subsequent GETs return fresh data; ensure you only
+invalidate on success and keep existing error handling.
 
-<file name="src/app/api/discounts/route.ts">
+In `@src/app/api/products/`[id]/route.ts:
+- Around line 16-17: The response is being double-wrapped because
+successDataResponse(product) already returns a NextResponse; remove the
+cached.static(...) wrapper and return successDataResponse(product) directly (or
+if you need to cache raw data, call cached.static on the raw product/data first
+and then build the NextResponse via successDataResponse or NextResponse.json).
+Ensure you stop passing a NextResponse into cached.static and instead pass plain
+data or return the NextResponse as-is (references: cached.static,
+successDataResponse, NextResponse).
 
-<violation number="1" location="src/app/api/discounts/route.ts:23">
-P1: Avoid `cached.static` on this admin-authenticated route; it applies public CDN caching and can leak or serve stale admin data. Use a non-shared cache policy (`noStore`, or at minimum `private`) for this response.</violation>
-</file>
+In `@src/components/home/featured-section.tsx`:
+- Around line 53-55: The product name is being forced to lowercase via
+product.name.toLowerCase(), which breaks intended brand casing; remove the
+.toLowerCase() call and render product.name as-is in the FeaturedSection JSX
+(the <p> that currently uses product.name.toLowerCase()), and if a visual
+lowercase is required for styling only, apply a CSS text-transform (e.g., a
+"lowercase" utility class) instead of mutating the data.
 
-<file name="src/components/shop/collections-section.tsx">
+In `@src/components/home/home-footer.tsx`:
+- Around line 156-163: The code renders dynamic social links directly via Link
+using link.url (see Link usage with key={link.id}, aria-label={link.platform});
+validate each link.url before rendering by ensuring it is a safe http/https URL
+(e.g., parse with the URL constructor or test
+startsWith('http://')/startsWith('https://')) and skip or omit any links that
+fail validation so no unsafe schemes reach the client; update the rendering
+logic that maps over links in the HomeFooter (or the component containing the
+Link) to filter out invalid URLs before returning the Link elements.
 
-<violation number="1" location="src/components/shop/collections-section.tsx:33">
-P2: The `See all` handler targets the first scroll viewport in the document, so it can scroll the wrong list when multiple scroll areas are rendered.</violation>
-</file>
+---
 
-<file name="src/app/api/products/route.ts">
-
-<violation number="1" location="src/app/api/products/route.ts:28">
-P1: Do not use shared public static caching for this auth-dependent product list; it can leak admin-only inactive products to non-admin users.</violation>
-</file>
-
-<file name="src/app/api/founders/route.ts">
-
-<violation number="1" location="src/app/api/founders/route.ts:19">
-P2: Using `cached.static` here significantly increases cache staleness for a mutable founders list, which can delay newly created founder data from appearing.</violation>
-</file>
-
-<file name="src/app/(user)/profile/addresses/page.tsx">
-
-<violation number="1" location="src/app/(user)/profile/addresses/page.tsx:55">
-P1: Forcing `isDefault` to `false` on submit breaks the first-address default behavior by overriding store fallback logic.</violation>
-</file>
-
-<file name="src/app/(user)/shop/shop-content.tsx">
-
-<violation number="1" location="src/app/(user)/shop/shop-content.tsx:62">
-P2: The new `sort` query param is used to change layout but not to sort products, so `/shop?sort=newest` shows unsorted results.</violation>
-</file>
-
-<file name="src/app/api/brand-documents/route.ts">
-
-<violation number="1" location="src/app/api/brand-documents/route.ts:23">
-P2: This change unintentionally increases cache lifetime for brand documents, likely causing stale data to be served far longer than before.</violation>
-
-
-In `@src/app/`(user)/profile/addresses/page.tsx:
-- Around line 54-63: The current handleSubmit function unconditionally
-normalizes isDefault to false which causes updateAddress(editingAddressId,
-payload) to unintentionally clear defaults on edits; change handleSubmit so that
-when editingAddressId is present you do not coerce or add isDefault if
-data.isDefault is undefined (i.e. pass data as-is or omit isDefault), but when
-creating (no editingAddressId) set isDefault: data.isDefault ?? false so
-addAddress receives a definitive boolean; adjust the payload construction and
-branches around updateAddress and addAddress accordingly.
-
-In `@src/app/api/categories/route.ts`:
-- Around line 52-55: In the POST handler (exported POST function) you are
-calling revalidatePath("/api/categories") and
-revalidatePath("/api/shop/catalog") twice; remove the duplicate calls so each
-path is revalidated only once—keep a single revalidatePath("/api/categories")
-and a single revalidatePath("/api/shop/catalog") in the POST flow to avoid
-redundant invalidations while leaving the revalidatePath calls and POST function
-intact.
-
-In `@src/components/shop/collections-section.tsx`:
-- Around line 30-33: The clickable buttons in the CollectionsSection component
-(the "See all" button and the category buttons rendered around lines where the
-button JSX appears) lack the required pressed-state micro-interaction; update
-each button's className to include the active:scale-95 utility (e.g., append
-"active:scale-95" to the existing "text-sm text-muted-foreground
-transition-colors hover:text-foreground" string) so presses show immediate
-visual feedback, and ensure this change is applied to both the "See all" button
-and the category button elements inside the component (the JSX button elements
-rendering categories around the 50-55 area).
-- Around line 33-40: The onClick handler in CollectionsSection currently uses
-document.querySelector('[data-slot="scroll-area-viewport"]') which can target
-the wrong viewport when multiple sections render; add a React ref (e.g.,
-sectionRef via useRef<HTMLElement | null>) on the section wrapper in the
-CollectionsSection component and replace the global query with scopedQuery =
-sectionRef.current?.querySelector('[data-slot="scroll-area-viewport"]'); then
-call scopedQuery?.scrollTo({ left: scopedQuery.scrollWidth, behavior: 'smooth'
-}) so the "See all" button scrolls the correct section instance.
-
-In `@tests/unit/inngest/upload.functions.test.ts`:
-- Around line 59-60: Remove the biome-ignore and the `as any` casts when
-invoking the Inngest handlers; instead define the internal handler signature and
-use it for typed calls: create a local type or interface matching the internal
-`fn` shape (e.g., type InngestHandlerFn = { fn: (args: { event: Event; step?:
-Step }) => Promise<any> } or similar) and cast `handleFileUpload` and
-`handleFileDelete` to that explicit type before calling `.fn({ event, step:
-mockStep })`; update both invocations (the `handleFileUpload.fn` and
-`handleFileDelete.fn` calls) to use the new explicit type so lint rules and
-noExplicitAny are satisfied and remove the biome-ignore comments.
-
-In `@tests/unit/services/order.service.test.ts`:
-- Around line 93-97: The catch block uses an unknown-typed variable `error` but
-accesses `error.message` directly; change this to safely narrow the type before
-accessing message (e.g., perform an instanceof Error check or create a typed
-alias like `const err = error as Error` and then use `err.message`) so all three
-expectations consistently cast/guard (matching the existing pattern at lines
-94–95) in the test in tests/unit/services/order.service.test.ts.
-
-In `@tests/unit/services/social-link.service.test.ts`:
-- Around line 68-72: The current try/catch can false-pass if no error is thrown;
-replace it with an explicit rejection assertion: remove the try/catch around
-socialLinkService.findById("999") and use await
-expect(socialLinkService.findById("999")).rejects to assert the promise rejects,
-then assert the error identity (e.g., .rejects.toThrow() or
-.rejects.toMatchObject({ name: "NotFoundError" })) so the test fails when no
-error is thrown. Ensure you reference the same call to
-socialLinkService.findById("999") and assert the NotFoundError name.
-- Around line 88-89: Remove the biome-ignore comment and the "as any" cast in
-the test; instead construct a properly typed test input that matches the
-SocialLinkCreate DTO/interface expected by socialLinkService.create (use the
-same type used by the service method or import the CreateSocialLink type) and
-pass that typed value to socialLinkService.create; update the test's "input"
-variable declaration to explicitly use that type and valid fields so no lint
-suppression or any-casting is needed.
-
-In `@tests/unit/stores/brand.store.test.ts`:
-- Around line 23-24: The tests are casting fetchApi and fetchJson to the wrong
-types before calling mock methods; update all casts that currently use
-ReturnType<typeof fetchApi> or ReturnType<typeof fetchJson> to use
-ReturnType<typeof mock> so the mockReset(), mockResolvedValue(), and
-mockRejectedValue() calls are invoked on the Bun mock type (e.g., change casts
-surrounding fetchApi and fetchJson where
-mockReset/mockResolvedValue/mockRejectedValue are used to ReturnType<typeof
-mock>); apply the same change to every occurrence (including the other ranges
-mentioned) so TypeScript recognizes the mock methods on fetchApi and fetchJson.
-
-In `@tests/unit/stores/cart.store.test.ts`:
-- Line 22: The tests currently cast fetchApi to ReturnType<typeof fetchApi>
-before calling mock methods (.mockReset, .mockResolvedValue,
-.mockRejectedValue), but that type is the Promise-return type rather than the
-mock function type; update all such casts (for fetchApi usages at the noted
-spots including the occurrences around lines with .mockReset,
-.mockResolvedValue, .mockRejectedValue) to use ReturnType<typeof mock> so the
-TypeScript type reflects the bun:test mock function and allows mock methods on
-fetchApi; ensure each call site (where fetchApi is cast before calling
-mockReset/mockResolvedValue/mockRejectedValue) is changed to the new cast and
-that imports still include mock from "bun:test".
-
-In `@tests/unit/stores/category.store.test.ts`:
-- Line 27: The test is casting the fetchApi mock to ReturnType<typeof fetchApi>
-which resolves to the async function's Promise type and lacks jest mock methods;
-change the casts to use ReturnType<typeof mock> wherever you call (fetchApi as
-ReturnType<typeof fetchApi>) and similar casts around fetchApi.mockReset(),
-fetchApi.mockResolvedValue(), etc. Specifically update the mock casts used with
-fetchApi in the test (including the other occurrences noted) to (fetchApi as
-ReturnType<typeof mock>) so the mockReset() and mockResolvedValue() calls are
-available and consistent with other tests.
-
-In `@tests/unit/stores/product.store.test.ts`:
-- Around line 29-30: The tests incorrectly cast the mocked functions using
-ReturnType<typeof fetchApi> and ReturnType<typeof fetchJson>, which resolve to
-Promise types that lack mock methods; update those casts to ReturnType<typeof
-mock> where fetchApi and fetchJson are being used (the lines with (fetchApi as
-...).mockReset() / mockResolvedValue and similarly for fetchJson), matching the
-pattern used in upload.route.test.ts; also apply the same change to the other
-occurrences mentioned (lines 38-40 and 64-66) so the mocks expose mockReset,
-mockResolvedValue, etc.
+Outside diff comments:
+In `@tests/e2e/shop.spec.ts`:
+- Around line 11-16: The console logging in the test.afterEach hook uses
+interpolated testInfo.title (testInfo.title) which violates the static-string
+logging policy; update the two console.log calls inside test.afterEach to use
+fixed static log messages/keys (e.g. "PASS_TEST" and "FAIL_TEST" or
+"TEST_PASSED" and "TEST_FAILED") instead of interpolating testInfo.title,
+keeping the conditional structure intact and referencing the same test.afterEach
+hook and testInfo.status to decide which static message to emit.
 
 ---
 
 Nitpick comments:
-In `@src/components/shop/new-arrivals-section.tsx`:
-- Around line 32-34: The current useEffect calls
-setShuffledProducts(shuffle(products.slice(0, 10))) on every products reference
-change, causing unnecessary re-shuffles; change this to compute the initial
-shuffle only once per meaningful change by using a ref or a state initializer:
-e.g., useRef to store the shuffled array (compute shuffle(products.slice(0,10))
-only when you detect items actually changed) or use useState(() =>
-shuffle(products.slice(0,10))) and update it only when product contents change
-(deep-compare or derive a stable key), updating references in the component
-where setShuffledProducts, shuffle, and products are used.
+In `@src/components/home/home-footer.tsx`:
+- Line 147: Replace the hardcoded year in the HomeFooter component
+(src/components/home/home-footer.tsx) with a runtime expression that uses new
+Date().getFullYear(); update the JSX paragraph that currently renders "© 2026
+ENTITIES. All rights reserved." to interpolate the dynamic year (e.g., use {new
+Date().getFullYear()} inside the <p> element) so the footer updates
+automatically each year.
 
-In `@tests/unit/api/generic.routes.test.ts`:
-- Around line 75-98: Remove the duplicate mockResolvedValue for service.create
-so only the intended DB-mapped response remains: keep the mock that returns {
-id: "1", ...dbEntity } and delete the earlier service.create.mockResolvedValue({
-id: "1", ...validBody }) call; ensure there is a single service.create mock in
-this test (references: service.create, dbEntity, validBody, requireAdmin).
+In `@src/components/home/newsletter-section.tsx`:
+- Around line 14-24: The current handleSubmit uses setTimeout to simulate
+success; replace that with a real async subscribe flow bound to a store/API
+pending flag (e.g., useNewsletterStore.isSubscribing or a subscribeToNewsletter
+action) instead of local setIsLoading, call the API/store method from
+handleSubmit, await its result, set the store-managed pending flag while
+awaiting, and on success call setEmail("") and toast.success("Subscribed to the
+Entities newsletter."); on failure catch the error, log full context (error
+object and input email) and show a user-friendly toast.error message; keep
+setIsLoading only if it mirrors the store flag and remove the synthetic
+setTimeout.
 
-In `@tests/unit/api/orders.route.test.ts`:
-- Around line 46-50: The test setup in the beforeEach misses resetting
-orderService.findByIdWithOwnership which is used later; update the beforeEach
-reset block to call (orderService.findByIdWithOwnership as ReturnType<typeof
-mock>).mockReset() alongside the existing resets (requireAuth, requireAdmin,
-orderService.findById, orderService.updateOrderDetails) so mocks are fully
-isolated between tests.
+In `@src/components/home/philosophy-section.tsx`:
+- Around line 54-57: Update the CTA Link component in philosophy-section.tsx
+(the Link with href="/about") to add an active press-state and transform
+transition: include the classes active:scale-95, transition-transform, and
+transform in its className so the link scales down on press and the transform is
+animated; keep existing classes (border-b-2, pb-1, text-sm, font-semibold,
+tracking-widest, uppercase, hover:opacity-60, transition-opacity) and add the
+new classes alongside them.
+````
 
-In `@tests/unit/services/brand-document.service.test.ts`:
-- Around line 72-82: The test currently swallows a missing-throw case because it
-uses try/catch without asserting the catch path; update the test for
-brandDocumentService.findById to assert a rejection instead (e.g. use await
-expect(brandDocumentService.findById("999")).rejects.toThrow() or await
-expect(...).rejects.toMatchObject({ name: "NotFoundError" })), or add
-expect.assertions(1) at the start of the test to ensure the catch block runs;
-reference the existing test for brandDocumentService.findById to make the
-change.
+</details>
 
-In `@tests/unit/services/brand.service.test.ts`:
-- Around line 78-89: The test uses a try/catch so it can pass silently if no
-error is thrown; update the test for brandService.findById to assert the
-rejection deterministically by either adding expect.assertions(2) at the top of
-the test or converting the ACT/ASSERT to Jest's rejects pattern (e.g., await
-expect(brandService.findById("999")).rejects.toThrow() and/or
-.rejects.toHaveProperty('name','NotFoundError') ), and keep the mock reference
-mockPrisma.brand.findUnique.mockResolvedValue(null) unchanged.
+---
 
-In `@tests/unit/services/category.service.test.ts`:
-- Around line 64-75: The test for categoryService.findById can pass silently if
-no error is thrown because the catch block may never run; update the test to
-assert the promise rejects (e.g., use await
-expect(categoryService.findById("999")).rejects.toThrow() or add
-expect.assertions(2) at the start) and keep the
-mockPrisma.category.findUnique.mockResolvedValue(null) arrangement; reference
-the mock call mockPrisma.category.findUnique and the method
-categoryService.findById when making the change so the test fails if no
-NotFoundError is thrown.
+<details>
+<summary>ℹ️ Review info</summary>
 
-In `@tests/unit/services/discount.service.test.ts`:
-- Around line 64-75: The test for discountService.findById("999") can pass
-silently because the try/catch doesn’t fail the test when no error is thrown;
-update the test to explicitly assert rejection instead of swallowing
-success—either replace the try/catch with await
-expect(discountService.findById("999")).rejects.toThrow(/Discount/) (or
-.rejects.toHaveProperty('name','NotFoundError')), or keep the try block but add
-a fail() (or throw new Error) immediately after the await to ensure the test
-fails if findById does not throw; reference discountService.findById and the
-test case name when making the change.
+**Configuration used**: defaults
 
-- In `CollectionsSection`, the "See all" handler uses a global `document.querySelector('[data-slot="scroll-area-viewport"]')`, which will target only the first scroll area on the page; consider scoping this via a `ref` to the local `ScrollArea` so the button reliably scrolls the correct list.
-- The test changes that cast mocks like `fetchApi as ReturnType<typeof fetchApi>` are misleading, since `ReturnType` refers to the mock’s return value rather than the mock function itself; using `typeof fetchApi` or the concrete mock type would better express the intent and avoid type confusion.
+**Review profile**: CHILL
+
+**Plan**: Pro
+
+<details>
+<summary>📥 Commits</summary>
+
+Reviewing files that changed from the base of the PR and between 294df0438a0448a7c9c8e1fd74a64d623dadb094 and 9fbba9d39fe58c58b015994c6344c04c4f9f0d05.
+
+</details>
+
+<details>
+<summary>📒 Files selected for processing (23)</summary>
+
+* `docs/architecture.md`
+* `prisma/schema.prisma`
+* `src/app/admin/brand/page.tsx`
+* `src/app/api/brand-documents/route.ts`
+* `src/app/api/brands/[id]/route.ts`
+* `src/app/api/brands/route.ts`
+* `src/app/api/categories/route.ts`
+* `src/app/api/discounts/route.ts`
+* `src/app/api/founders/route.ts`
+* `src/app/api/products/[id]/route.ts`
+* `src/app/api/products/route.ts`
+* `src/app/api/shop/catalog/route.ts`
+* `src/app/page.tsx`
+* `src/components/home/featured-section.tsx`
+* `src/components/home/hero-section.tsx`
+* `src/components/home/home-footer.tsx`
+* `src/components/home/newsletter-section.tsx`
+* `src/components/home/philosophy-section.tsx`
+* `src/inngest/client.ts`
+* `src/lib/cache-headers.ts`
+* `src/lib/validations/brand.ts`
+* `src/services/brand.service.ts`
+* `tests/e2e/shop.spec.ts`
+
+</details>
+
+</details>
+
+<!-- This is an auto-generated comment by CodeRabbit for review status -->
+
+---
