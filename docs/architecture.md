@@ -369,11 +369,11 @@ Brand administration manages the main brand profile and its social presence thro
   - Request deduping via `createRequestDeduper` prevents duplicate fetches
   - Optimistic updates for create/update/delete with automatic rollback on failure
 - **API Routes**:
+  - `GET /api/brands` — list (**Aggressive cache**, 24h CDN, 7d SWR; public, paginated/searchable). Additionally, this endpoint serves as a brand provider: if no active brand exists, it auto-creates a default "My Store" brand with a "Default Founder" to ensure the homepage and other brand-dependent features never fail with 500 errors.
+  - `POST /api/brands` — creates brand; emits `brand.created.v1` (admin required). Enforces single-brand architecture: rejects creation if any brand already exists.
   - `GET /api/brands/[id]` — fetches brand with founder, documents, social links, philosophy (**Static cache**, 1h CDN; public)
-  - `POST /api/brands` — creates brand; emits `brand.created.v1` (admin required)
   - `PUT /api/brands/[id]` — updates brand; emits `brand.updated.v1` (admin required); also calls `revalidatePath("/")` to bust homepage ISR cache
   - `DELETE /api/brands/[id]` — hard delete; emits `brand.deleted.v1` (admin required); also calls `revalidatePath("/")` to bust homepage ISR cache
-  - `GET /api/brands` — list (**Aggressive cache**, 24h CDN, 7d SWR; public, paginated/searchable)
 - **Validation**: `src/lib/validations/brand.ts` defines `createBrandSchema` and `updateBrandSchema` with fields:
   - `name`, `logoUrl`, `tagline`, `brandStory`, `supportEmail`, `supportPhone`, `isActive`, `founderId`
 - **UI Pattern**:
