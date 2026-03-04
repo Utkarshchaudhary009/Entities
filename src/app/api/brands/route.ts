@@ -13,11 +13,31 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = parseSearchParams(searchParams, brandQuerySchema);
 
+    // Get all active brands (we should only ever have one, but just in case)
     const result = await brandService.findAll({
       page: query.page,
       limit: query.limit,
       search: query.search,
     });
+
+    // If no brand exists, auto-create a default one to prevent 500 errors in the UI
+    if (result.data.length === 0) {
+      console.log("No brands found. Auto-creating a default generic brand.");
+      const defaultFounder = await prisma.founder.create({
+        data: { name: "Default Founder" },
+      });
+      const newBrand = await brandService.create({
+        name: "My Store",
+        founderId: defaultFounder.id,
+        isActive: true,
+      });
+      // Fetch the full brand with relations
+      const fullBrand = await brandService.findById(newBrand.id);
+      return cached.aggressive({
+        data: [fullBrand],
+        meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      });
+    }
 
     return cached.aggressive(result);
   } catch (error) {
@@ -32,6 +52,14 @@ export async function POST(request: Request) {
   try {
     const json = await request.json();
     const body = createBrandSchema.parse(json);
+
+    // Enforce Single-Brand Architecture
+    const existingBrands = await prisma.brand.count();
+    if (existingBrands > 0) {
+      throw new Error(
+        "A brand already exists. This store only supports a single active brand. Please update the existing brand instead.",
+      );
+    }
 
     let founderId = body.founderId;
     if (!founderId) {
