@@ -3,8 +3,8 @@ import { revalidatePath } from "next/cache";
 import { safeInngestSend } from "@/inngest/safe-send";
 import { idParamSchema } from "@/lib/api/query-schemas";
 import { handleError, successDataResponse } from "@/lib/api/response";
+import { CACHE_HEADERS, withCache } from "@/lib/cache-headers";
 import { requireAdmin } from "@/lib/auth/guards";
-import { cached } from "@/lib/cache-headers";
 import { updateBrandSchema } from "@/lib/validations/brand";
 import { brandService } from "@/services/brand.service";
 import type { RouteParamsAsync } from "@/types/api";
@@ -14,7 +14,7 @@ export async function GET(_request: Request, { params }: RouteParamsAsync) {
     const { id } = idParamSchema.parse(await params);
     const brand = await brandService.findById(id);
     // Individual brand detail — static cache, bust on mutation
-    return cached.static(successDataResponse(brand));
+    return withCache(successDataResponse(brand), CACHE_HEADERS.static);
   } catch (error) {
     return handleError(error, "Fetch brand");
   }
